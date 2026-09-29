@@ -8,6 +8,7 @@
   "contact": {"homepage": "https://modkeel.com", "sources": "https://github.com/Modkeel/companion",
               "issues": "https://github.com/Modkeel/companion/issues"},
   "license": "MIT",
+  "icon": "assets/modkeel/icon.png",
   "environment": "*",
   "entrypoints": {
     "main": ["modkeel.companion.fabric.CompanionMod"],
