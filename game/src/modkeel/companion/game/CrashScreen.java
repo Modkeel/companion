@@ -41,31 +41,33 @@ public final class CrashScreen extends Screen {
         Stack body = Stack.vertical(8);
         body.defaultCellSetting().alignHorizontallyCenter();
 
-        body.addChild(text(Component.translatable("modkeel.kind." + d.kind.name().toLowerCase(Locale.ROOT)), w));
-        if (!d.error.isEmpty()) {
-            body.addChild(text(Component.literal(clip(d.error, 200)).withStyle(ChatFormatting.GRAY), w));
-        }
+        // Headline first (the mod), then why, then what that kind of crash means; the raw error
+        // lives in the report button's tooltip
         Diagnosis.Suspect s = d.top();
         if (s != null) {
-            body.addChild(text(Component.translatable("modkeel.crash.suspect", s.name,
-                    Component.translatable("modkeel.confidence." + d.confidence.name().toLowerCase(Locale.ROOT))), w));
-            MutableComponent why = Component.empty();
+            body.addChild(text(Component.translatable("modkeel.crash.suspect", s.name)
+                    .withStyle(ChatFormatting.YELLOW), w));
+            MutableComponent reasons = Component.empty();
             for (String reason : s.reasons) {
-                if (!why.getSiblings().isEmpty()) {
-                    why.append("; ");
+                if (!reasons.getSiblings().isEmpty()) {
+                    reasons.append("; ");
                 }
-                why.append(msg(reason));
+                reasons.append(msg(reason));
             }
-            body.addChild(text(why.withStyle(ChatFormatting.GRAY), w));
-            if (d.suspects.size() > 1) {
-                List<String> others = new ArrayList<>();
-                for (Diagnosis.Suspect o : d.suspects.subList(1, d.suspects.size())) {
-                    others.add(o.name);
-                }
-                body.addChild(text(Component.translatable("modkeel.crash.others", String.join(", ", others)), w));
-            }
-        } else {
+            body.addChild(text(Component.translatable("modkeel.crash.why", Component.translatable(
+                    "modkeel.confidence." + d.confidence.name().toLowerCase(Locale.ROOT)), reasons)
+                    .withStyle(ChatFormatting.GRAY), w));
+        }
+        body.addChild(text(Component.translatable("modkeel.kind." + d.kind.name().toLowerCase(Locale.ROOT)), w));
+        if (s == null) {
             body.addChild(text(Component.translatable("modkeel.crash.no_suspect"), w));
+        } else if (d.suspects.size() > 1) {
+            List<String> others = new ArrayList<>();
+            for (Diagnosis.Suspect o : d.suspects.subList(1, d.suspects.size())) {
+                others.add(o.name);
+            }
+            body.addChild(text(Component.translatable("modkeel.crash.others", String.join(", ", others))
+                    .withStyle(ChatFormatting.GRAY), w));
         }
         if (stuck(g)) {
             body.addChild(text(Component.translatable("modkeel.cta").withStyle(ChatFormatting.AQUA), w));
@@ -78,9 +80,8 @@ public final class CrashScreen extends Screen {
         Stack row1 = footer.addChild(Stack.horizontal(8));
         Stack row2 = footer.addChild(Stack.horizontal(8));
 
-        Button disable = row1.addChild(Button.builder(s == null
-                        ? Component.translatable("modkeel.crash.disable_none")
-                        : fit("modkeel.crash.disable", s.name, 150 - 12),
+        Button disable = row1.addChild(Button.builder(Component.translatable(s == null
+                        ? "modkeel.crash.disable_none" : "modkeel.crash.disable"),
                 b -> confirmDisable(s)).width(150).build());
         disable.active = s != null && s.file != null;
 
@@ -95,8 +96,11 @@ public final class CrashScreen extends Screen {
             revert.setTooltip(Tooltip.create(Component.translatable("modkeel.revert.none")));
         }
 
-        row2.addChild(Button.builder(Component.translatable("modkeel.crash.open_report"),
+        Button report = row2.addChild(Button.builder(Component.translatable("modkeel.crash.open_report"),
                 b -> Compat.openPath(g.crashFile)).width(150).build());
+        if (!d.error.isEmpty()) {
+            report.setTooltip(Tooltip.create(Component.literal(clip(d.error, 300))));
+        }
         row2.addChild(Button.builder(Component.translatable("modkeel.crash.continue"),
                 b -> onClose()).width(150).build());
 
@@ -159,18 +163,6 @@ public final class CrashScreen extends Screen {
     static MultiLineTextWidget text(Component c, int width) {
         return new MultiLineTextWidget(c, net.minecraft.client.Minecraft.getInstance().font)
                 .setMaxWidth(width).setCentered(true);
-    }
-
-    /** A translated label with {@code name} shortened until it fits {@code px} pixels. */
-    static Component fit(String key, String name, int px) {
-        net.minecraft.client.gui.Font font = net.minecraft.client.Minecraft.getInstance().font;
-        String n = name;
-        Component c = Component.translatable(key, n);
-        while (font.width(c) > px && n.length() > 4) {
-            n = n.substring(0, n.length() - (n.endsWith("…") ? 2 : 1)) + "…";
-            c = Component.translatable(key, n);
-        }
-        return c;
     }
 
     static String clip(String s, int max) {

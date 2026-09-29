@@ -179,7 +179,7 @@ def build(mc: str, loader: str = "fabric", run_tests: bool = True) -> dict[str, 
                 "lifecycle-events-v1|api-base")
             write_jar(BUILD / "mfcrash.jar", {"fabric.mod.json": json.dumps(
                 {"schemaVersion": 1, "id": "mfcrash", "version": "1.0",
-                 "name": "Modkeel test crasher", "environment": "client",
+                 "name": "Crash Test Mod", "environment": "client",
                  "entrypoints": {"client": ["modkeel.testmods.MfCrash"]},
                  "depends": {"fabric-lifecycle-events-v1": "*"}})}, [crash_out], [])
         else:
@@ -191,8 +191,8 @@ def build(mc: str, loader: str = "fabric", run_tests: bool = True) -> dict[str, 
                 "${minecraft}", game_range).replace("${" + loader + "}", loader_range)
             write_jar(mod, loader_metadata(loader, v, toml, "Modkeel Companion"), [core, classes],
                       resources)
-            for test_mod, name in (("mfcrash", "Modkeel test crasher"),
-                                   ("mfidle", "Modkeel test mouse release")):
+            for test_mod, name in (("mfcrash", "Crash Test Mod"),
+                                   ("mfidle", "Mouse Release Test Mod")):
                 out = compile_(mc, sorted((HERE / "testmods" / f"{test_mod}-{loader}").rglob(
                     "*.java")), tmp / test_mod)
                 write_jar(BUILD / f"{test_mod}-{loader}.jar",

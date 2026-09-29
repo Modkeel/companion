@@ -31,7 +31,6 @@ public final class WelcomeScreen extends Screen {
         }
         body.addChild(CrashScreen.text(Component.translatable("modkeel.welcome.privacy")
                 .withStyle(ChatFormatting.GRAY), w));
-        body.addChild(CrashScreen.text(Component.translatable("modkeel.welcome.app"), w));
         body.addChild(CrashScreen.text(Component.translatable("modkeel.welcome.later")
                 .withStyle(ChatFormatting.GRAY), w));
         scroll = layout.addToContents(new Scroll(minecraft, body, Compat.contentHeight(layout)));

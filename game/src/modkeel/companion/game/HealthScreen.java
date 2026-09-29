@@ -20,6 +20,7 @@ import net.minecraft.client.gui.layouts.HeaderAndFooterLayout;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
 
 /** "Pack health": the mod set, world backups, and what Modkeel changed, each reversible. */
 public final class HealthScreen extends Screen {
@@ -72,17 +73,23 @@ public final class HealthScreen extends Screen {
         List<String> last = g.state.getList("lastResult");
         String action = g.state.get("lastAction", "");
         if (!last.isEmpty() && !action.isEmpty()) {
-            boolean failed = last.stream().anyMatch(l -> l.startsWith("fail"));
-            body.addChild(CrashScreen.text(Component.translatable("modkeel.health.last_action",
-                    CrashScreen.msg(action), Component.translatable(failed ? "modkeel.health.last_fail"
-                            : "modkeel.health.last_ok")).withStyle(failed ? ChatFormatting.GOLD : ChatFormatting.GRAY), w));
+            MutableComponent line = Component.translatable("modkeel.health.last_action", CrashScreen.msg(action));
+            if (last.stream().anyMatch(l -> l.startsWith("fail"))) {
+                line.append(" ").append(Component.translatable("modkeel.health.last_fail")).withStyle(ChatFormatting.GOLD);
+            } else {
+                line.withStyle(ChatFormatting.GRAY);
+            }
+            body.addChild(CrashScreen.text(line, w));
         }
 
-        body.addChild(new StringWidget(Component.translatable("modkeel.health.backups")
-                .withStyle(ChatFormatting.YELLOW), font));
+        // A section with nothing in it is one gray line, so what does need attention stands out
         List<String> worlds = Backups.worlds(g.gameDir);
         if (worlds.isEmpty()) {
-            body.addChild(CrashScreen.text(Component.translatable("modkeel.health.no_backups"), w));
+            body.addChild(CrashScreen.text(Component.translatable("modkeel.health.no_backups")
+                    .withStyle(ChatFormatting.GRAY), w));
+        } else {
+            body.addChild(new StringWidget(Component.translatable("modkeel.health.backups")
+                    .withStyle(ChatFormatting.YELLOW), font));
         }
         for (String world : worlds.subList(0, Math.min(worlds.size(), MAX_ROWS))) {
             List<Path> zips = Backups.list(g.gameDir, world);
@@ -154,9 +161,15 @@ public final class HealthScreen extends Screen {
 
     /** What the Modkeel lab knows about the installed mods on this Minecraft version. */
     private void addLab(Stack body, int w) {
+        List<Guardian.LabMod> mods = g.labMods();
+        List<Rules.Rule> clashes = g.labClashes();
+        if (clashes.isEmpty() && mods.stream().allMatch(m -> m.rule == null && m.otherVersion == null)) {
+            body.addChild(CrashScreen.text(Component.translatable("modkeel.lab.none", mods.size(), g.mcVersion)
+                    .withStyle(ChatFormatting.GRAY), w));
+            return;
+        }
         body.addChild(new StringWidget(Component.translatable("modkeel.lab.title", g.mcVersion)
                 .withStyle(ChatFormatting.YELLOW), font));
-        List<Guardian.LabMod> mods = g.labMods();
         List<String> verified = new ArrayList<>();
         List<String> otherVersion = new ArrayList<>();
         for (Guardian.LabMod m : mods) {
@@ -170,14 +183,14 @@ public final class HealthScreen extends Screen {
                 otherVersion.add(m.name + " (" + m.otherVersion + ")");
             }
         }
-        for (Rules.Rule r : g.labClashes()) {
+        for (Rules.Rule r : clashes) {
             body.addChild(CrashScreen.text(Component.translatable("modkeel.lab.clash", r.a, r.b)
                     .withStyle(ChatFormatting.RED), w));
         }
-        body.addChild(CrashScreen.text(verified.isEmpty()
-                ? Component.translatable("modkeel.lab.verified_none", mods.size())
-                : Component.translatable("modkeel.lab.verified", verified.size(), mods.size(),
-                        CrashScreen.clip(String.join(", ", verified), 300)), w));
+        if (!verified.isEmpty()) {
+            body.addChild(CrashScreen.text(Component.translatable("modkeel.lab.verified", verified.size(),
+                    mods.size(), CrashScreen.clip(String.join(", ", verified), 300)), w));
+        }
         if (!otherVersion.isEmpty()) {
             body.addChild(CrashScreen.text(Component.translatable("modkeel.lab.other_version",
                     CrashScreen.clip(String.join(", ", otherVersion), 300)).withStyle(ChatFormatting.GOLD), w));
