@@ -24,6 +24,7 @@ public final class Client {
 
     public static void init() {
         Common.guardian.startup();
+        Tour.start();
     }
 
     /** Called by the loader after a screen is initialised; `add` puts a widget on it. */

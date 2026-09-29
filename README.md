@@ -26,6 +26,13 @@ Everything lives under the Modkeel button on the title screen.
 
 Fabric needs [Fabric API](https://modrinth.com/mod/fabric-api).
 
+## Languages
+
+English, Spanish, Brazilian Portuguese, German, French, Russian and Simplified Chinese, with
+regional variants (Spanish for Latin America, European Portuguese, Austrian and Swiss German,
+Canadian French) using the closest one. Every text is in `game/resources/assets/modkeel/lang/`,
+so a resource pack can add or override a language with its own `assets/modkeel/lang/<code>.json`.
+
 ## Building
 
 No Gradle: `build.py` compiles with `javac` and remaps with

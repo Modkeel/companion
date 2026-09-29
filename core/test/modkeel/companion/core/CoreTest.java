@@ -355,12 +355,13 @@ public final class CoreTest {
     static void planRoundTrip() throws Exception {
         Path dir = tmp();
         Plan p = new Plan();
-        p.title = "Disabled X";
+        p.title = Msg.of("modkeel.action.disabled", "X");
         p.move(dir.resolve("a b.jar"), dir.resolve("a b.jar.disabled")).copy(dir.resolve("c.jar"), dir.resolve("d.jar"));
         Path f = dir.resolve("plan.txt");
         p.write(f);
         Plan q = Plan.read(f);
-        eq("Disabled X", q.title, "title");
+        eq(Msg.of("modkeel.action.disabled", "X"), q.title, "title");
+        eq("X", Msg.args(q.title)[0], "title argument");
         eq(2, q.ops.size(), "ops");
         eq("a b.jar", q.ops.get(0).from.getFileName().toString(), "path with space");
         eq("copy", q.ops.get(1).kind, "kind");
@@ -497,8 +498,8 @@ public final class CoreTest {
         g.rules = Rules.parse(List.of("jar\t" + ModSet.sha1(bad) + "\tyungs\t26.2\tcrashes\tofficial_runtime; crashed"));
         Diagnosis d = g.startup();
         eq("yungs", d.top().id, "the lab crash outweighs one generic frame");
-        check(d.top().reasons.get(0).contains("Modkeel lab"), "reason " + d.top().reasons);
-        check(d.top().reasons.contains("its file name says it is for Minecraft 26.1.2, not 26.2"),
+        eq(Msg.of("modkeel.reason.lab_crashes", "26.2"), d.top().reasons.get(0), "lab reason");
+        check(d.top().reasons.contains(Msg.of("modkeel.reason.file_name", "26.1.2", "26.2")),
                 "file name hint on a suspect " + d.top().reasons);
         eq(2, g.labMods().size(), "lab view of installed mods");
     }

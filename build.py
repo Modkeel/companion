@@ -111,6 +111,15 @@ def test_core(core: Path, tmp: Path) -> None:
                    check=True)
 
 
+# Minecraft falls back to English, not to a sibling language: each regional variant needs its file
+LANG_ALIASES = {
+    "es_es.json": [f"es_{r}.json" for r in ("ar", "cl", "ec", "mx", "uy", "ve")],
+    "pt_br.json": ["pt_pt.json"],
+    "de_de.json": ["de_at.json", "de_ch.json"],
+    "fr_fr.json": ["fr_ca.json"],
+}
+
+
 def write_jar(out: Path, metadata: dict[str, str], class_dirs: list[Path],
               resources: list[Path]) -> None:
     """`metadata`: loader metadata files (path in the jar -> text), written first."""
@@ -126,6 +135,8 @@ def write_jar(out: Path, metadata: dict[str, str], class_dirs: list[Path],
                 name = f.relative_to(root).as_posix()
                 if f.is_file() and name not in metadata:
                     z.write(f, name)
+                    for alias in LANG_ALIASES.get(f.name, []):
+                        z.write(f, name[: -len(f.name)] + alias)
         license_file = HERE / "LICENSE"
         if license_file.exists():
             z.write(license_file, "LICENSE_modkeel")

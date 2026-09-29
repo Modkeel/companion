@@ -124,7 +124,7 @@ public final class Outcomes {
                     : f.ticks >= HELD_TICKS ? Status.HELD_1H : Status.OPEN;
             if (next != f.status) {
                 f.status = next;
-                Log.info("fix \"" + f.title + "\": " + next);
+                Log.info("fix \"" + Msg.plain(f.title) + "\": " + next);
             }
             changed = true;
         }
@@ -166,7 +166,7 @@ public final class Outcomes {
             if (!f.status.done && f.signature.equals(signature) && f.set.equals(fingerprint)) {
                 f.status = Status.RECURRED;
                 changed = true;
-                Log.info("fix \"" + f.title + "\": the same crash came back");
+                Log.info("fix \"" + Msg.plain(f.title) + "\": the same crash came back");
             }
         }
         if (changed) {
@@ -188,7 +188,7 @@ public final class Outcomes {
             if (!any) {
                 f.status = Status.UNDONE;
                 changed = true;
-                Log.info("fix \"" + f.title + "\": undone");
+                Log.info("fix \"" + Msg.plain(f.title) + "\": undone");
             }
         }
         if (changed) {

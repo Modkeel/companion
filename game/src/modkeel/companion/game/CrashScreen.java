@@ -6,6 +6,9 @@ import java.util.Locale;
 
 import modkeel.companion.core.Diagnosis;
 import modkeel.companion.core.Guardian;
+import modkeel.companion.core.Msg;
+import modkeel.companion.core.Outcomes;
+import modkeel.companion.core.Rules;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.MultiLineTextWidget;
@@ -46,7 +49,14 @@ public final class CrashScreen extends Screen {
         if (s != null) {
             body.addChild(text(Component.translatable("modkeel.crash.suspect", s.name,
                     Component.translatable("modkeel.confidence." + d.confidence.name().toLowerCase(Locale.ROOT))), w));
-            body.addChild(text(Component.literal(String.join("; ", s.reasons)).withStyle(ChatFormatting.GRAY), w));
+            MutableComponent why = Component.empty();
+            for (String reason : s.reasons) {
+                if (!why.getSiblings().isEmpty()) {
+                    why.append("; ");
+                }
+                why.append(msg(reason));
+            }
+            body.addChild(text(why.withStyle(ChatFormatting.GRAY), w));
             if (d.suspects.size() > 1) {
                 List<String> others = new ArrayList<>();
                 for (Diagnosis.Suspect o : d.suspects.subList(1, d.suspects.size())) {
@@ -57,6 +67,10 @@ public final class CrashScreen extends Screen {
         } else {
             body.addChild(text(Component.translatable("modkeel.crash.no_suspect"), w));
         }
+        if (stuck(g)) {
+            body.addChild(text(Component.translatable("modkeel.cta").withStyle(ChatFormatting.AQUA), w));
+        }
+        body.addChild(text(Component.translatable("modkeel.crash.later").withStyle(ChatFormatting.GRAY), w));
 
         scroll = layout.addToContents(new Scroll(minecraft, body, Compat.contentHeight(layout)));
 
@@ -109,6 +123,37 @@ public final class CrashScreen extends Screen {
         MutableComponent msg = Component.translatable("modkeel.revert.confirm",
                 names.isEmpty() ? "-" : clip(String.join(", ", names), 300));
         return msg.append("\n\n").append(Component.translatable("modkeel.restart_note"));
+    }
+
+    /**
+     * When no one-click fix gets the pack going: no mod to blame, a fix that did not hold, or
+     * the lab saw the blamed mod crash on this version. Only then Modkeel points at the app.
+     */
+    static boolean stuck(Guardian g) {
+        Diagnosis d = g.crash;
+        if (d != null && d.top() == null) {
+            return true;
+        }
+        for (Outcomes.Fix f : g.outcomes.fixes) {
+            if (f.status == Outcomes.Status.RECURRED && (d == null || f.signature.equals(d.signature))) {
+                return true;
+            }
+        }
+        for (Guardian.LabMod m : g.labMods()) {
+            if (m.rule != null && m.rule.status == Rules.Status.CRASHES
+                    && (d == null || d.top() == null || m.id.equals(d.top().id))) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /** A stored message: a translation key with its arguments, or plain text. */
+    static Component msg(String m) {
+        if (!Msg.isKey(m)) {
+            return Component.literal(m);
+        }
+        return Component.translatable(Msg.key(m), (Object[]) Msg.args(m));
     }
 
     static MultiLineTextWidget text(Component c, int width) {

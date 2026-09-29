@@ -225,7 +225,7 @@ public final class Guardian {
             }
             Log.info("crash " + newest.getFileName() + ": " + d.kind + ", " + d.error
                      + (d.top() == null ? ", no suspect" : ", suspect " + d.top().id + " ("
-                        + d.confidence + ", " + String.join("; ", d.top().reasons) + ")"));
+                        + d.confidence + ", " + Msg.plain(String.join("; ", d.top().reasons)) + ")"));
             return d;
         } catch (IOException e) {
             Log.warn("cannot read " + newest, e);
@@ -292,17 +292,15 @@ public final class Guardian {
         List<Diagnosis.Hint> out = new ArrayList<>();
         for (LabMod m : labMods()) {
             if (m.rule != null && m.rule.status == Rules.Status.CRASHES) {
-                out.add(new Diagnosis.Hint(m.id, 60, "in the Modkeel lab this exact file crashed on Minecraft "
-                        + mcVersion, false));
+                out.add(new Diagnosis.Hint(m.id, 60, Msg.of("modkeel.reason.lab_crashes", mcVersion), false));
             }
             if (m.otherVersion != null) {
-                out.add(new Diagnosis.Hint(m.id, 10, "its file name says it is for Minecraft "
-                        + m.otherVersion + ", not " + mcVersion, true));
+                out.add(new Diagnosis.Hint(m.id, 10, Msg.of("modkeel.reason.file_name", m.otherVersion, mcVersion), true));
             }
         }
         for (Rules.Rule r : labClashes()) {
-            out.add(new Diagnosis.Hint(r.a, 20, "the Modkeel lab saw it clash with " + r.b, true));
-            out.add(new Diagnosis.Hint(r.b, 20, "the Modkeel lab saw it clash with " + r.a, true));
+            out.add(new Diagnosis.Hint(r.a, 20, Msg.of("modkeel.reason.lab_clash", r.b), true));
+            out.add(new Diagnosis.Hint(r.b, 20, Msg.of("modkeel.reason.lab_clash", r.a), true));
         }
         return out;
     }
@@ -322,7 +320,7 @@ public final class Guardian {
 
     public Plan disablePlan(Diagnosis.Suspect suspect) {
         Plan p = new Plan();
-        p.title = "Disabled " + suspect.name;
+        p.title = Msg.of("modkeel.action.disabled", suspect.name);
         Path jar = modsDir.resolve(suspect.file);
         p.move(jar, Plan.disabledName(jar));
         return p;
@@ -331,7 +329,7 @@ public final class Guardian {
     /** Back to the last good set: disable what is new, bring back what went missing. */
     public Plan revertPlan() {
         Plan p = new Plan();
-        p.title = "Reverted to the last good mod set";
+        p.title = Msg.of("modkeel.action.reverted");
         ModSet good = lastGood();
         if (good == null) {
             return p;
@@ -366,7 +364,7 @@ public final class Guardian {
     public Plan enablePlan(String disabledFile) {
         Plan p = new Plan();
         String jar = disabledFile.replaceAll("(\\.\\d+)?\\.disabled$", "");
-        p.title = "Re-enabled " + jar;
+        p.title = Msg.of("modkeel.action.enabled", jar);
         Path to = modsDir.resolve(jar);
         if (Files.exists(to)) {
             to = modsDir.resolve(jar.replaceAll("(?i)\\.jar$", "") + "-reenabled.jar");
@@ -446,7 +444,7 @@ public final class Guardian {
         } catch (IOException e) {
             Log.warn("cannot start the helper", e);
         }
-        Log.info("applied: " + plan.title);
+        Log.info("applied: " + Msg.plain(plan.title));
     }
 
     /**

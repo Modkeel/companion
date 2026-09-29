@@ -91,15 +91,15 @@ public final class Diagnosis {
 
         Map<String, Suspect> byId = new LinkedHashMap<>();
         for (String id : report.loadingIssues) {
-            d.blame(byId, owners, id, 100, "the loader reported it failed to load");
+            d.blame(byId, owners, id, 100, Msg.of("modkeel.reason.load_failed"));
         }
         for (String id : report.fromMod) {
-            d.blame(byId, owners, id, 100, "its mixin failed to apply");
+            d.blame(byId, owners, id, 100, Msg.of("modkeel.reason.mixin"));
         }
         for (String config : report.mixinConfigs) {
             JarInfo owner = owners.ofMixinConfig(config);
             if (owner != null) {
-                d.blame(byId, owners, owner.id, 90, "its mixin config " + config + " failed");
+                d.blame(byId, owners, owner.id, 90, Msg.of("modkeel.reason.mixin_config", config));
             }
         }
         for (int c = 0; c < report.causes.size(); c++) {
@@ -112,7 +112,7 @@ public final class Diagnosis {
                 // a merged mixin handler is that mod's code, whatever class it sits in
                 String handler = f.mixinHandlerMod();
                 if (handler != null) {
-                    d.blame(byId, owners, handler, weight, "its mixin code is in the stack trace");
+                    d.blame(byId, owners, handler, weight, Msg.of("modkeel.reason.mixin_trace"));
                     continue;
                 }
                 String id = f.module;
@@ -121,7 +121,7 @@ public final class Diagnosis {
                     id = owner != null ? owner.id : null;
                 }
                 if (id != null) {
-                    d.blame(byId, owners, id, weight, "its code is in the stack trace");
+                    d.blame(byId, owners, id, weight, Msg.of("modkeel.reason.trace"));
                 }
             }
         }
@@ -130,7 +130,7 @@ public final class Diagnosis {
             String missing = root.message.replace('/', '.').replaceAll("^.*?([\\w$]+(?:\\.[\\w$]+)+).*$", "$1");
             JarInfo owner = owners.ofClass(missing);
             if (owner != null) {
-                d.blame(byId, owners, owner.id, 8, "another mod expects a different version of it");
+                d.blame(byId, owners, owner.id, 8, Msg.of("modkeel.reason.version"));
             }
         }
 
