@@ -1,0 +1,167 @@
+---- Minecraft Crash Report ----
+// My bad.
+
+Time: 2026-09-27 17:06:57
+Description: Mod loading failures have occurred; consult the issue messages for more details
+
+net.neoforged.neoforge.logging.CrashReportExtender$ModLoadingCrashException: Mod loading has failed
+
+
+A detailed walkthrough of the error, its code path and all known details is as follows:
+---------------------------------------------------------------------------------------
+
+-- Head --
+Thread: main
+Stacktrace:
+	at net.neoforged.fml.classloading.ModuleClassLoader.loadClass(ModuleClassLoader.java:254) ~[loader-11.0.16.jar:11.0] {}
+-- Mod loading issue for: dynamictrees --
+Details:
+	Caused by 0: java.lang.NoClassDefFoundError: net/minecraft/util/Tuple
+		at TRANSFORMER/dynamictrees@1.8.0-BETA04/com.dtteam.dynamictrees.systems.season.NormalSeasonManager.<init>(NormalSeasonManager.java:25) ~[dynamictrees-neoforge-26.1.2-1.8.0-BETA04.jar:?] {}
+		at TRANSFORMER/dynamictrees@1.8.0-BETA04/com.dtteam.dynamictrees.systems.season.SeasonCompatibilityHandler.<clinit>(SeasonCompatibilityHandler.java:22) ~[dynamictrees-neoforge-26.1.2-1.8.0-BETA04.jar:?] {}
+		at TRANSFORMER/dynamictrees@1.8.0-BETA04/com.dtteam.dynamictrees.DynamicTrees.init(DynamicTrees.java:64) ~[dynamictrees-neoforge-26.1.2-1.8.0-BETA04.jar:?] {}
+		at TRANSFORMER/dynamictrees@1.8.0-BETA04/com.dtteam.dynamictrees.DynamicTreesNeoForge.<init>(DynamicTreesNeoForge.java:43) ~[dynamictrees-neoforge-26.1.2-1.8.0-BETA04.jar:?] {}
+		at java.base/jdk.internal.reflect.DirectConstructorHandleAccessor.newInstance(DirectConstructorHandleAccessor.java:62) ~[?:?] {}
+		at java.base/java.lang.reflect.Constructor.newInstanceWithCaller(Constructor.java:499) ~[?:?] {}
+		at java.base/java.lang.reflect.Constructor.newInstance(Constructor.java:483) ~[?:?] {}
+		at net.neoforged.fml.javafmlmod.FMLModContainer.constructMod(FMLModContainer.java:124) ~[loader-11.0.16.jar:11.0] {}
+		at net.neoforged.fml.ModLoader.lambda$constructMods$0(ModLoader.java:125) ~[loader-11.0.16.jar:11.0] {}
+		at net.neoforged.fml.ModLoader.lambda$dispatchParallelTask$3(ModLoader.java:203) ~[loader-11.0.16.jar:11.0] {}
+		at java.base/java.util.concurrent.CompletableFuture.uniHandle(CompletableFuture.java:955) ~[?:?] {}
+		at java.base/java.util.concurrent.CompletableFuture$UniHandle.tryFire(CompletableFuture.java:932) ~[?:?] {}
+		at java.base/java.util.concurrent.CompletableFuture$Completion.exec(CompletableFuture.java:504) ~[?:?] {}
+		at java.base/java.util.concurrent.ForkJoinTask.doExec(ForkJoinTask.java:511) ~[?:?] {}
+		at java.base/java.util.concurrent.ForkJoinPool$WorkQueue.topLevelExec(ForkJoinPool.java:1450) ~[?:?] {}
+		at java.base/java.util.concurrent.ForkJoinPool.runWorker(ForkJoinPool.java:2019) ~[?:?] {}
+		at java.base/java.util.concurrent.ForkJoinWorkerThread.run(ForkJoinWorkerThread.java:187) ~[?:?] {}
+
+	Mod file: /C:/Users/player/.modforge/servers/neoforge-26.2/mods/dynamictrees-neoforge-26.1.2-1.8.0-BETA04.jar
+	Failure message: Dynamic Trees (dynamictrees) has failed to load correctly
+		java.lang.NoClassDefFoundError: net/minecraft/util/Tuple
+	Mod version: 1.8.0-BETA04
+	Mod issues URL: <No issues URL found>
+	Exception message: java.lang.ClassNotFoundException: net.minecraft.util.Tuple
+Stacktrace:
+	at net.neoforged.fml.classloading.ModuleClassLoader.loadClass(ModuleClassLoader.java:254) ~[loader-11.0.16.jar:11.0] {}
+	at java.base/java.lang.ClassLoader.loadClass(ClassLoader.java:490) ~[?:?] {}
+	at TRANSFORMER/dynamictrees@1.8.0-BETA04/com.dtteam.dynamictrees.systems.season.NormalSeasonManager.<init>(NormalSeasonManager.java:25) ~[dynamictrees-neoforge-26.1.2-1.8.0-BETA04.jar:?] {}
+	at TRANSFORMER/dynamictrees@1.8.0-BETA04/com.dtteam.dynamictrees.systems.season.SeasonCompatibilityHandler.<clinit>(SeasonCompatibilityHandler.java:22) ~[dynamictrees-neoforge-26.1.2-1.8.0-BETA04.jar:?] {}
+	at TRANSFORMER/dynamictrees@1.8.0-BETA04/com.dtteam.dynamictrees.DynamicTrees.init(DynamicTrees.java:64) ~[dynamictrees-neoforge-26.1.2-1.8.0-BETA04.jar:?] {}
+	at TRANSFORMER/dynamictrees@1.8.0-BETA04/com.dtteam.dynamictrees.DynamicTreesNeoForge.<init>(DynamicTreesNeoForge.java:43) ~[dynamictrees-neoforge-26.1.2-1.8.0-BETA04.jar:?] {}
+	at java.base/jdk.internal.reflect.DirectConstructorHandleAccessor.newInstance(DirectConstructorHandleAccessor.java:62) ~[?:?] {}
+	at java.base/java.lang.reflect.Constructor.newInstanceWithCaller(Constructor.java:499) ~[?:?] {}
+	at java.base/java.lang.reflect.Constructor.newInstance(Constructor.java:483) ~[?:?] {}
+	at net.neoforged.fml.javafmlmod.FMLModContainer.constructMod(FMLModContainer.java:124) ~[loader-11.0.16.jar:11.0] {}
+	at net.neoforged.fml.ModLoader.lambda$constructMods$0(ModLoader.java:125) ~[loader-11.0.16.jar:11.0] {}
+	at net.neoforged.fml.ModLoader.lambda$dispatchParallelTask$3(ModLoader.java:203) ~[loader-11.0.16.jar:11.0] {}
+	at java.base/java.util.concurrent.CompletableFuture.uniHandle(CompletableFuture.java:955) ~[?:?] {}
+	at java.base/java.util.concurrent.CompletableFuture$UniHandle.tryFire(CompletableFuture.java:932) ~[?:?] {}
+	at java.base/java.util.concurrent.CompletableFuture$Completion.exec(CompletableFuture.java:504) ~[?:?] {}
+	at java.base/java.util.concurrent.ForkJoinTask.doExec(ForkJoinTask.java:511) ~[?:?] {}
+	at java.base/java.util.concurrent.ForkJoinPool$WorkQueue.topLevelExec(ForkJoinPool.java:1450) ~[?:?] {}
+	at java.base/java.util.concurrent.ForkJoinPool.runWorker(ForkJoinPool.java:2019) ~[?:?] {}
+	at java.base/java.util.concurrent.ForkJoinWorkerThread.run(ForkJoinWorkerThread.java:187) ~[?:?] {}
+
+
+-- System Details --
+Details:
+	Minecraft Version: 26.2
+	Minecraft Version ID: 26.2
+	Operating System: Windows 11 (amd64) version 10.0
+	Java Version: 25.0.4.1, Eclipse Adoptium
+	Java VM Version: OpenJDK 64-Bit Server VM (mixed mode, sharing), Eclipse Adoptium
+	Memory: 646451264 bytes (616 MiB) / 1073741824 bytes (1024 MiB) up to 4294967296 bytes (4096 MiB)
+	Memory (heap): init: 1024MiB, used: 406MiB, committed: 1024MiB, max: 4096MiB
+	Memory (non-head): init: 007MiB, used: 107MiB, committed: 109MiB, max: 000MiB
+	CPUs: 12
+	Processor Vendor: GenuineIntel
+	Processor Name: Intel(R) Core(TM) i7-10750H CPU @ 2.60GHz
+	Identifier: Intel64 Family 6 Model 165 Stepping 2
+	Microarchitecture: Comet Lake
+	Frequency (GHz): 2.59
+	Number of physical packages: 1
+	Number of physical CPUs: 6
+	Number of logical CPUs: 12
+	Graphics card #0 name: NVIDIA GeForce GTX 1650
+	Graphics card #0 vendor: NVIDIA
+	Graphics card #0 VRAM (MiB): 4096.00
+	Graphics card #0 deviceId: VideoController1
+	Graphics card #0 versionInfo: 32.0.15.9144
+	Graphics card #1 name: Intel(R) UHD Graphics
+	Graphics card #1 vendor: Intel Corporation
+	Graphics card #1 VRAM (MiB): 1024.00
+	Graphics card #1 deviceId: VideoController2
+	Graphics card #1 versionInfo: 31.0.101.2141
+	Memory slot #0 capacity (MiB): 8192.00
+	Memory slot #0 clockSpeed (GHz): 3.20
+	Memory slot #0 type: DDR4
+	Memory slot #1 capacity (MiB): 8192.00
+	Memory slot #1 clockSpeed (GHz): 3.20
+	Memory slot #1 type: DDR4
+	Virtual memory max (MiB): 40791.05
+	Virtual memory used (MiB): 29560.16
+	Swap memory total (MiB): 24576.00
+	Swap memory used (MiB): 11088.04
+	Space in storage for jna.tmpdir (MiB): <path not set>
+	Space in storage for org.lwjgl.system.SharedLibraryExtractPath (MiB): <path not set>
+	Space in storage for io.netty.native.workdir (MiB): <path not set>
+	Space in storage for java.io.tmpdir (MiB): available: 39806.56, total: 475974.00
+	Space in storage for workdir (MiB): available: 39806.56, total: 475974.00
+	Operating System Version: Microsoft Windows 11 (Home) build 26200
+	Process Elevated: false
+	Process Loads: Uptime: 12s, user: 33s (281.95%), kernel: 3s (27.08%), total: 36s (309.04%)
+	Process Virtual Size (MiB): 1990.29
+	Process Resident Size (MiB): 909.09
+	JVM Flags: 2 total; -Xms1G -Xmx4G
+	Debug Flags: 0 total; 
+	Class Processors: 
+		00.00%: neoforge:computing_frames (marker)
+		00.00%: neoforge:runtime_enum_extender
+		05.25%: neoforge:access_transformer
+		00.14%: neoforge:mixin
+		00.00%: neoforge:simple_processors_default (marker)
+		00.02%: neoforge.coremods:field_to_getter.net.minecraft.world.level.biome.biome
+		00.02%: neoforge.coremods:field_to_getter.net.minecraft.world.level.block.flowerpotblock
+		00.02%: neoforge.coremods:field_to_getter.net.minecraft.world.level.levelgen.structure.structure
+		00.38%: neoforge.coremods:method_redirector
+	Mod List: 
+		dynamictrees-neoforge-26.1.2-1.8.0-BETA04.jar     |Dynamic Trees                 |dynamictrees                  |1.8.0-BETA04        |Manifest: 28fe95788f62af899a176f3f86cbc6c21099c7f9210945c46d21636625bb4bd9
+		minecraft-server-patched-26.2.0.88.jar            |Minecraft                     |minecraft                     |26.2                |Manifest: 4ddd93f746c7bc28524ac604eb250e2c94cbbf0fb91dfb0453f87c3cdf1970ef
+		neoforge-26.2.0.88-universal.jar                  |NeoForge                      |neoforge                      |26.2.0.88           |Manifest: febba20109c82832bd2fab6197ae8563f0d9ca84b0e5abeab0302ed4e736533c
+	Crash Report UUID: a64c19ed-bc6c-495b-9047-2fe3ed75bea8
+	FML: 11.0.16
+	NeoForge: 26.2.0.88
+	Class Processors: 
+		00.00%: neoforge:computing_frames (marker)
+		00.00%: neoforge:runtime_enum_extender
+		05.25%: neoforge:access_transformer
+		00.14%: neoforge:mixin
+		00.00%: neoforge:simple_processors_default (marker)
+		00.02%: neoforge.coremods:field_to_getter.net.minecraft.world.level.biome.biome
+		00.02%: neoforge.coremods:field_to_getter.net.minecraft.world.level.block.flowerpotblock
+		00.02%: neoforge.coremods:field_to_getter.net.minecraft.world.level.levelgen.structure.structure
+		00.38%: neoforge.coremods:method_redirector
+	Mod List: 
+		dynamictrees-neoforge-26.1.2-1.8.0-BETA04.jar     |Dynamic Trees                 |dynamictrees                  |1.8.0-BETA04        |Manifest: 28fe95788f62af899a176f3f86cbc6c21099c7f9210945c46d21636625bb4bd9
+		minecraft-server-patched-26.2.0.88.jar            |Minecraft                     |minecraft                     |26.2                |Manifest: 4ddd93f746c7bc28524ac604eb250e2c94cbbf0fb91dfb0453f87c3cdf1970ef
+		neoforge-26.2.0.88-universal.jar                  |NeoForge                      |neoforge                      |26.2.0.88           |Manifest: febba20109c82832bd2fab6197ae8563f0d9ca84b0e5abeab0302ed4e736533c
+	Crash Report UUID: 3b311df6-513f-4b92-b1b5-c79ca6cb49e5
+	FML: 11.0.16
+	NeoForge: 26.2.0.88
+[17:06:57] [main/ERROR] [minecraft/Main]: Failed to start the minecraft server
+net.neoforged.fml.ModLoadingException: Loading errors encountered:
+	- Dynamic Trees (dynamictrees) has failed to load correctly
+	  java.lang.NoClassDefFoundError: net/minecraft/util/Tuple
+
+	at net.neoforged.fml.ModLoader.waitForFuture(ModLoader.java:253) ~[loader-11.0.16.jar:11.0] {}
+	at net.neoforged.fml.ModLoader.dispatchParallelTask(ModLoader.java:216) ~[loader-11.0.16.jar:11.0] {}
+	at net.neoforged.fml.ModLoader.constructMods(ModLoader.java:124) ~[loader-11.0.16.jar:11.0] {}
+	at net.neoforged.fml.ModLoader.gatherAndInitializeMods(ModLoader.java:101) ~[loader-11.0.16.jar:11.0] {}
+	at TRANSFORMER/neoforge@26.2.0.88/net.neoforged.neoforge.internal.CommonModLoader.begin(CommonModLoader.java:49) ~[neoforge-26.2.0.88-universal.jar:?] {}
+	at TRANSFORMER/neoforge@26.2.0.88/net.neoforged.neoforge.server.loading.ServerModLoader.load(ServerModLoader.java:30) ~[neoforge-26.2.0.88-universal.jar:?] {}
+	at TRANSFORMER/minecraft@26.2/net.minecraft.server.Main.main(Main.java:117) [minecraft-server-patched-26.2.0.88.jar:?] {}
+	at net.neoforged.fml.startup.Server.main(Server.java:19) [loader-11.0.16.jar:11.0] {}
+[17:06:57] [main/INFO] [ne.ne.fm.lo.FMLLoader/]: Closing FML Loader 5af10db7
+[17:06:57] [main/INFO] [ne.ne.fm.ModLoader/]: Clearing ModLoader
+net.neoforged.fml.startup.FatalStartupException: Couldn't find Minecraft server thread. Startup likely failed.
+	at net.neoforged.fml.startup.Server.main(Server.java:23)

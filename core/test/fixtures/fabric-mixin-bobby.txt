@@ -1,0 +1,272 @@
+---- Minecraft Crash Report ----
+// I bet Cylons wouldn't have this problem.
+
+Time: 2026-09-27 16:59:05
+Description: Initializing game
+
+java.lang.ExceptionInInitializerError
+	at knot//net.minecraft.client.renderer.RenderPipelines.<clinit>(RenderPipelines.java:53)
+	at knot//net.minecraft.client.renderer.rendertype.RenderTypes.<clinit>(RenderTypes.java:49)
+	at knot//net.minecraft.client.renderer.Sheets.<clinit>(Sheets.java:34)
+	at knot//net.minecraft.client.resources.model.sprite.AtlasManager.<clinit>(AtlasManager.java:31)
+	at knot//net.minecraft.client.Minecraft.<init>(Minecraft.java:630)
+	at knot//net.minecraft.client.main.Main.main(Main.java:278)
+	at net.fabricmc.loader.impl.game.minecraft.MinecraftGameProvider.launch(MinecraftGameProvider.java:517)
+	at net.fabricmc.loader.impl.launch.knot.Knot.launch(Knot.java:72)
+	at net.fabricmc.loader.impl.launch.knot.KnotClient.main(KnotClient.java:23)
+Caused by: java.lang.RuntimeException: Mixin transformation of net.minecraft.client.renderer.LevelRenderer failed
+	at net.fabricmc.loader.impl.launch.knot.KnotClassDelegate.getPostMixinClassByteArray(KnotClassDelegate.java:440)
+	at net.fabricmc.loader.impl.launch.knot.KnotClassDelegate.tryLoadClass(KnotClassDelegate.java:336)
+	at net.fabricmc.loader.impl.launch.knot.KnotClassDelegate.loadClass(KnotClassDelegate.java:231)
+	at net.fabricmc.loader.impl.launch.knot.KnotClassLoader.loadClass(KnotClassLoader.java:119)
+	at java.base/java.lang.ClassLoader.loadClass(ClassLoader.java:490)
+	at knot//net.minecraft.client.renderer.BindGroupLayouts.<clinit>(BindGroupLayouts.java:113)
+	... 9 more
+Caused by: org.spongepowered.asm.mixin.transformer.throwables.MixinTransformerError: An unexpected critical error was encountered
+	at org.spongepowered.asm.mixin.transformer.MixinProcessor.applyMixins(MixinProcessor.java:380)
+	at org.spongepowered.asm.mixin.transformer.MixinTransformer.transformClass(MixinTransformer.java:237)
+	at org.spongepowered.asm.mixin.transformer.MixinTransformer.transformClassBytes(MixinTransformer.java:202)
+	at net.fabricmc.loader.impl.launch.knot.KnotClassDelegate.getPostMixinClassByteArray(KnotClassDelegate.java:435)
+	... 14 more
+Caused by: org.spongepowered.asm.mixin.injection.throwables.InjectionError: Critical injection failure: Argument modifier method clampMaxValue(Lcom/mojang/blaze3d/buffers/GpuBufferSlice;)Lcom/mojang/blaze3d/buffers/GpuBufferSlice; in bobby.mixins.json:LevelRendererMixin from mod bobby failed injection check, (0/1) succeeded. Scanned 0 target(s). No refMap loaded.
+	at org.spongepowered.asm.mixin.injection.struct.InjectionInfo.postInject(InjectionInfo.java:526)
+	at org.spongepowered.asm.mixin.transformer.MixinTargetContext.applyInjections(MixinTargetContext.java:1477)
+	at org.spongepowered.asm.mixin.transformer.MixinApplicatorStandard.applyInjections(MixinApplicatorStandard.java:832)
+	at org.spongepowered.asm.mixin.transformer.MixinApplicatorStandard.lambda$runApplicatorPass$7(MixinApplicatorStandard.java:362)
+	at org.spongepowered.asm.mixin.transformer.MixinApplicatorStandard.processMixins(MixinApplicatorStandard.java:381)
+	at org.spongepowered.asm.mixin.transformer.MixinApplicatorStandard.runApplicatorPass(MixinApplicatorStandard.java:360)
+	at org.spongepowered.asm.mixin.transformer.MixinApplicatorStandard.apply(MixinApplicatorStandard.java:240)
+	at org.spongepowered.asm.mixin.transformer.TargetClassContext.apply(TargetClassContext.java:437)
+	at org.spongepowered.asm.mixin.transformer.TargetClassContext.applyMixins(TargetClassContext.java:418)
+	at org.spongepowered.asm.mixin.transformer.MixinProcessor.applyMixins(MixinProcessor.java:351)
+	... 17 more
+
+
+A detailed walkthrough of the error, its code path and all known details is as follows:
+---------------------------------------------------------------------------------------
+
+-- Head --
+Thread: Render thread
+Stacktrace:
+	at knot//net.minecraft.client.renderer.RenderPipelines.<clinit>(RenderPipelines.java:53)
+	at knot//net.minecraft.client.renderer.rendertype.RenderTypes.<clinit>(RenderTypes.java:49)
+	at knot//net.minecraft.client.renderer.Sheets.<clinit>(Sheets.java:34)
+	at knot//net.minecraft.client.resources.model.sprite.AtlasManager.<clinit>(AtlasManager.java:31)
+	at knot//net.minecraft.client.Minecraft.<init>(Minecraft.java:630)
+
+-- Initialization --
+Details:
+	Modules: 
+		ADVAPI32.dll:API base de Windows 32 avanzado:10.0.26100.3624 (WinBuild.160101.0800):Microsoft Corporation
+		AVRT.dll:Multimedia Realtime Runtime:10.0.26100.1 (WinBuild.160101.0800):Microsoft Corporation
+		CFGMGR32.dll:Configuration Manager DLL:10.0.26100.9278 (WinBuild.160101.0800):Microsoft Corporation
+		COMCTL32.dll:Biblioteca de controles de la experiencia del usuario:6.10 (WinBuild.160101.0800):Microsoft Corporation
+		CRYPT32.dll:Crypto API32:10.0.26100.8875 (WinBuild.160101.0800):Microsoft Corporation
+		CRYPTBASE.dll:Base cryptographic API DLL:10.0.26100.9444 (WinBuild.160101.0800):Microsoft Corporation
+		CRYPTSP.dll:Cryptographic Service Provider API:10.0.26100.9444 (WinBuild.160101.0800):Microsoft Corporation
+		DBGHELP.DLL:Windows Image Helper:10.0.26100.9444 (WinBuild.160101.0800):Microsoft Corporation
+		DEVOBJ.dll:Device Information Set DLL:10.0.26100.9278 (WinBuild.160101.0800):Microsoft Corporation
+		DNSAPI.dll:DLL de API de cliente DNS:10.0.26100.9278 (WinBuild.160101.0800):Microsoft Corporation
+		DSPARSE.dll:Active Directory Domain Services API:10.0.26100.1 (WinBuild.160101.0800):Microsoft Corporation
+		DWMAPI.DLL:API del Administrador de ventanas de escritorio de Microsoft:10.0.26100.8875 (WinBuild.160101.0800):Microsoft Corporation
+		DWrite.dll:Servicios de tipografía de Microsoft DirectX:10.0.26100.1 (WinBuild.160101.0800):Microsoft Corporation
+		DXGI.DLL:DirectX Graphics Infrastructure:10.0.26100.9444 (WinBuild.160101.0800):Microsoft Corporation
+		GDI32.dll:GDI Client DLL:10.0.26100.8328 (WinBuild.160101.0800):Microsoft Corporation
+		GLU32.dll:DLL de la biblioteca de programas de OpenGL:10.0.26100.1 (WinBuild.160101.0800):Microsoft Corporation
+		IMM32.DLL:Multi-User Windows IMM32 API Client DLL:10.0.26100.9278 (WinBuild.160101.0800):Microsoft Corporation
+		IPHLPAPI.DLL:API auxiliar para IP:10.0.26100.1 (WinBuild.160101.0800):Microsoft Corporation
+		KERNEL32.DLL:Archivo DLL de cliente API BASE de Windows NT:10.0.26100.9278 (WinBuild.160101.0800):Microsoft Corporation
+		KERNELBASE.dll:Archivo DLL de cliente API BASE de Windows NT:10.0.26100.9278 (WinBuild.160101.0800):Microsoft Corporation
+		MMDevApi.dll:API de MMDevice:10.0.26100.1 (WinBuild.160101.0800):Microsoft Corporation
+		MSASN1.dll:ASN.1 Runtime APIs:10.0.26100.9444 (WinBuild.160101.0800):Microsoft Corporation
+		MSCTF.dll:Archivo DLL del servidor MSCTF:10.0.26100.8875 (WinBuild.160101.0800):Microsoft Corporation
+		MpOav.dll:IOfficeAntiVirus Module:4.18.26080.4 (ccacee407da609d5c2c557d13db39624e32a0227):Microsoft Corporation
+		NSI.dll:NSI User-mode interface DLL:10.0.26100.9444 (WinBuild.160101.0800):Microsoft Corporation
+		NTASN1.dll:Microsoft ASN.1 API:10.0.26100.1 (WinBuild.160101.0800):Microsoft Corporation
+		OLEAUT32.dll:OLEAUT32.DLL:10.0.26100.9278 (WinBuild.160101.0800):Microsoft Corporation
+		OpenAL.dll:Main implementation library:1.25.2:
+		POWRPROF.dll:Archivo DLL auxiliar del perfil de energía:10.0.26100.8875 (WinBuild.160101.0800):Microsoft Corporation
+		PSAPI.DLL:Process Status Helper:10.0.26100.8521 (WinBuild.160101.0800):Microsoft Corporation
+		Pdh.dll:Ayudante de los datos de rendimiento DLL de Windows:10.0.26100.1 (WinBuild.160101.0800):Microsoft Corporation
+		RPCRT4.dll:Tiempo de ejecución de llamada a procedimiento remoto:10.0.26100.1 (WinBuild.160101.0800):Microsoft Corporation
+		SDL3.dll:SDL:3, 4, 14, 0:
+		SETUPAPI.dll:API de instalación de Windows:10.0.26100.8875 (WinBuild.160101.0800):Microsoft Corporation
+		SHCORE.dll:SHCORE:10.0.26100.8875 (WinBuild.160101.0800):Microsoft Corporation
+		SHELL32.dll:Archivo DLL común del shell de Windows:10.0.26100.9278 (WinBuild.160101.0800):Microsoft Corporation
+		SspiCli.dll:Security Support Provider Interface:10.0.26100.9278 (WinBuild.160101.0800):Microsoft Corporation
+		UMPDC.dll:User Mode Power Dependency Coordinator:10.0.26100.8972 (WinBuild.160101.0800):Microsoft Corporation
+		USER32.dll:Archivo DLL de cliente API USER de Windows multiusuario:10.0.26100.8875 (WinBuild.160101.0800):Microsoft Corporation
+		USERENV.dll:Userenv:10.0.26100.7920 (WinBuild.160101.0800):Microsoft Corporation
+		USP10.dll:Uniscribe Unicode script processor:10.0.26100.1 (WinBuild.160101.0800):Microsoft Corporation
+		VCRUNTIME140.dll:Microsoft® C Runtime Library:14.44.35208.0:Microsoft Corporation
+		VERSION.dll:Version Checking and File Installation Libraries:10.0.26100.1150 (WinBuild.160101.0800):Microsoft Corporation
+		WINMM.dll:MCI API DLL:10.0.26100.1 (WinBuild.160101.0800):Microsoft Corporation
+		WINSTA.dll:Winstation Library:10.0.26100.9278 (WinBuild.160101.0800):Microsoft Corporation
+		WINTRUST.dll:Microsoft Trust Verification APIs:10.0.26100.9444 (WinBuild.160101.0800):Microsoft Corporation
+		WS2_32.dll:DLL de 32 bits de Windows Socket 2.0:10.0.26100.1 (WinBuild.160101.0800):Microsoft Corporation
+		WinTypes.dll:DLL de tipos basados en Windows:10.0.26100.7705 (WinBuild.160101.0800):Microsoft Corporation
+		Wtsapi32.dll:Windows Remote Desktop Session Host Server SDK APIs:10.0.26100.9278 (WinBuild.160101.0800):Microsoft Corporation
+		amsi.dll:Anti-Malware Scan Interface:10.0.26100.7309 (WinBuild.160101.0800):Microsoft Corporation
+		apphelp.dll:Biblioteca de compatibilidad de aplicaciones cliente:10.0.26100.8457 (WinBuild.160101.0800):Microsoft Corporation
+		bcrypt.dll:Biblioteca de primitivas criptográficas de Windows:10.0.26100.1 (WinBuild.160101.0800):Microsoft Corporation
+		bcryptPrimitives.dll:Windows Cryptographic Primitives Library:10.0.26100.9444 (WinBuild.160101.0800):Microsoft Corporation
+		clbcatq.dll:COM+ Configuration Catalog:2001.12.10941.16384 (WinBuild.160101.0800):Microsoft Corporation
+		combase.dll:Microsoft COM para Windows:10.0.26100.7705 (WinBuild.160101.0800):Microsoft Corporation
+		cryptnet.dll:Crypto Network Related API:10.0.26100.9278 (WinBuild.160101.0800):Microsoft Corporation
+		d3d11.dll:Direct3D 11 Runtime:10.0.26100.9278 (WinBuild.160101.0800):Microsoft Corporation
+		dataexchange.dll:Data exchange:10.0.26100.9278 (WinBuild.160101.0800):Microsoft Corporation
+		dbgcore.DLL:Windows Core Debugging Helpers:10.0.26100.9444 (WinBuild.160101.0800):Microsoft Corporation
+		directxdatabasehelper.dll:DirectXDatabaseHelper:10.0.26100.9444 (WinBuild.160101.0800):Microsoft Corporation
+		drvstore.dll:Driver Store API:10.0.26100.9444 (WinBuild.160101.0800):Microsoft Corporation
+		dxcore.dll:DXCore:10.0.26100.9278 (WinBuild.160101.0800):Microsoft Corporation
+		extnet.dll:OpenJDK Platform binary:25.0.1.0:Microsoft
+		fastprox.dll:WMI Custom Marshaller:10.0.26100.9444 (WinBuild.160101.0800):Microsoft Corporation
+		freetype.dll:Font Rendering Library:2.14.3:The FreeType Project
+		fwpuclnt.dll:API de modo usuario de FWP/IPsec:10.0.26100.3915 (WinBuild.160101.0800):Microsoft Corporation
+		game_detour_64.dll
+		gdi32full.dll:GDI Client DLL:10.0.26100.9444 (WinBuild.160101.0800):Microsoft Corporation
+		graphics-hook64.dll:OBS Graphics Hook:1.8.7.0:OBS Project
+		hid.dll:Biblioteca de usuario de HID:10.0.26100.8875 (WinBuild.160101.0800):Microsoft Corporation
+		iertutil.dll:Utilidad en tiempo de ejecución para Internet Explorer:11.00.26100.8875 (WinBuild.160101.0800):Microsoft Corporation
+		imagehlp.dll:Windows NT Image Helper:10.0.26100.4202 (WinBuild.160101.0800):Microsoft Corporation
+		java.dll:OpenJDK Platform binary:25.0.1.0:Microsoft
+		javaw.exe:OpenJDK Platform binary:25.0.1.0:Microsoft
+		jemalloc.dll
+		jimage.dll:OpenJDK Platform binary:25.0.1.0:Microsoft
+		jli.dll:OpenJDK Platform binary:25.0.1.0:Microsoft
+		jna7231565068863460550.dll:JNA native library:7.0.2:Java(TM) Native Access (JNA)
+		jvm.dll:OpenJDK 64-Bit server VM:25.0.1.0:Microsoft
+		kernel.appcore.dll:AppModel API Host:10.0.26100.9278 (WinBuild.160101.0800):Microsoft Corporation
+		lwjgl.dll
+		lwjgl_opengl.dll
+		lwjgl_stb.dll
+		lwjgl_vma.dll
+		management.dll:OpenJDK Platform binary:25.0.1.0:Microsoft
+		management_ext.dll:OpenJDK Platform binary:25.0.1.0:Microsoft
+		mscms.dll:Archivo DLL de Sistema de coincidencias de color de Microsoft:10.0.26100.8875 (WinBuild.160101.0800):Microsoft Corporation
+		msvcp140.dll:Microsoft® C Runtime Library:14.44.35208.0:Microsoft Corporation
+		msvcp_win.dll:Microsoft® C Runtime Library:10.0.26100.9444 (WinBuild.160101.0800):Microsoft Corporation
+		msvcrt.dll:Windows NT CRT DLL:7.0.26100.9444 (WinBuild.160101.0800):Microsoft Corporation
+		mswsock.dll:Proveedor de servicios de Microsoft Windows Sockets 2.0:10.0.26100.1 (WinBuild.160101.0800):Microsoft Corporation
+		napinsp.dll:Proveedor de correcciones de compatibilidad (shim) de nomenclaturas de correo electrónico:10.0.26100.1 (WinBuild.160101.0800):Microsoft Corporation
+		ncrypt.dll:Enrutador de Windows NCrypt:10.0.26100.1591 (WinBuild.160101.0800):Microsoft Corporation
+		net.dll:OpenJDK Platform binary:25.0.1.0:Microsoft
+		netutils.dll:Net Win32 API Helpers DLL:10.0.26100.1882 (WinBuild.160101.0800):Microsoft Corporation
+		nio.dll:OpenJDK Platform binary:25.0.1.0:Microsoft
+		nlansp_c.dll:NLA Namespace Service Provider DLL:10.0.26100.9278 (WinBuild.160101.0800):Microsoft Corporation
+		ntdll.dll:DLL del nivel de Windows NT:10.0.26100.9278 (WinBuild.160101.0800):Microsoft Corporation
+		ntmarta.dll:Proveedor MARTA de Windows NT:10.0.26100.1 (WinBuild.160101.0800):Microsoft Corporation
+		nvgpucomp64.dll:NVIDIA GPU Compiler Driver, Version 591.44 :32.0.15.9144:NVIDIA Corporation
+		nvoglv64.dll:NVIDIA Compatible OpenGL ICD:32.0.15.9144:NVIDIA Corporation
+		nvspcap64.dll:NVIDIA Game Proxy\x008\x16\x01FileVersion\x00\x001:11.0.7.237\x00\x008\x16\x01Produc:NVIDIA Corporation\x00\x00L$\x01FileDescriptio
+		ole32.dll:Microsoft OLE para Windows:10.0.26100.6725 (WinBuild.160101.0800):Microsoft Corporation
+		opengl32.dll:OpenGL Client DLL:10.0.26100.9278 (WinBuild.160101.0800):Microsoft Corporation
+		perfos.dll:DLL de objetos de rendimiento del sistema Windows:10.0.26100.7705 (WinBuild.160101.0800):Microsoft Corporation
+		perfproc.dll:DLL de objetos de rendimiento de procesos Windows:10.0.26100.7705 (WinBuild.160101.0800):Microsoft Corporation
+		pfclient.dll:SysMain Client:10.0.26100.4202 (WinBuild.160101.0800):Microsoft Corporation
+		profapi.dll:User Profile Basic API:10.0.26100.9444 (WinBuild.160101.0800):Microsoft Corporation
+		rasadhlp.dll:Remote Access AutoDial Helper:10.0.26100.7920 (WinBuild.160101.0800):Microsoft Corporation
+		rometadata.dll:Microsoft MetaData Library:4.8.9221.0 built by: NET481REL1LAST_25H2:Microsoft Corporation
+		rsaenh.dll:Microsoft Enhanced Cryptographic Provider:10.0.26100.1 (WinBuild.160101.0800):Microsoft Corporation
+		sechost.dll:Host for SCM/SDDL/LSA Lookup APIs:10.0.26100.1 (WinBuild.160101.0800):Microsoft Corporation
+		shaderc.dll
+		shlwapi.dll:Biblioteca de utilidades de Shell:10.0.26100.8875 (WinBuild.160101.0800):Microsoft Corporation
+		spirv-cross.dll
+		srvcli.dll:Server Service Client DLL:10.0.26100.1150 (WinBuild.160101.0800):Microsoft Corporation
+		sunmscapi.dll:OpenJDK Platform binary:25.0.1.0:Microsoft
+		textinputframework.dll:"TextInputFramework.DYNLINK":10.0.26100.9278 (WinBuild.160101.0800):Microsoft Corporation
+		twinapi.appcore.dll:twinapi.appcore:10.0.26100.1 (WinBuild.160101.0800):Microsoft Corporation
+		ucrtbase.dll:Microsoft® C Runtime Library:10.0.26100.9444 (WinBuild.160101.0800):Microsoft Corporation
+		urlmon.dll:Extensiones de OLE32 para Win32:11.00.26100.8875 (WinBuild.160101.0800):Microsoft Corporation
+		uxtheme.dll:Biblioteca UxTheme de Microsoft:10.0.26100.8875 (WinBuild.160101.0800):Microsoft Corporation
+		vcruntime140_1.dll:Microsoft® C Runtime Library:14.44.35208.0:Microsoft Corporation
+		verify.dll:OpenJDK Platform binary:25.0.1.0:Microsoft
+		vulkan-1.dll:Vulkan Loader:1.4.321.0:
+		wbemcomn.dll:WMI:10.0.26100.7920 (WinBuild.160101.0800):Microsoft Corporation
+		wbemprox.dll:WMI:10.0.26100.9278 (WinBuild.160101.0800):Microsoft Corporation
+		wbemsvc.dll:WMI:10.0.26100.9278 (WinBuild.160101.0800):Microsoft Corporation
+		win32u.dll:Win32u:10.0.26100.9444 (WinBuild.160101.0800):Microsoft Corporation
+		windows.staterepositorycore.dll:Windows StateRepository API Core:10.0.26100.9444 (WinBuild.160101.0800):Microsoft Corporation
+		windows.storage.dll:API de almacenamiento de Microsoft WinRT:10.0.26100.9278 (WinBuild.160101.0800):Microsoft Corporation
+		winrnr.dll:LDAP RnR Provider DLL:10.0.26100.9278 (WinBuild.160101.0800):Microsoft Corporation
+		wldp.dll:Directiva de bloqueo de Windows:10.0.26100.8521 (WinBuild.160101.0800):Microsoft Corporation
+		wshbth.dll:Windows Sockets Helper DLL:10.0.26100.8875 (WinBuild.160101.0800):Microsoft Corporation
+		zip.dll:OpenJDK Platform binary:25.0.1.0:Microsoft
+Stacktrace:
+	at knot//net.minecraft.client.main.Main.main(Main.java:278)
+	at net.fabricmc.loader.impl.game.minecraft.MinecraftGameProvider.launch(MinecraftGameProvider.java:517)
+	at net.fabricmc.loader.impl.launch.knot.Knot.launch(Knot.java:72)
+	at net.fabricmc.loader.impl.launch.knot.KnotClient.main(KnotClient.java:23)
+
+-- System Details --
+Details:
+	Minecraft Version: 26.3
+	Minecraft Version ID: 26.3
+	Operating System: Windows 11 (amd64) version 10.0
+	Java Version: 25.0.1, Microsoft
+	Java VM Version: OpenJDK 64-Bit Server VM (mixed mode), Microsoft
+	Memory: 123395064 bytes (117 MiB) / 369098752 bytes (352 MiB) up to 4250927104 bytes (4054 MiB)
+	Memory (heap): init: 254MiB, used: 230MiB, committed: 352MiB, max: 4054MiB
+	Memory (non-heap): init: 007MiB, used: 143MiB, committed: 145MiB, max: 000MiB
+	CPUs: 12
+	Processor Vendor: GenuineIntel
+	Processor Name: Intel(R) Core(TM) i7-10750H CPU @ 2.60GHz
+	Identifier: Intel64 Family 6 Model 165 Stepping 2
+	Microarchitecture: Comet Lake
+	Frequency (GHz): 2.59
+	Number of physical packages: 1
+	Number of physical CPUs: 6
+	Number of logical CPUs: 12
+	Graphics card #0 name: NVIDIA GeForce GTX 1650
+	Graphics card #0 vendor: NVIDIA
+	Graphics card #0 VRAM (MiB): 4096.00
+	Graphics card #0 deviceId: VideoController1
+	Graphics card #0 versionInfo: 32.0.15.9144
+	Graphics card #1 name: Intel(R) UHD Graphics
+	Graphics card #1 vendor: Intel Corporation
+	Graphics card #1 VRAM (MiB): 1024.00
+	Graphics card #1 deviceId: VideoController2
+	Graphics card #1 versionInfo: 31.0.101.2141
+	Memory slot #0 capacity (MiB): 8192.00
+	Memory slot #0 clockSpeed (GHz): 3.20
+	Memory slot #0 type: DDR4
+	Memory slot #1 capacity (MiB): 8192.00
+	Memory slot #1 clockSpeed (GHz): 3.20
+	Memory slot #1 type: DDR4
+	Virtual memory max (MiB): 40791.05
+	Virtual memory used (MiB): 26975.71
+	Swap memory total (MiB): 24576.00
+	Swap memory used (MiB): 10962.12
+	Space in storage for jna.tmpdir (MiB): available: 40276.32, total: 475974.00
+	Space in storage for org.lwjgl.system.SharedLibraryExtractPath (MiB): available: 40276.32, total: 475974.00
+	Space in storage for io.netty.native.workdir (MiB): available: 40276.32, total: 475974.00
+	Space in storage for java.io.tmpdir (MiB): available: 40276.32, total: 475974.00
+	Space in storage for workdir (MiB): available: 40276.32, total: 475974.00
+	Operating System Version: Microsoft Windows 11 (Home) build 26200
+	Process Elevated: false
+	Process Loads: Uptime: 15s, user: 34s (226.08%), kernel: 3s (23.40%), total: 37s (249.48%)
+	Process Virtual Size (MiB): 2177.57
+	Process Resident Size (MiB): 621.10
+	JVM Flags: 2 total; -XX:HeapDumpPath=MojangTricksIntelDriversForPerformance_javaw.exe_minecraft.exe.heapdump -XX:StackShadowPages=32
+	Debug Flags: 0 total; 
+	Launched Version: fabric-26.3-0.19.5
+	Launcher name: portablemc
+	Backend library: LWJGL version 3.4.3-snapshot
+	Window size: <not initialized>
+	Surface Info: <no surface>
+	SDL Platform: Windows
+	Graphics Device: NVIDIA GeForce GTX 1650/PCIe/SSE2
+	Graphics Backend: OpenGL
+	Graphics Vendor: NVIDIA Corporation
+	Graphics Drivers: 3.3.0 NVIDIA 591.44
+	Graphics Device Extensions: GL_ARB_multi_draw_indirect, GL_ARB_shader_draw_parameters, GL_ARB_base_instance, GL_KHR_debug, GL_ARB_draw_indirect, GL_ARB_clip_control, GL_ARB_vertex_attrib_binding, GL_ARB_direct_state_access, GL_EXT_texture_filter_anisotropic
+	Graphics Device Type: OTHER
+	Graphics Device Features: DeviceFeatures[wireframeFillMode=true, shaderDrawParameters=true, multiDrawDirectInterleaved=false, multiDrawDirectSeparate=true, multiDrawIndirect=true, drawIndirect=true, nonZeroFirstInstance=true, persistentMapping=false]
+	GL debug messages: 
+	Is Modded: Definitely; Client brand changed to 'fabric'
+	Universe: 404
+	Type: Client
+	Locale: es_419
+	System encoding: Cp1252
+	File encoding: UTF-8
+	CPU: 12x Intel(R) Core(TM) i7-10750H CPU @ 2.60GHz

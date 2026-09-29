@@ -1,0 +1,26 @@
+modLoader = "javafml"
+loaderVersion = "[47,)"
+license = "MIT"
+issueTrackerURL = "https://modkeel.com"
+
+[[mods]]
+modId = "modkeel"
+version = "${version}"
+displayName = "Modkeel Companion"
+displayURL = "https://modkeel.com"
+authors = "Modkeel"
+description = "Backs up your worlds when your mods change, explains crashes and fixes them in one click. No mixins."
+
+[[dependencies.modkeel]]
+modId = "forge"
+mandatory = true
+versionRange = "${forge}"
+ordering = "NONE"
+side = "BOTH"
+
+[[dependencies.modkeel]]
+modId = "minecraft"
+mandatory = true
+versionRange = "${minecraft}"
+ordering = "NONE"
+side = "BOTH"

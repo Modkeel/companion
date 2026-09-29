@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "id": "modkeel",
+  "version": "${version}",
+  "name": "Modkeel Companion",
+  "description": "Backs up your worlds when your mods change, explains crashes and fixes them in one click. No mixins.",
+  "authors": ["Modkeel"],
+  "contact": {"homepage": "https://modkeel.com", "sources": "https://modkeel.com"},
+  "license": "MIT",
+  "environment": "*",
+  "entrypoints": {
+    "main": ["modkeel.companion.fabric.CompanionMod"],
+    "client": ["modkeel.companion.fabric.CompanionClient"]
+  },
+  "depends": {
+    "fabricloader": ">=0.16",
+    "minecraft": ">=26.1",
+    "fabric-lifecycle-events-v1": "*",
+    "fabric-screen-api-v1": "*"
+  }
+}
