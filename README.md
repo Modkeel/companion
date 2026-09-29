@@ -44,7 +44,12 @@ python build.py                                # Fabric, Minecraft 26.2 (runs th
 python build.py --mc 1.21.1 --loader neoforge
 python build.py --mc 1.20.1 --loader forge
 python build.py --all                          # every released jar -> build/release/
+python build.py --announce                     # once uploaded: updates.json offers the new version
 ```
+
+NeoForge and Forge check `updates.json` in this repo and mark a newer Modkeel in their mods
+list; the loader makes that request, not Modkeel. On Fabric, Mod Menu does the same through
+Modrinth.
 
 The first build of a version downloads the game, its mappings and the loader (for NeoForge and
 Forge, through their official installers) into `~/.modkeel` (`MODKEEL_HOME`).

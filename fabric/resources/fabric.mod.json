@@ -5,7 +5,8 @@
   "name": "Modkeel Companion",
   "description": "Backs up your worlds when your mods change, explains crashes and fixes them in one click. No mixins.",
   "authors": ["Modkeel"],
-  "contact": {"homepage": "https://modkeel.com", "sources": "https://modkeel.com"},
+  "contact": {"homepage": "https://modkeel.com", "sources": "https://github.com/Modkeel/companion",
+              "issues": "https://github.com/Modkeel/companion/issues"},
   "license": "MIT",
   "environment": "*",
   "entrypoints": {

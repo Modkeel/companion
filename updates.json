@@ -1,0 +1,13 @@
+{
+  "homepage": "https://modkeel.com",
+  "promos": {
+    "1.21-latest": "0.1.0",
+    "1.21-recommended": "0.1.0",
+    "1.21.1-latest": "0.1.0",
+    "1.21.1-recommended": "0.1.0",
+    "1.20-latest": "0.1.0",
+    "1.20-recommended": "0.1.0",
+    "1.20.1-latest": "0.1.0",
+    "1.20.1-recommended": "0.1.0"
+  }
+}

@@ -1,13 +1,14 @@
 modLoader = "javafml"
 loaderVersion = "[1,)"
 license = "MIT"
-issueTrackerURL = "https://modkeel.com"
+issueTrackerURL = "https://github.com/Modkeel/companion/issues"
 
 [[mods]]
 modId = "modkeel"
 version = "${version}"
 displayName = "Modkeel Companion"
 displayURL = "https://modkeel.com"
+updateJSONURL = "${updates}"
 authors = "Modkeel"
 description = "Backs up your worlds when your mods change, explains crashes and fixes them in one click. No mixins."
 
