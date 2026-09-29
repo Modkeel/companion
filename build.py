@@ -35,7 +35,6 @@ TARGETS = [("26.2", "fabric"), ("1.21.11", "fabric"), ("1.21.1", "fabric"),
 BUILD = HERE / "build"
 # NeoForge and Forge read this from the public repo (updateJSONURL) and flag a newer release in
 # their mods list; Fabric players get the same from Mod Menu once the mod is on Modrinth
-UPDATES = HERE / "updates.json"
 UPDATES_URL = "https://raw.githubusercontent.com/Modkeel/companion/main/updates.json"
 FABRIC_MODULES = "lifecycle-events-v1|screen-api-v1|api-base"
 
@@ -192,7 +191,8 @@ def build(mc: str, loader: str = "fabric", run_tests: bool = True) -> dict[str, 
             game_range, loader_range = LOADER_RANGES[loader][v]
             toml = (HERE / loader / "resources" / TOML[loader]).read_text(
                 encoding="utf-8").replace("${version}", VERSION).replace(
-                "${updates}", UPDATES_URL).replace("${minecraft}", game_range).replace("${" + loader + "}", loader_range)
+                "${updates}", UPDATES_URL).replace("${minecraft}", game_range).replace(
+                "${" + loader + "}", loader_range)
             write_jar(mod, loader_metadata(loader, v, toml, "Modkeel Companion"), [core, classes],
                       resources)
             for test_mod, name in (("mfcrash", "Crash Test Mod"),
@@ -206,38 +206,13 @@ def build(mc: str, loader: str = "fabric", run_tests: bool = True) -> dict[str, 
     return {"mod": mod, "tests": test_jars(mc, loader)}
 
 
-def game_versions(maven_range: str) -> list[str]:
-    """Every release a Maven range like "[1.21,1.21.2)" admits: 1.21 and 1.21.1."""
-    low, high = maven_range.strip("[)").split(",")
-    last = int(high.split(".")[2]) if high.count(".") == 2 else 1
-    return [low] + [f"{low}.{n}" for n in range(1, last)]
-
-
-def announce() -> None:
-    """Point NeoForge and Forge players at VERSION. Run once it is downloadable."""
-    data = {"homepage": "https://modkeel.com", "promos": {}}
-    for loader, ranges in LOADER_RANGES.items():
-        for game_range, _ in ranges.values():
-            for mc in game_versions(game_range):
-                data["promos"][f"{mc}-latest"] = VERSION
-                data["promos"][f"{mc}-recommended"] = VERSION
-    UPDATES.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
-    print(f"{UPDATES.name}: {VERSION} for Minecraft " + ", ".join(
-        k[:-len("-latest")] for k in data["promos"] if k.endswith("-latest")))
-
-
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--mc", default="26.2")
     ap.add_argument("--loader", default="fabric", choices=["fabric", "neoforge", "forge"])
     ap.add_argument("--no-tests", action="store_true")
     ap.add_argument("--all", action="store_true", help="every target in TARGETS, for a release")
-    ap.add_argument("--announce", action="store_true",
-                    help="after uploading a release: write updates.json so loaders offer it")
     args = ap.parse_args()
-    if args.announce:
-        announce()
-        return
     for old in BUILD.glob("*.jar"):  # logs, shots and test output stay
         old.unlink()
     if not args.all:

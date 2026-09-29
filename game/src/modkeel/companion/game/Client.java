@@ -42,6 +42,11 @@ public final class Client {
         String test = System.getProperty("modkeel.test.screen");
         if (g.crash != null && !crashHandled) {
             crashHandled = true;
+            // the crash screen already introduced Modkeel: no welcome on the start after the fix
+            if (g.state.get("welcomed", null) == null) {
+                g.state.set("welcomed", System.currentTimeMillis());
+                g.state.save();
+            }
             String auto = System.getProperty("modkeel.test.autofix");
             if (auto != null) {
                 mc.execute(() -> autofix(mc, g, auto));
