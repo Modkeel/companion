@@ -146,8 +146,10 @@ public final class CrashScreen extends Screen {
     /** "20260930-184012-123.zip" -> the player's own date format. */
     static String backupTime(String file) {
         try {
+            // the sentence ends with its own period ("p.m." would give "p.m..")
             return DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.SHORT).format(
-                    new SimpleDateFormat("yyyyMMdd-HHmmss").parse(file.substring(0, 15)));
+                    new SimpleDateFormat("yyyyMMdd-HHmmss").parse(file.substring(0, 15)))
+                    .replaceAll("\\.$", "");
         } catch (ParseException | IndexOutOfBoundsException e) {
             return file;
         }
