@@ -138,16 +138,17 @@ public final class CrashScreen extends Screen {
         }
         if (world.backup != null) {
             body.addChild(text(Component.translatable("modkeel.rescue.backup",
-                    backupTime(world.backup.getFileName().toString()))
+                    backupTime(world.backup.getFileName().toString(), minecraft.options.languageCode))
                     .withStyle(ChatFormatting.GRAY), w));
         }
     }
 
-    /** "20260930-184012-123.zip" -> the player's own date format. */
-    static String backupTime(String file) {
+    /** "20260930-184012-123.zip" -> a date in the game's language ("en_us"), not the system's. */
+    static String backupTime(String file, String language) {
+        Locale locale = Locale.forLanguageTag(language.replace('_', '-'));
         try {
             // the sentence ends with its own period ("p.m." would give "p.m..")
-            return DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.SHORT).format(
+            return DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.SHORT, locale).format(
                     new SimpleDateFormat("yyyyMMdd-HHmmss").parse(file.substring(0, 15)))
                     .replaceAll("\\.$", "");
         } catch (ParseException | IndexOutOfBoundsException e) {
