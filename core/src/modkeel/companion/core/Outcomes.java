@@ -18,12 +18,16 @@ public final class Outcomes {
     private static final int KEEP = 20;
 
     public enum Status {
-        OPEN(false), HELD_1H(false), HELD_5H(true), RECURRED(true), UNDONE(true);
+        OPEN(false, null), HELD_1H(false, "held-1h"), HELD_5H(true, "held-5h"),
+        RECURRED(true, "recurred"), UNDONE(true, "undone");
 
         public final boolean done;
+        /** The status as the reports API names it; null for none to send. */
+        public final String wire;
 
-        Status(boolean done) {
+        Status(boolean done, String wire) {
             this.done = done;
+            this.wire = wire;
         }
     }
 
@@ -37,14 +41,25 @@ public final class Outcomes {
         public Status status = Status.OPEN;
         /** Fingerprint of the mod set the fix left, taken on the next start ("-" until then). */
         public String set = "-";
+        /**
+         * The shared crash report this fix answers: "-" when not shared, {@code q:<outbox file>}
+         * until the server gave it an id, then that id.
+         */
+        public String report = "-";
+        /** The last status sent for {@link #report} ("-" for none). */
+        public String sent = "-";
 
         String line() {
             return created + "\t" + signature + "\t" + status + "\t" + ticks + "\t" + set + "\t"
-                    + String.join("|", disabled) + "\t" + title;
+                    + String.join("|", disabled) + "\t" + report + "\t" + sent + "\t" + title;
         }
 
         static Fix parse(String line) {
-            String[] p = line.split("\t", 7);
+            String[] p = line.split("\t", 9);
+            if (p.length < 9) { // written before reports: no link
+                p = line.split("\t", 7);
+                p = new String[] {p[0], p[1], p[2], p[3], p[4], p[5], "-", "-", p[6]};
+            }
             Fix f = new Fix();
             f.created = Long.parseLong(p[0]);
             f.signature = p[1];
@@ -54,7 +69,9 @@ public final class Outcomes {
             if (!p[5].isEmpty()) {
                 f.disabled = new ArrayList<>(Arrays.asList(p[5].split("\\|")));
             }
-            f.title = p[6];
+            f.report = p[6];
+            f.sent = p[7];
+            f.title = p[8];
             return f;
         }
     }
@@ -99,12 +116,14 @@ public final class Outcomes {
         }
     }
 
-    public synchronized void add(String signature, String title, List<String> disabled) {
+    /** {@code report} is the shared crash's outbox file name, or null when not shared. */
+    public synchronized void add(String signature, String title, List<String> disabled, String report) {
         Fix f = new Fix();
         f.created = System.currentTimeMillis();
         f.signature = signature;
         f.title = title;
         f.disabled = new ArrayList<>(disabled);
+        f.report = report == null ? "-" : "q:" + report;
         fixes.add(0, f);
         while (fixes.size() > KEEP) {
             fixes.remove(fixes.size() - 1);
@@ -172,6 +191,41 @@ public final class Outcomes {
         if (changed) {
             save();
         }
+    }
+
+    /**
+     * Queue each new status of a shared fix, once its crash report has an id from the server.
+     * Returns whether anything was queued.
+     */
+    public synchronized boolean queueSteps(Reports reports) {
+        boolean changed = false;
+        boolean queued = false;
+        for (Fix f : fixes) {
+            if (f.report.startsWith("q:")) {
+                String name = f.report.substring(2);
+                String id = reports.reportId(name);
+                if (id != null) {
+                    f.report = id;
+                    changed = true;
+                } else if (!Files.exists(reports.outbox.resolve(name))) {
+                    f.report = "-"; // dropped unsent: nothing to link to
+                    changed = true;
+                }
+            }
+            if (f.report.equals("-") || f.report.startsWith("q:") || f.status.wire == null
+                    || f.status.name().equals(f.sent)) {
+                continue;
+            }
+            if (reports.queue("outcome", reports.outcome(f.report, f.status.wire, f.ticks)) != null) {
+                f.sent = f.status.name();
+                changed = true;
+                queued = true;
+            }
+        }
+        if (changed) {
+            save();
+        }
+        return queued;
     }
 
     /** A fix whose disabled files are all gone again was undone by the player. */

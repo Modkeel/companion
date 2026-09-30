@@ -43,6 +43,7 @@ public final class CoreTest {
         run("crash signature ignores lines, lambdas and mixin hashes", CoreTest::signature);
         run("fix outcomes: held, recurred, undone", CoreTest::outcomes);
         run("reports: payload, outbox, install token", CoreTest::reports);
+        run("reports: a shared fix sends its steps", CoreTest::reportSteps);
         run("rules bundle and version in file names", CoreTest::rules);
         run("lab rules in the diagnosis", CoreTest::labHints);
         run("lag spike: owner of a sampled stack", CoreTest::spikeOwner);
@@ -567,7 +568,7 @@ public final class CoreTest {
         server.createContext("/v1/install", ex -> reply(ex, 200, "{\"install\":\"" + "ab".repeat(16) + "\"}"));
         server.createContext("/v1/crash", ex -> {
             got.add(new String(ex.getRequestBody().readAllBytes(), StandardCharsets.UTF_8));
-            reply(ex, status[0], "{\"id\":\"r1\",\"seen\":3,\"fixes\":[]}");
+            reply(ex, status[0], "{\"id\":\"" + "r1".repeat(12) + "\",\"seen\":3,\"fixes\":[]}");
         });
         server.start();
         try {
@@ -597,7 +598,7 @@ public final class CoreTest {
             try (var sent = Files.list(r.sent)) {
                 check(sent.anyMatch(f -> {
                     try {
-                        return Files.readString(f).contains("\"answer\":{\"id\":\"r1\"");
+                        return Files.readString(f).contains("\"answer\":{\"id\":\"" + "r1".repeat(12) + "\"");
                     } catch (IOException e) {
                         return false;
                     }
@@ -619,6 +620,72 @@ public final class CoreTest {
             eq(0, r.pending().size(), "and is dropped");
             eq(false, new Reports(g, "").enabled(), "empty endpoint turns sending off");
         } finally {
+            server.stop(0);
+        }
+    }
+
+    static boolean waitFor(java.util.function.BooleanSupplier cond) throws InterruptedException {
+        for (int i = 0; i < 100 && !cond.getAsBoolean(); i++) {
+            Thread.sleep(50);
+        }
+        return cond.getAsBoolean();
+    }
+
+    static void reportSteps() throws Exception {
+        Path game = tmp();
+        Path mods = game.resolve("mods");
+        jar(mods, "bad.jar", "bad", null, "bad/Bad.class");
+        Path self = jar(game, "self.jar", "modkeel", null, "x/X.class");
+        Path crashes = game.resolve("crash-reports");
+        Files.createDirectories(crashes);
+        Files.write(crashes.resolve("crash-1.txt"),
+                "java.lang.RuntimeException: x\n\tat knot//bad.Bad.run(Bad.java:1)\n".getBytes(StandardCharsets.UTF_8));
+        String id = "0123456789abcdef01234567";
+        List<String> steps = java.util.Collections.synchronizedList(new ArrayList<>());
+        HttpServer server = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
+        server.createContext("/v1/install", ex -> reply(ex, 200, "{\"install\":\"" + "ab".repeat(16) + "\"}"));
+        server.createContext("/v1/crash", ex -> {
+            ex.getRequestBody().readAllBytes();
+            reply(ex, 200, "{\"id\":\"" + id + "\",\"seen\":1,\"fixes\":[]}");
+        });
+        server.createContext("/v1/outcome", ex -> {
+            steps.add(new String(ex.getRequestBody().readAllBytes(), StandardCharsets.UTF_8));
+            reply(ex, 200, "{\"ok\":true}");
+        });
+        server.start();
+        String url = "http://127.0.0.1:" + server.getAddress().getPort();
+        try {
+            System.setProperty("modkeel.api", url);
+            Guardian g = new Guardian(game);
+            Diagnosis d = g.startup();
+            g.shareCrash(true, g.reports.disableFix(d.top()));
+            g.applyCrashFix(g.disablePlan(d.top()), self);
+            check(g.outcomes.fixes.get(0).report.startsWith("q:"), "linked to the queued crash");
+            check(waitFor(() -> Outcomes.load(g.home).fixes.get(0).report.equals(id)),
+                    "linked to the report id once sent");
+
+            g.addPlay(Outcomes.HELD_TICKS);
+            check(waitFor(() -> steps.size() == 1), "held 1 h sent");
+            eq("{\"v\":1,\"install\":\"" + "ab".repeat(16) + "\",\"report\":\"" + id
+                    + "\",\"status\":\"held-1h\",\"ticks\":" + Outcomes.HELD_TICKS + "}", steps.get(0), "outcome");
+            g.addPlay(1);
+            check(waitFor(() -> g.reports.pending().isEmpty()), "outbox empty");
+            eq(1, steps.size(), "a step is sent once");
+
+            Guardian again = new Guardian(game);
+            again.startup();
+            again.addPlay(4 * Outcomes.HELD_TICKS);
+            check(waitFor(() -> steps.size() == 2), "held 5 h sent after a restart");
+            check(steps.get(1).contains("\"status\":\"held-5h\""), steps.get(1));
+
+            // a fix never shared sends nothing
+            Files.write(game.resolve("modkeel/outcomes.txt"), List.of(
+                    "1\tabc\tOPEN\t0\t-\tx.jar.disabled\told line"), StandardCharsets.UTF_8);
+            Outcomes old = Outcomes.load(game.resolve("modkeel"));
+            eq("-", old.fixes.get(0).report, "a line from before reports reads as not shared");
+            eq("old line", old.fixes.get(0).title, "title kept");
+        } finally {
+            System.clearProperty("modkeel.api");
             server.stop(0);
         }
     }

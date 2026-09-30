@@ -80,6 +80,7 @@ public final class Guardian {
         this.state = State.load(this.gameDir);
         this.outcomes = Outcomes.load(this.home);
         this.reports = new Reports(this);
+        this.reports.afterSend = () -> outcomes.queueSteps(reports);
     }
 
     /** At launch, before any screen: what the last fix did, which fixes were undone, and the crash. */
@@ -90,8 +91,23 @@ public final class Guardian {
             outcomes.checkUndone(modsDir);
             outcomes.bindSet(current().fingerprint());
         }
+        Diagnosis d = checkCrashes();
+        reportSteps();
         reports.sendLater(); // what a closed game left in the outbox
-        return checkCrashes();
+        return d;
+    }
+
+    /** Play on the current set: fixes being watched may now count as held. */
+    public void addPlay(long ticks) {
+        outcomes.addTicks(ticks);
+        reportSteps();
+    }
+
+    /** Queue and send what changed on shared fixes (the player agreed when sharing the crash). */
+    private void reportSteps() {
+        if (reports.enabled() && outcomes.queueSteps(reports)) {
+            reports.sendLater();
+        }
     }
 
     public synchronized ModSet current() {
@@ -312,6 +328,9 @@ public final class Guardian {
         return w;
     }
 
+    /** Outbox file of the crash shared on this screen: the fix picked next links to it. */
+    private String sharedCrash;
+
     /** Whether the player shared the last crash: the crash screen starts with that choice. */
     public boolean shareChoice() {
         return state.get("share", "false").equals("true");
@@ -324,8 +343,10 @@ public final class Guardian {
     public void shareCrash(boolean share, Reports.Fix fix) {
         state.set("share", share);
         state.save();
+        sharedCrash = null;
         if (share && crash != null && reports.enabled()) {
-            reports.queue("crash", reports.crash(crash, fix));
+            Path f = reports.queue("crash", reports.crash(crash, fix));
+            sharedCrash = f == null ? null : f.getFileName().toString();
             reports.sendLater();
         }
     }
@@ -479,7 +500,7 @@ public final class Guardian {
                     disabled.add(op.to.getFileName().toString());
                 }
             }
-            outcomes.add(crash.signature, plan.title, disabled);
+            outcomes.add(crash.signature, plan.title, disabled, sharedCrash);
         }
         apply(plan, selfJar);
     }

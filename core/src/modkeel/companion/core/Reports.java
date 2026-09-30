@@ -40,6 +40,7 @@ public final class Reports {
     private static final Pattern TOKEN = Pattern.compile("[0-9a-f]{32}");
     private static final Pattern INSTALL_FIELD = Pattern.compile("\"install\":\"[0-9a-f]*\"");
     private static final Pattern INSTALL_ANSWER = Pattern.compile("\"install\"\\s*:\\s*\"([0-9a-f]{32})\"");
+    private static final Pattern REPORT_ANSWER = Pattern.compile("\"answer\":\\{\"id\":\"([0-9a-f]{24})\"");
 
     /** A fix as the server counts it: a stable title and the mod ids it turned off. */
     public static final class Fix {
@@ -60,6 +61,8 @@ public final class Reports {
     private final Path tokenFile;
     private final AtomicBoolean sending = new AtomicBoolean();
     private HttpClient http;
+    /** Run after a send pass that delivered something: answers can unlock new reports. */
+    public volatile Runnable afterSend;
 
     public Reports(Guardian g) {
         this(g, System.getProperty("modkeel.api", DEFAULT_API));
@@ -123,6 +126,26 @@ public final class Reports {
         tail.append('}');
         head.append(",\"mods\":").append(mods(MAX_BYTES - head.length() - tail.length()));
         return head.append(tail).toString();
+    }
+
+    /** How a shared fix went ({@code status} as the API names it). */
+    public String outcome(String report, String status, long ticks) {
+        return "{\"v\":1,\"install\":\"\",\"report\":" + q(report) + ",\"status\":" + q(status)
+                + ",\"ticks\":" + Math.min(Math.max(ticks, 0), Integer.MAX_VALUE) + "}";
+    }
+
+    /** The id the server gave a crash report sent from {@code outbox/<name>}, or null. */
+    public String reportId(String name) {
+        Path f = sent.resolve(name);
+        try {
+            if (Files.exists(f)) {
+                Matcher m = REPORT_ANSWER.matcher(new String(Files.readAllBytes(f), StandardCharsets.UTF_8));
+                return m.find() ? m.group(1) : null;
+            }
+        } catch (IOException e) {
+            Log.warn("cannot read " + f, e);
+        }
+        return null;
     }
 
     String env() {
@@ -311,8 +334,11 @@ public final class Reports {
         }
         Thread t = new Thread(() -> {
             try {
-                while (!send() && !pending().isEmpty()) {
-                    Thread.sleep(RETRY_MS);
+                // a pass that left nothing to retry goes again at once for reports queued meanwhile
+                while (!pending().isEmpty()) {
+                    if (!send()) {
+                        Thread.sleep(RETRY_MS);
+                    }
                 }
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
@@ -380,6 +406,10 @@ public final class Reports {
         }
         if (!files.isEmpty()) {
             Log.info("reports: " + ok + " sent, " + kept + " kept for later, " + dropped + " dropped");
+        }
+        Runnable after = afterSend;
+        if (ok > 0 && after != null) {
+            after.run();
         }
         prune();
         return kept == 0;

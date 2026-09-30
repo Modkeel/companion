@@ -95,7 +95,7 @@ public final class Common {
             background(guardian::markGood);
         }
         if (ticks % PLAY_CHUNK == 0) {
-            background(() -> guardian.outcomes.addTicks(PLAY_CHUNK));
+            background(() -> guardian.addPlay(PLAY_CHUNK));
         }
     }
 
