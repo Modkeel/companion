@@ -7,6 +7,7 @@ import modkeel.companion.core.Diagnosis;
 import modkeel.companion.core.Guardian;
 import modkeel.companion.core.Log;
 import modkeel.companion.core.Outcomes;
+import modkeel.companion.core.Sections;
 import modkeel.companion.core.Spikes;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.level.storage.LevelResource;
@@ -34,7 +35,7 @@ public final class Common {
         guardian = new Guardian(gameDir);
         guardian.mcVersion = mcVersion;
         Common.selfJar = selfJar;
-        spikes = new Spikes(guardian::owners);
+        spikes = new Spikes(guardian::owners, Sections.load());
         // read every jar now, off the game threads, so the first spike is named without delay
         background(guardian::owners);
         spikes.start();

@@ -4,6 +4,7 @@ import java.lang.management.GarbageCollectorMXBean;
 import java.lang.management.ManagementFactory;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.List;
@@ -16,7 +17,9 @@ import java.util.function.Supplier;
 /**
  * Lag spikes and the mods behind them, with no mixins. A game thread beats once per tick; a
  * watchdog thread notices when the beats stop, samples that thread's stack until they resume,
- * and names the mod whose code the thread was running.
+ * and names the mod whose code the thread was running. Samples no mod owns are split by the
+ * part of Minecraft they are in ({@link Sections}); every busy sample also says what it waited
+ * on (the processor, the graphics card, the disk).
  */
 public final class Spikes {
     /** Which thread stalled: the render thread (the picture froze) or the server thread (the world stopped). */
@@ -25,16 +28,25 @@ public final class Spikes {
     /** Id of the samples that no mod owns. */
     public static final String VANILLA = "minecraft";
 
-    /** One mod's share of a spike. {@code name} is null for {@link #VANILLA}. */
+    /**
+     * One mod's share of a spike. For {@link #VANILLA}, {@code name} is null and {@code section}
+     * is the part of Minecraft ("entities"), or null when no part matched.
+     */
     public static final class Share {
         public final String id;
         public final String name;
+        public final String section;
         public final int percent;
 
-        Share(String id, String name, int percent) {
+        Share(String id, String name, String section, int percent) {
             this.id = id;
             this.name = name;
+            this.section = section;
             this.percent = percent;
+        }
+
+        String key() {
+            return section == null ? id : id + ":" + section;
         }
     }
 
@@ -47,13 +59,23 @@ public final class Spikes {
         public final int gcPercent;
         /** Mods by share, largest first, each at least {@link #MIN_SHARE} percent. */
         public final List<Share> shares;
+        /** Share of the busy samples waiting on the graphics card or driver, 0-100. */
+        public final int gpuPercent;
+        /** Share of the busy samples waiting on the disk, 0-100. */
+        public final int diskPercent;
+        /** The processor was nearly full and mostly with other programs. */
+        public final boolean otherPrograms;
 
-        Spike(Where where, long at, long millis, int gcPercent, List<Share> shares) {
+        Spike(Where where, long at, long millis, int gcPercent, List<Share> shares, int gpuPercent,
+              int diskPercent, boolean otherPrograms) {
             this.where = where;
             this.at = at;
             this.millis = millis;
             this.gcPercent = gcPercent;
             this.shares = shares;
+            this.gpuPercent = gpuPercent;
+            this.diskPercent = diskPercent;
+            this.otherPrograms = otherPrograms;
         }
 
         public Share top() {
@@ -68,7 +90,11 @@ public final class Spikes {
                 b.append(", gc ").append(gcPercent).append('%');
             }
             for (Share s : shares) {
-                b.append(", ").append(s.id).append(' ').append(s.percent).append('%');
+                b.append(", ").append(s.key()).append(' ').append(s.percent).append('%');
+            }
+            b.append("; gpu ").append(gpuPercent).append("%, disk ").append(diskPercent).append('%');
+            if (otherPrograms) {
+                b.append(", other programs busy");
             }
             return b.toString();
         }
@@ -84,6 +110,7 @@ public final class Spikes {
         private final Map<String, Integer> counts = new HashMap<>();
         private int busy;
         private int idle;
+        private final int[] resources = new int[Sections.Resource.values().length];
         private long gcAtStart;
 
         Watch(Thread thread, Where where) {
@@ -112,13 +139,24 @@ public final class Spikes {
     /** Called on the sampler thread for each recorded spike. */
     public volatile Consumer<Spike> listener;
 
+    /** System processor load at least this, with the game using under half of it: other programs. */
+    static final double BUSY_SYSTEM = 0.9;
+
     private final Supplier<Owners> owners;
+    private final Sections sections;
     private final List<Watch> watches = new CopyOnWriteArrayList<>();
+    /**
+     * {system, this process} processor load over the last {@link #LOAD_MS}, from its own thread:
+     * the first reading takes most of a second and later ones tens of ms, too slow to sample.
+     */
+    private volatile double[] load;
+    static final long LOAD_MS = 2000;
     private final Deque<Spike> recent = new ArrayDeque<>();
     private Thread sampler;
 
-    public Spikes(Supplier<Owners> owners) {
+    public Spikes(Supplier<Owners> owners, Sections sections) {
         this.owners = owners;
+        this.sections = sections;
     }
 
     /** The watch of the current thread, created on its first call. */
@@ -142,6 +180,20 @@ public final class Spikes {
         sampler.setDaemon(true);
         sampler.setPriority(Thread.MAX_PRIORITY);
         sampler.start();
+        Thread sampler = this.sampler;
+        Thread loads = new Thread(() -> {
+            while (sampler.isAlive() && !sampler.isInterrupted()) {
+                load = cpuLoad();
+                try {
+                    Thread.sleep(LOAD_MS);
+                } catch (InterruptedException e) {
+                    return;
+                }
+            }
+        }, "modkeel-load");
+        loads.setDaemon(true);
+        loads.setPriority(Thread.MIN_PRIORITY);
+        loads.start();
     }
 
     public synchronized void stop() {
@@ -192,6 +244,7 @@ public final class Spikes {
                 w.counts.clear();
                 w.busy = 0;
                 w.idle = 0;
+                Arrays.fill(w.resources, 0);
                 w.gcAtStart = gcMillis();
             }
             sample(w);
@@ -213,7 +266,13 @@ public final class Spikes {
             return;
         }
         w.busy++;
-        w.counts.merge(owner(stack, owners.get()), 1, Integer::sum);
+        String owner = owner(stack, owners.get());
+        if (owner.equals(VANILLA)) {
+            String section = sections.of(stack);
+            owner = section == null ? VANILLA : VANILLA + ":" + section;
+        }
+        w.counts.merge(owner, 1, Integer::sum);
+        w.resources[Sections.resource(stack).ordinal()]++;
     }
 
     private void record(Watch w, long millis) {
@@ -226,12 +285,24 @@ public final class Spikes {
                 .forEach(e -> {
                     int pct = e.getValue() * 100 / w.busy;
                     if (pct >= MIN_SHARE) {
-                        JarInfo info = e.getKey().equals(VANILLA) ? null : o.ofId(e.getKey());
-                        shares.add(new Share(e.getKey(),
-                                info == null ? null : info.displayName(), pct));
+                        String key = e.getKey();
+                        if (key.equals(VANILLA) || key.startsWith(VANILLA + ":")) {
+                            String section = key.length() > VANILLA.length()
+                                    ? key.substring(VANILLA.length() + 1) : null;
+                            shares.add(new Share(VANILLA, null, section, pct));
+                        } else {
+                            JarInfo info = o.ofId(key);
+                            shares.add(new Share(key, info == null ? key : info.displayName(),
+                                    null, pct));
+                        }
                     }
                 });
-        Spike s = new Spike(w.where, System.currentTimeMillis(), millis, gcPercent, shares);
+        int gpu = w.resources[Sections.Resource.GPU.ordinal()] * 100 / w.busy;
+        int disk = w.resources[Sections.Resource.DISK.ordinal()] * 100 / w.busy;
+        double[] load = this.load;
+        boolean others = load != null && load[0] >= BUSY_SYSTEM && load[1] < load[0] / 2;
+        Spike s = new Spike(w.where, System.currentTimeMillis(), millis, gcPercent, shares, gpu,
+                disk, others);
         synchronized (recent) {
             recent.addFirst(s);
             while (recent.size() > KEEP) {
@@ -262,6 +333,26 @@ public final class Spikes {
             }
         }
         return VANILLA;
+    }
+
+    /**
+     * {system, this process} processor load since the previous call, 0-1, or null when the JVM
+     * cannot tell (or has no reading yet).
+     */
+    private static double[] cpuLoad() {
+        try {
+            if (ManagementFactory.getOperatingSystemMXBean()
+                    instanceof com.sun.management.OperatingSystemMXBean) {
+                com.sun.management.OperatingSystemMXBean os = (com.sun.management.OperatingSystemMXBean)
+                        ManagementFactory.getOperatingSystemMXBean();
+                double system = os.getCpuLoad();
+                double process = os.getProcessCpuLoad();
+                return system < 0 || process < 0 ? null : new double[] {system, process};
+            }
+        } catch (LinkageError | RuntimeException e) {
+            // not every JVM has the com.sun extension
+        }
+        return null;
     }
 
     private static long gcMillis() {

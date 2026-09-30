@@ -39,6 +39,7 @@ public final class CoreTest {
         run("lab rules in the diagnosis", CoreTest::labHints);
         run("lag spike: owner of a sampled stack", CoreTest::spikeOwner);
         run("lag spike: busy stall named, idle stall ignored", CoreTest::spikeLive);
+        run("lag spike: part of Minecraft and resource of a stack", CoreTest::spikeSections);
         System.out.println(passed + " passed, " + failed + " failed");
         if (failed > 0) {
             System.exit(1);
@@ -592,7 +593,7 @@ public final class CoreTest {
         // this test's own package stands for a mod's code
         jar(mods, "busy.jar", "busymod", null, "modkeel/companion/core/Busy.class");
         Owners o = owners(mods);
-        Spikes spikes = new Spikes(() -> o);
+        Spikes spikes = new Spikes(() -> o, Sections.parse(List.of(), List.of()));
         spikes.startMs = 60;
         spikes.reportMs = 150;
         spikes.start();
@@ -621,5 +622,61 @@ public final class CoreTest {
         eq("busymod", s.top().id, "culprit");
         check(s.top().percent >= 50, "share " + s.top().percent);
         eq("BUSYMOD Mod", s.top().name, "display name");
+        eq(0, s.gpuPercent, "no graphics wait");
+    }
+
+    static StackTraceElement[] stack(String... frames) {
+        StackTraceElement[] out = new StackTraceElement[frames.length];
+        for (int i = 0; i < frames.length; i++) {
+            int dot = frames[i].lastIndexOf('.');
+            out[i] = el(frames[i].substring(0, dot), frames[i].substring(dot + 1));
+        }
+        return out;
+    }
+
+    static void spikeSections() throws Exception {
+        List<String> table = Files.readAllLines(fixtures.resolve("../../../game/resources/modkeel/sections.txt"));
+        Sections sec = Sections.parse(table, List.of("net.minecraft.class_1297\tentities"));
+        // innermost first, like Thread.getStackTrace
+        eq("entities", sec.of(stack(
+                "net.minecraft.util.Mth.floor",
+                "net.minecraft.world.entity.monster.Zombie.tick",
+                "net.minecraft.server.level.ServerLevel.tickNonPassenger",
+                "net.minecraft.server.MinecraftServer.tickServer")), "entity tick");
+        eq("entities", sec.of(stack(
+                "net.minecraft.world.level.block.Block.getShape",
+                "net.minecraft.world.entity.Entity.move",
+                "net.minecraft.server.level.ServerLevel.tickNonPassenger")),
+                "a block looked up by a moving mob is still the mob");
+        eq("blocks", sec.of(stack(
+                "net.minecraft.world.level.redstone.NeighborUpdater.update",
+                "net.minecraft.server.level.ServerChunkCache.tickChunks",
+                "net.minecraft.server.MinecraftServer.tickServer")), "random ticks inside chunk ticking");
+        eq("worldgen", sec.of(stack(
+                "net.minecraft.world.level.block.state.BlockBehaviour.getShape",
+                "net.minecraft.world.level.levelgen.feature.TreeFeature.place",
+                "net.minecraft.server.level.ChunkMap.lambda$scheduleChunkGeneration$1",
+                "net.minecraft.server.level.ServerChunkCache.getChunk")), "generation refines chunk loading");
+        eq("rendering", sec.of(stack(
+                "net.minecraft.world.entity.Entity.getX",
+                "net.minecraft.client.renderer.entity.EntityRenderer.render",
+                "net.minecraft.client.renderer.GameRenderer.render",
+                "net.minecraft.client.Minecraft.runTick")), "entity drawing is rendering");
+        eq("entities", sec.of(stack(
+                "net.minecraft.class_1297$class_5529.method_31486",
+                "net.minecraft.class_3218.method_18762")), "intermediary names through classnames.tsv");
+        eq(null, sec.of(stack("net.minecraft.server.MinecraftServer.tickServer")), "no part");
+
+        eq(Sections.Resource.GPU, Sections.resource(stack(
+                "org.lwjgl.system.JNI.invokeV",
+                "org.lwjgl.glfw.GLFW.glfwSwapBuffers",
+                "com.mojang.blaze3d.platform.Window.updateDisplay")), "swap buffers waits on the GPU");
+        eq(Sections.Resource.DISK, Sections.resource(stack(
+                "sun.nio.ch.FileDispatcherImpl.write0",
+                "sun.nio.ch.FileChannelImpl.write",
+                "net.minecraft.world.level.chunk.storage.RegionFile.write")), "file write");
+        eq(Sections.Resource.CPU, Sections.resource(stack(
+                "java.util.HashMap.get",
+                "net.minecraft.world.entity.Entity.tick")), "game code on the processor");
     }
 }

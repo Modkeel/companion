@@ -15,8 +15,10 @@ import net.minecraft.network.chat.MutableComponent;
 
 /** The lag spikes of this session and whose code was running during each, over the open world. */
 public final class SpikeScreen extends Screen {
-    /** A spike that heavy on garbage collection is shown as memory cleanup, not as a mod. */
-    static final int GC_HEAVY = 50;
+    /** A cause at least this big leads the toast instead of the top mod. */
+    static final int HEAVY = 50;
+    /** A cause at least this big is listed under its spike. */
+    static final int SHOWN = 10;
 
     private final Screen back;
     private HeaderAndFooterLayout layout;
@@ -42,16 +44,29 @@ public final class SpikeScreen extends Screen {
             body.addChild(CrashScreen.text(Component.translatable("modkeel.spikes.none"), w));
         }
         boolean memory = false;
+        boolean graphics = false;
         SimpleDateFormat clock = new SimpleDateFormat("HH:mm:ss", Locale.ROOT);
         for (Spikes.Spike s : spikes) {
-            memory |= s.gcPercent >= GC_HEAVY;
-            body.addChild(CrashScreen.text(Component.translatable("modkeel.spikes.row",
+            memory |= s.gcPercent >= HEAVY;
+            graphics |= s.gpuPercent >= HEAVY;
+            Stack row = Stack.vertical(1);
+            row.defaultCellSetting().alignHorizontallyCenter();
+            row.addChild(CrashScreen.text(Component.translatable("modkeel.spikes.row",
                     clock.format(new Date(s.at)), seconds(s.millis),
                     Component.translatable("modkeel.spikes." + s.where.name().toLowerCase(Locale.ROOT)),
                     shares(s)), w));
+            Component causes = causes(s);
+            if (causes != null) {
+                row.addChild(CrashScreen.text(causes.copy().withStyle(ChatFormatting.GRAY), w));
+            }
+            body.addChild(row);
         }
         if (memory) {
             body.addChild(CrashScreen.text(Component.translatable("modkeel.spikes.gc_hint")
+                    .withStyle(ChatFormatting.YELLOW), w));
+        }
+        if (graphics) {
+            body.addChild(CrashScreen.text(Component.translatable("modkeel.spikes.gpu_hint")
                     .withStyle(ChatFormatting.YELLOW), w));
         }
         scroll = layout.addToContents(new Scroll(minecraft, body, Compat.contentHeight(layout)));
@@ -77,18 +92,19 @@ public final class SpikeScreen extends Screen {
         return String.format(Locale.ROOT, "%.1f", millis / 1000.0);
     }
 
+    /** A mod's name, "Minecraft: entities", or "Minecraft itself". */
     static Component name(Spikes.Share s) {
-        return s.name == null ? Component.translatable("modkeel.spikes.vanilla")
-                              : Component.literal(s.name);
+        if (s.name != null) {
+            return Component.literal(s.name);
+        }
+        return s.section == null ? Component.translatable("modkeel.spikes.vanilla")
+                : Component.translatable("modkeel.spikes.vanilla_section",
+                        Component.translatable("modkeel.spikes.section." + s.section));
     }
 
-    /** "Create 70%, Sodium 20%", or memory cleanup when that took most of it. */
+    /** "Create 70%, Minecraft: entities 20%". */
     static Component shares(Spikes.Spike s) {
         MutableComponent out = Component.empty();
-        if (s.gcPercent >= GC_HEAVY) {
-            return out.append(Component.translatable("modkeel.spikes.gc"))
-                    .append(" " + s.gcPercent + "%");
-        }
         for (Spikes.Share share : s.shares) {
             if (!out.getSiblings().isEmpty()) {
                 out.append(", ");
@@ -100,11 +116,48 @@ public final class SpikeScreen extends Screen {
         return out;
     }
 
-    /** The toast's second line: the biggest share. */
+    /**
+     * What the game waited on, beyond the processor: "Graphics card wait 60% · Java memory
+     * cleanup 20%". Null when it was all game code.
+     */
+    static Component causes(Spikes.Spike s) {
+        MutableComponent out = Component.empty();
+        String[][] items = {{"modkeel.spikes.gc", "" + s.gcPercent},
+                            {"modkeel.spikes.res.gpu", "" + s.gpuPercent},
+                            {"modkeel.spikes.res.disk", "" + s.diskPercent}};
+        for (String[] item : items) {
+            if (Integer.parseInt(item[1]) >= SHOWN) {
+                if (!out.getSiblings().isEmpty()) {
+                    out.append(" · ");
+                }
+                out.append(Component.translatable(item[0])).append(" " + item[1] + "%");
+            }
+        }
+        if (s.otherPrograms) {
+            if (!out.getSiblings().isEmpty()) {
+                out.append(" · ");
+            }
+            out.append(Component.translatable("modkeel.spikes.other_programs"));
+        }
+        return out.getSiblings().isEmpty() ? null : out;
+    }
+
+    /** The toast's second line: the biggest cause, or the biggest share. */
     static Component mostly(Spikes.Spike s) {
-        if (s.gcPercent >= GC_HEAVY) {
-            return Component.translatable("modkeel.spikes.toast_mostly",
+        if (s.gcPercent >= HEAVY) {
+            return Component.translatable("modkeel.spikes.toast_cause",
                     Component.translatable("modkeel.spikes.gc"), s.gcPercent);
+        }
+        if (s.gpuPercent >= HEAVY) {
+            return Component.translatable("modkeel.spikes.toast_cause",
+                    Component.translatable("modkeel.spikes.res.gpu"), s.gpuPercent);
+        }
+        if (s.diskPercent >= HEAVY) {
+            return Component.translatable("modkeel.spikes.toast_cause",
+                    Component.translatable("modkeel.spikes.res.disk"), s.diskPercent);
+        }
+        if (s.otherPrograms) {
+            return Component.translatable("modkeel.spikes.other_programs");
         }
         Spikes.Share top = s.top();
         return top == null ? Component.translatable("modkeel.spikes.toast_details")

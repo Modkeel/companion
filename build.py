@@ -157,6 +157,31 @@ def test_mod_toml(mod_id: str, name: str, mc: str, loader: str) -> str:
         f'versionRange = "{game}"', 'side = "CLIENT"', ""])
 
 
+def class_sections(mc: str, out: Path) -> Path:
+    """modkeel/classnames.tsv under `out`: each intermediary class whose Mojang name is in
+    sections.txt, with its section, so the lag spike breakdown reads obfuscated Fabric stacks."""
+    rows = []
+    for line in (HERE / "game" / "resources" / "modkeel" / "sections.txt").read_text(
+            encoding="utf-8").splitlines():
+        if line and not line.startswith("#"):
+            prefix, section = line.split("\t")[:2]
+            rows.append((prefix, section))
+    rows.sort(key=lambda r: -len(r[0]))
+    lines = []
+    for line in remap.merged_mappings(mc).read_text(encoding="utf-8").splitlines():
+        parts = line.split("\t")
+        if parts[0] != "c" or "$" in parts[2]:
+            continue
+        named = parts[3].replace("/", ".")
+        section = next((s for p, s in rows if named.startswith(p)), None)
+        if section:
+            lines.append(f"{parts[2].replace('/', '.')}\t{section}")
+    dest = out / "modkeel" / "classnames.tsv"
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    dest.write_text("\n".join(sorted(lines)) + "\n", encoding="utf-8")
+    return out
+
+
 def build(mc: str, loader: str = "fabric", run_tests: bool = True) -> dict[str, Path]:
     v = variant(mc)
     with tempfile.TemporaryDirectory() as t:
@@ -168,6 +193,8 @@ def build(mc: str, loader: str = "fabric", run_tests: bool = True) -> dict[str, 
         adapter = [*(HERE / loader / "src").rglob("*.java"), *version_sources(HERE / loader, v)]
         resources = [HERE / "game" / "resources", HERE / loader / "resources"]
         mod = mod_jar(mc, loader)
+        if loader == "fabric" and remap.obfuscated(mc):
+            resources.append(class_sections(mc, tmp / "generated"))
         if loader == "fabric":
             classes = remap.compile_fabric(mc, sorted(game + adapter), tmp / "classes",
                                            FABRIC_MODULES, [core])

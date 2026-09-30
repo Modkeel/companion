@@ -1,0 +1,37 @@
+# Which part of Minecraft a stack frame is in, for the lag spike breakdown.
+# class name prefix (Mojang names) <TAB> section [<TAB> outer sections it refines, comma-separated]
+# A stack is read from the outside in: the outermost section frame names the part, and a deeper
+# frame only replaces it when its section refines that one (chunk ticking -> the blocks and
+# mobs it ticks, chunk loading -> world generation).
+# Fabric before 26.1 runs with intermediary names; the build adds modkeel/classnames.tsv for it.
+net.minecraft.world.entity.	entities	chunks
+net.minecraft.world.level.entity.	entities	chunks
+net.minecraft.world.level.pathfinder.	entities	chunks
+net.minecraft.server.level.ServerEntity	entities	chunks
+net.minecraft.world.level.block.entity.	block_entities	chunks
+net.minecraft.world.level.block.	blocks	chunks
+net.minecraft.world.level.redstone.	blocks	chunks
+net.minecraft.world.level.material.	blocks	chunks
+net.minecraft.world.ticks.	blocks	chunks
+net.minecraft.world.level.chunk.	chunks
+net.minecraft.server.level.ChunkMap	chunks
+net.minecraft.server.level.ServerChunkCache	chunks
+net.minecraft.server.level.ChunkHolder	chunks
+net.minecraft.server.level.DistanceManager	chunks
+net.minecraft.server.level.progress.	chunks
+net.minecraft.client.multiplayer.ClientChunkCache	chunks
+net.minecraft.world.level.lighting.	lighting	chunks
+net.minecraft.world.level.levelgen.	worldgen	chunks
+net.minecraft.world.level.biome.	worldgen	chunks
+net.minecraft.world.level.chunk.storage.	saving	chunks
+net.minecraft.world.level.storage.	saving
+net.minecraft.client.renderer.	rendering
+net.minecraft.client.model.	rendering
+net.minecraft.client.particle.	rendering
+com.mojang.blaze3d.	rendering
+net.minecraft.client.gui.	interface
+net.minecraft.network.	network
+net.minecraft.server.network.	network
+net.minecraft.client.multiplayer.ClientPacketListener	network
+net.minecraft.server.packs.	resources
+net.minecraft.client.resources.	resources
