@@ -1,5 +1,8 @@
 package modkeel.companion.game;
 
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -9,7 +12,9 @@ import modkeel.companion.core.Guardian;
 import modkeel.companion.core.Msg;
 import modkeel.companion.core.Outcomes;
 import modkeel.companion.core.Rules;
+import modkeel.companion.core.Log;
 import net.minecraft.ChatFormatting;
+import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.MultiLineTextWidget;
 import net.minecraft.client.gui.components.Tooltip;
@@ -25,6 +30,8 @@ public final class CrashScreen extends Screen {
     private final Diagnosis d;
     private HeaderAndFooterLayout layout;
     private Scroll scroll;
+    /** Textures made for this screen, closed with it. */
+    private final List<AutoCloseable> owned = new ArrayList<>();
 
     public CrashScreen(Screen next, Guardian g) {
         super(Component.translatable("modkeel.crash.title"));
@@ -40,6 +47,8 @@ public final class CrashScreen extends Screen {
         int w = Math.min(width - 40, 380);
         Stack body = Stack.vertical(8);
         body.defaultCellSetting().alignHorizontallyCenter();
+
+        rescue(body, w);
 
         // Headline first (the mod), then why, then what that kind of crash means; the raw error
         // lives in the report button's tooltip
@@ -106,6 +115,54 @@ public final class CrashScreen extends Screen {
 
         layout.visitWidgets(this::addRenderableWidget);
         repositionElements();
+    }
+
+    /** The world that was open: it is still there, and how much of it Minecraft had saved. */
+    private void rescue(Stack body, int w) {
+        Guardian.WorldAtCrash world = g.worldAtCrash;
+        if (world == null) {
+            return;
+        }
+        AbstractWidget icon = Compat.worldIcon(minecraft, world.name, world.dir.resolve("icon.png"),
+                48, owned);
+        if (icon != null) {
+            body.addChild(icon);
+        }
+        body.addChild(text(Component.translatable("modkeel.rescue.safe", world.name)
+                .withStyle(ChatFormatting.GREEN), w));
+        long minutes = world.unsavedMinutes();
+        if (minutes == 0) {
+            body.addChild(text(Component.translatable("modkeel.rescue.saved_at_crash"), w));
+        } else if (minutes > 0) {
+            body.addChild(text(Component.translatable("modkeel.rescue.saved_before", minutes), w));
+        }
+        if (world.backup != null) {
+            body.addChild(text(Component.translatable("modkeel.rescue.backup",
+                    backupTime(world.backup.getFileName().toString()))
+                    .withStyle(ChatFormatting.GRAY), w));
+        }
+    }
+
+    /** "20260930-184012-123.zip" -> the player's own date format. */
+    static String backupTime(String file) {
+        try {
+            return DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.SHORT).format(
+                    new SimpleDateFormat("yyyyMMdd-HHmmss").parse(file.substring(0, 15)));
+        } catch (ParseException | IndexOutOfBoundsException e) {
+            return file;
+        }
+    }
+
+    @Override
+    public void removed() {
+        for (AutoCloseable c : owned) {
+            try {
+                c.close();
+            } catch (Exception e) {
+                Log.warn("cannot free a texture", e);
+            }
+        }
+        owned.clear();
     }
 
     private void confirmDisable(Diagnosis.Suspect s) {

@@ -18,6 +18,7 @@ public final class CompanionMod implements ModInitializer {
                 .map(c -> c.getMetadata().getVersion().getFriendlyString()).orElse(""),
                 CompanionMod::selfJar);
         ServerLifecycleEvents.SERVER_STARTING.register(Common::serverStarting);
+        ServerLifecycleEvents.SERVER_STOPPED.register(server -> Common.serverStopped());
         ServerTickEvents.END_SERVER_TICK.register(server -> Common.serverTick());
         if (loader.getEnvironmentType() == EnvType.SERVER) {
             Common.dedicatedServerStartup();

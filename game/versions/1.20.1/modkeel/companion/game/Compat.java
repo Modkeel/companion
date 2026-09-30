@@ -1,6 +1,17 @@
 package modkeel.companion.game;
 
 import java.nio.file.Path;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.util.List;
+
+import com.mojang.blaze3d.platform.NativeImage;
+import modkeel.companion.core.Log;
+import net.minecraft.client.gui.components.AbstractWidget;
+import net.minecraft.client.gui.components.ImageWidget;
+import net.minecraft.client.gui.components.toasts.SystemToast;
+import net.minecraft.client.gui.screens.FaviconTexture;
 
 import net.minecraft.Util;
 import net.minecraft.client.Minecraft;
@@ -64,5 +75,28 @@ public final class Compat {
     /** Test tour: press a button as a click would. */
     public static void press(AbstractButton button) {
         button.onPress();
+    }
+
+    /** A world's icon.png as a widget, or null. The texture goes into {@code owned} to close later. */
+    public static AbstractWidget worldIcon(Minecraft mc, String world, Path png, int size,
+                                           List<AutoCloseable> owned) {
+        if (!Files.isRegularFile(png)) {
+            return null;
+        }
+        try (InputStream in = Files.newInputStream(png)) {
+            NativeImage img = NativeImage.read(in);
+            FaviconTexture tex = FaviconTexture.forWorld(mc.getTextureManager(), world);
+            tex.upload(img);
+            owned.add(tex);
+            return new ImageWidget(size, size, tex.textureLocation());
+        } catch (IOException | RuntimeException e) {
+            Log.warn("cannot show the icon of " + world, e);
+            return null;
+        }
+    }
+
+    /** A toast in the corner that replaces the previous one. */
+    public static void toast(Minecraft mc, Component title, Component message) {
+        SystemToast.addOrUpdate(mc.getToasts(), SystemToast.SystemToastIds.PERIODIC_NOTIFICATION, title, message);
     }
 }

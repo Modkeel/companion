@@ -38,6 +38,36 @@ public final class Guardian {
     /** The crash found at startup, if any, and its report file. */
     public Diagnosis crash;
     public Path crashFile;
+    /** The world that was open when that crash happened, or null. */
+    public WorldAtCrash worldAtCrash;
+    private String playingAtLaunch;
+    private long playingClosedAt;
+    /** A world closed this soon after a crash report was closed by that crash. */
+    private static final long CLOSED_BY_CRASH_MS = 120_000;
+
+    /** A world open at a crash: what Minecraft saved of it, and Modkeel's newest backup. */
+    public static final class WorldAtCrash {
+        public final String name;
+        public final Path dir;
+        /** When Minecraft last wrote the world's level.dat, epoch ms (0 when unknown). */
+        public final long savedAt;
+        public final long crashedAt;
+        /** Newest Modkeel backup of this world, or null. */
+        public final Path backup;
+
+        WorldAtCrash(String name, Path dir, long savedAt, long crashedAt, Path backup) {
+            this.name = name;
+            this.dir = dir;
+            this.savedAt = savedAt;
+            this.crashedAt = crashedAt;
+            this.backup = backup;
+        }
+
+        /** Minutes of play Minecraft had not saved when it crashed (0 when saved at the crash). */
+        public long unsavedMinutes() {
+            return savedAt == 0 ? -1 : Math.max(0, (crashedAt - savedAt) / 60_000);
+        }
+    }
 
     public Guardian(Path gameDir) {
         this.gameDir = gameDir.toAbsolutePath().normalize();
@@ -86,6 +116,10 @@ public final class Guardian {
     public Path onWorldStarting(Path worldDir) {
         worldDir = worldDir.toAbsolutePath().normalize();
         String world = worldDir.getFileName().toString();
+        // a crash also stops the server (emergency save), so the close time decides, not the flag
+        state.set("playing", worldDir.toString());
+        state.set("playingClosed", null);
+        state.save();
         Path stored = worldDir.resolve("modkeel").resolve("modset.txt");
         ModSet now = current();
         Path backup = null;
@@ -119,6 +153,15 @@ public final class Guardian {
             Log.warn("backup of " + world + " failed", e);
         }
         return backup;
+    }
+
+    /**
+     * The world closed. A crash closes it too, right after the report is written, so this only
+     * records when; {@link #checkCrashes} compares it with the report's time.
+     */
+    public void onWorldStopped() {
+        state.set("playingClosed", System.currentTimeMillis());
+        state.save();
     }
 
     // ---- last good set -------------------------------------------------------------------
@@ -191,6 +234,10 @@ public final class Guardian {
      * report from the last 24 hours counts.
      */
     public Diagnosis checkCrashes() {
+        playingAtLaunch = state.get("playing", null);
+        playingClosedAt = state.getLong("playingClosed", 0);
+        state.set("playing", null);
+        state.set("playingClosed", null);
         long now = System.currentTimeMillis();
         long since = state.getLong("lastCrashCheck", now - 24L * 3600 * 1000);
         state.set("lastCrashCheck", now);
@@ -220,6 +267,7 @@ public final class Guardian {
             d.suspects.removeIf(s -> s.file != null && !Files.exists(modsDir.resolve(s.file)));
             crash = d;
             crashFile = newest;
+            worldAtCrash = worldAt(newestTime);
             if (outcomes.watching()) {
                 outcomes.onCrash(d.signature, current().fingerprint());
             }
@@ -231,6 +279,31 @@ public final class Guardian {
             Log.warn("cannot read " + newest, e);
             return null;
         }
+    }
+
+    private WorldAtCrash worldAt(long crashedAt) {
+        if (playingAtLaunch == null || playingClosedAt != 0
+                && (playingClosedAt < crashedAt - 5_000 || playingClosedAt > crashedAt + CLOSED_BY_CRASH_MS)) {
+            return null;
+        }
+        Path dir = java.nio.file.Paths.get(playingAtLaunch);
+        Path levelDat = dir.resolve("level.dat");
+        if (!Files.exists(levelDat)) {
+            return null;
+        }
+        long savedAt = 0;
+        try {
+            savedAt = Files.getLastModifiedTime(levelDat).toMillis();
+        } catch (IOException e) {
+            Log.warn("cannot read " + levelDat, e);
+        }
+        String name = dir.getFileName().toString();
+        List<Path> backups = Backups.list(gameDir, name);
+        WorldAtCrash w = new WorldAtCrash(name, dir, savedAt, crashedAt,
+                backups.isEmpty() ? null : backups.get(0));
+        Log.info("world " + name + " was open at the crash; last saved "
+                 + w.unsavedMinutes() + " min before it");
+        return w;
     }
 
     // ---- lab rules -----------------------------------------------------------------------

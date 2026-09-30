@@ -6,30 +6,96 @@ import modkeel.companion.core.Diagnosis;
 import modkeel.companion.core.Guardian;
 import modkeel.companion.core.Log;
 import modkeel.companion.core.Plan;
+import modkeel.companion.core.Spikes;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.screens.ConfirmScreen;
+import net.minecraft.client.gui.screens.PauseScreen;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.TitleScreen;
 import net.minecraft.network.chat.Component;
 
-/** Client side: the crash screen before the title screen, and the Modkeel button. */
+/** Client side: the crash screen before the title screen, the Modkeel button, lag spike alerts. */
 public final class Client {
+    /** A spike this long gets a toast while playing. */
+    static final long TOAST_MS = Long.getLong("modkeel.spikes.toast_ms", 500);
+    /** Joining a world always stutters: no toast in its first seconds. */
+    static final long JOIN_QUIET_MS = 20_000;
+    static final long TOAST_EVERY_MS = 60_000;
+
     private static boolean crashHandled;
+    private static Spikes.Watch frames;
+    private static volatile long inWorldSince;
+    private static long lastToast;
 
     private Client() {
     }
 
     public static void init() {
         Common.guardian.startup();
+        Common.spikes.listener = Client::onSpike;
         Tour.start();
+    }
+
+    /** Called by the loader at the end of every client tick, on the render thread. */
+    public static void clientTick(Minecraft mc) {
+        if (frames == null) {
+            frames = Common.spikes.watch(Spikes.Where.FRAME);
+        }
+        if (mc.level == null) {
+            frames.pause();
+            inWorldSince = 0;
+            return;
+        }
+        if (inWorldSince == 0) {
+            inWorldSince = System.currentTimeMillis();
+        }
+        frames.beat();
+    }
+
+    static boolean spikeAlerts() {
+        return !"off".equals(Common.guardian.state.get("spikeAlerts", "on"));
+    }
+
+    static void setSpikeAlerts(boolean on) {
+        Common.guardian.state.set("spikeAlerts", on ? "on" : "off");
+        Common.guardian.state.save();
+    }
+
+    /** On the sampler thread: a toast for a spike worth mentioning, never more than one a minute. */
+    private static void onSpike(Spikes.Spike s) {
+        long now = System.currentTimeMillis();
+        long joined = inWorldSince;
+        if (s.millis < TOAST_MS || joined == 0 || now - joined < JOIN_QUIET_MS
+                || now - lastToast < TOAST_EVERY_MS || !spikeAlerts()) {
+            return;
+        }
+        lastToast = now;
+        Minecraft mc = Minecraft.getInstance();
+        mc.execute(() -> {
+            Log.info("lag spike toast: " + s);
+            Compat.toast(mc, Component.translatable("modkeel.spikes.toast_title",
+                    SpikeScreen.seconds(s.millis)), SpikeScreen.mostly(s));
+            if ("spikes".equals(System.getProperty("modkeel.test.screen"))) {
+                Log.info("showing the lag spike screen");
+                Compat.setScreen(mc, new SpikeScreen(null));
+            }
+        });
     }
 
     /** Called by the loader after a screen is initialised; `add` puts a widget on it. */
     public static void afterScreenInit(Minecraft mc, Screen screen, int width,
                                        Consumer<AbstractWidget> add) {
+        if (screen instanceof PauseScreen) {
+            add.accept(Button.builder(Component.translatable("modkeel.spikes.button"),
+                            b -> Compat.setScreen(mc, new SpikeScreen(screen)))
+                    .bounds(width - 104, 4, 100, 20)
+                    .tooltip(Tooltip.create(Component.translatable("modkeel.spikes.tooltip")))
+                    .build());
+            return;
+        }
         if (!(screen instanceof TitleScreen)) {
             return;
         }

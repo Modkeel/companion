@@ -9,6 +9,7 @@ import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.loading.FMLPaths;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.server.ServerStartingEvent;
+import net.neoforged.neoforge.event.server.ServerStoppedEvent;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
 
 /** NeoForge entrypoint: world backups and the last good set, on clients and servers. */
@@ -19,6 +20,7 @@ public final class CompanionNeo {
                 () -> container.getModInfo().getOwningFile().getFile().getFilePath());
         NeoForge.EVENT_BUS.addListener((ServerStartingEvent e) -> Common.serverStarting(e.getServer()));
         NeoForge.EVENT_BUS.addListener((ServerTickEvent.Post e) -> Common.serverTick());
+        NeoForge.EVENT_BUS.addListener((ServerStoppedEvent e) -> Common.serverStopped());
         if (dist.isClient()) {
             // a class of its own: client classes are absent on a dedicated server
             NeoClient.init();

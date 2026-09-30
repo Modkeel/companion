@@ -5,6 +5,7 @@ import net.minecraft.SharedConstants;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.server.ServerStartingEvent;
+import net.minecraftforge.event.server.ServerStoppedEvent;
 import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.fml.ModList;
 import net.minecraftforge.fml.common.Mod;
@@ -26,6 +27,8 @@ public final class CompanionForge {
                         Common.serverTick();
                     }
                 });
+        MinecraftForge.EVENT_BUS.addListener(EventPriority.NORMAL, false, ServerStoppedEvent.class,
+                e -> Common.serverStopped());
         if (FMLEnvironment.dist.isClient()) {
             // a class of its own: client classes are absent on a dedicated server
             ForgeClient.init();

@@ -31,11 +31,14 @@ public final class CoreTest {
         run("guardian: last good set and revert", CoreTest::guardianRevert);
         run("guardian: disable, dependents, enable", CoreTest::guardianDisable);
         run("guardian: crash found once", CoreTest::guardianCrash);
+        run("guardian: the world open at a crash", CoreTest::guardianWorldAtCrash);
         run("plan round trip", CoreTest::planRoundTrip);
         run("crash signature ignores lines, lambdas and mixin hashes", CoreTest::signature);
         run("fix outcomes: held, recurred, undone", CoreTest::outcomes);
         run("rules bundle and version in file names", CoreTest::rules);
         run("lab rules in the diagnosis", CoreTest::labHints);
+        run("lag spike: owner of a sampled stack", CoreTest::spikeOwner);
+        run("lag spike: busy stall named, idle stall ignored", CoreTest::spikeLive);
         System.out.println(passed + " passed, " + failed + " failed");
         if (failed > 0) {
             System.exit(1);
@@ -352,6 +355,43 @@ public final class CoreTest {
         eq(null, new Guardian(game).checkCrashes(), "shown once");
     }
 
+    static void guardianWorldAtCrash() throws Exception {
+        Path game = tmp();
+        Path world = game.resolve("saves").resolve("Castle");
+        Files.createDirectories(world);
+        Files.write(world.resolve("level.dat"), new byte[] {1});
+        long now = System.currentTimeMillis();
+        Files.setLastModifiedTime(world.resolve("level.dat"), FileTime.fromMillis(now - 4 * 60_000));
+        Path reports = game.resolve("crash-reports");
+        Files.createDirectories(reports);
+
+        // closed normally, then a crash on the title screen minutes later: no world to talk about
+        Guardian g = new Guardian(game);
+        g.onWorldStarting(world);
+        g.onWorldStopped();
+        Path first = reports.resolve("crash-a-client.txt");
+        Files.copy(fixtures.resolve("fabric-mixin-fabrishot.txt"), first);
+        Files.setLastModifiedTime(first, FileTime.fromMillis(now + 10 * 60_000));
+        g = new Guardian(game);
+        check(g.checkCrashes() != null, "crash found");
+        eq(null, g.worldAtCrash, "no world open");
+        Files.delete(first);
+
+        // a crash while the world is open: the crash stops the server right after the report
+        g.onWorldStarting(world);
+        Path second = reports.resolve("crash-b-client.txt");
+        Files.copy(fixtures.resolve("fabric-mixin-fabrishot.txt"), second);
+        Files.setLastModifiedTime(second, FileTime.fromMillis(now + 2000));
+        g.onWorldStopped();
+        g = new Guardian(game);
+        check(g.checkCrashes() != null, "second crash found");
+        check(g.worldAtCrash != null, "world open at the crash");
+        eq("Castle", g.worldAtCrash.name, "world name");
+        eq(4L, g.worldAtCrash.unsavedMinutes(), "minutes since the last save");
+        check(g.worldAtCrash.backup != null, "the first start with Modkeel backed it up");
+        eq(null, new Guardian(game).state.get("playing", null), "cleared once read");
+    }
+
     static void planRoundTrip() throws Exception {
         Path dir = tmp();
         Plan p = new Plan();
@@ -502,5 +542,84 @@ public final class CoreTest {
         check(d.top().reasons.contains(Msg.of("modkeel.reason.file_name", "26.1.2", "26.2")),
                 "file name hint on a suspect " + d.top().reasons);
         eq(2, g.labMods().size(), "lab view of installed mods");
+    }
+
+    // ---- lag spikes ----------------------------------------------------------------------
+
+    static StackTraceElement el(String cls, String method) {
+        return new StackTraceElement(cls, method, null, 1);
+    }
+
+    static void spikeOwner() throws Exception {
+        Path mods = tmp().resolve("mods");
+        jar(mods, "create.jar", "create", null, "com/simibubi/create/Create.class");
+        jar(mods, "sodium.jar", "sodium", null, "net/caffeinemc/mods/sodium/Sodium.class");
+        jar(mods, "fabric-api.jar", "fabric-api", null, "net/fabricmc/fabric/impl/Foo.class");
+        Owners o = owners(mods);
+        eq("create", Spikes.owner(new StackTraceElement[] {
+            el("net.minecraft.world.level.Level", "getBlockState"),
+            el("com.simibubi.create.Create", "tickBelts"),
+            el("net.caffeinemc.mods.sodium.Sodium", "render")}, o), "innermost mod frame wins");
+        eq("sodium", Spikes.owner(new StackTraceElement[] {
+            el("net.minecraft.client.renderer.LevelRenderer", "handler$zfk000$sodium$renderLevel"),
+            el("net.minecraft.client.Minecraft", "runTick")}, o), "merged mixin handler");
+        eq(Spikes.VANILLA, Spikes.owner(new StackTraceElement[] {
+            el("net.fabricmc.fabric.impl.Foo", "invoke"),
+            el("net.minecraft.client.Minecraft", "runTick")}, o), "platform is not blamed");
+    }
+
+    static volatile long sink;
+
+    static void spin(long ms) {
+        long end = System.nanoTime() + ms * 1_000_000;
+        long x = 0;
+        while (System.nanoTime() < end) {
+            x += x * 31 + 7;
+        }
+        sink = x;
+    }
+
+    static void beatFor(Spikes.Watch w, long ms) throws InterruptedException {
+        long end = System.nanoTime() + ms * 1_000_000;
+        while (System.nanoTime() < end) {
+            w.beat();
+            Thread.sleep(5);
+        }
+    }
+
+    static void spikeLive() throws Exception {
+        Path mods = tmp().resolve("mods");
+        // this test's own package stands for a mod's code
+        jar(mods, "busy.jar", "busymod", null, "modkeel/companion/core/Busy.class");
+        Owners o = owners(mods);
+        Spikes spikes = new Spikes(() -> o);
+        spikes.startMs = 60;
+        spikes.reportMs = 150;
+        spikes.start();
+        Throwable[] error = {null};
+        Thread game = new Thread(() -> {
+            try {
+                Spikes.Watch w = spikes.watch(Spikes.Where.FRAME);
+                beatFor(w, 100);
+                Thread.sleep(400); // a paused game: the thread waits, nothing to blame
+                beatFor(w, 100);
+                spin(400);
+                beatFor(w, 100);
+            } catch (Throwable e) {
+                error[0] = e;
+            }
+        });
+        game.start();
+        game.join();
+        Thread.sleep(50);
+        spikes.stop();
+        check(error[0] == null, "game thread: " + error[0]);
+        List<Spikes.Spike> recent = spikes.recent();
+        eq(1, recent.size(), "only the busy stall: " + recent);
+        Spikes.Spike s = recent.get(0);
+        check(s.millis >= 350 && s.millis < 700, "duration " + s.millis);
+        eq("busymod", s.top().id, "culprit");
+        check(s.top().percent >= 50, "share " + s.top().percent);
+        eq("BUSYMOD Mod", s.top().name, "display name");
     }
 }

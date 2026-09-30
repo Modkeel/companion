@@ -7,6 +7,7 @@ import modkeel.companion.core.Diagnosis;
 import modkeel.companion.core.Guardian;
 import modkeel.companion.core.Log;
 import modkeel.companion.core.Outcomes;
+import modkeel.companion.core.Spikes;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.level.storage.LevelResource;
 import org.slf4j.LoggerFactory;
@@ -17,6 +18,7 @@ import org.slf4j.LoggerFactory;
  */
 public final class Common {
     public static Guardian guardian;
+    public static Spikes spikes;
     private static Supplier<Path> selfJar;
     private static int ticks;
     /** Play is counted towards fix outcomes once a minute. */
@@ -32,6 +34,10 @@ public final class Common {
         guardian = new Guardian(gameDir);
         guardian.mcVersion = mcVersion;
         Common.selfJar = selfJar;
+        spikes = new Spikes(guardian::owners);
+        // read every jar now, off the game threads, so the first spike is named without delay
+        background(guardian::owners);
+        spikes.start();
     }
 
     public static Path selfJar() {
@@ -44,7 +50,12 @@ public final class Common {
         guardian.onWorldStarting(server.getWorldPath(LevelResource.ROOT));
     }
 
+    public static void serverStopped() {
+        guardian.onWorldStopped();
+    }
+
     public static void serverTick() {
+        spikes.watch(Spikes.Where.WORLD).beat();
         ++ticks;
         if (!marked && ticks >= Guardian.GOOD_TICKS) {
             marked = true;
@@ -64,7 +75,7 @@ public final class Common {
         }
     }
 
-    private static void background(Runnable r) {
+    static void background(Runnable r) {
         Thread t = new Thread(r, "modkeel-background");
         t.setDaemon(true);
         t.start();

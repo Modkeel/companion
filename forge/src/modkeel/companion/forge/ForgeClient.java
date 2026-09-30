@@ -4,6 +4,7 @@ import modkeel.companion.game.Client;
 import net.minecraft.client.Minecraft;
 import net.minecraftforge.client.event.ScreenEvent;
 import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.EventPriority;
 
 /** Forge client side. */
@@ -13,6 +14,12 @@ final class ForgeClient {
 
     static void init() {
         Client.init();
+        MinecraftForge.EVENT_BUS.addListener(EventPriority.NORMAL, false, TickEvent.ClientTickEvent.class,
+                e -> {
+                    if (e.phase == TickEvent.Phase.END) {
+                        Client.clientTick(Minecraft.getInstance());
+                    }
+                });
         MinecraftForge.EVENT_BUS.addListener(EventPriority.NORMAL, false, ScreenEvent.Init.Post.class,
                 e -> Client.afterScreenInit(Minecraft.getInstance(), e.getScreen(),
                         e.getScreen().width, e::addListener));

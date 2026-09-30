@@ -161,10 +161,19 @@ public final class Diagnosis {
         return d;
     }
 
+    private static boolean platform(String id) {
+        return PLATFORM.contains(id) || id.startsWith("fabric-") || id.startsWith("fabric_");
+    }
+
+    /** A declared mod that is not part of the platform: one a player can act on. */
+    static boolean blameable(JarInfo info) {
+        return info.declared && info.id != null && !platform(info.id.toLowerCase(Locale.ROOT));
+    }
+
     private void blame(Map<String, Suspect> byId, Owners owners, String rawId, int score,
                        String reason) {
         String id = rawId.toLowerCase(Locale.ROOT);
-        if (PLATFORM.contains(id) || id.startsWith("fabric-") || id.startsWith("fabric_")) {
+        if (platform(id)) {
             return;
         }
         Suspect s = byId.get(id);
