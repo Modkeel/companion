@@ -1,14 +1,21 @@
 package modkeel.companion.core;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
+import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.attribute.FileTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
+
+import com.sun.net.httpserver.HttpExchange;
+import com.sun.net.httpserver.HttpServer;
 
 /** Core tests without a test framework: java modkeel.companion.core.CoreTest <fixtures dir>. */
 public final class CoreTest {
@@ -35,6 +42,7 @@ public final class CoreTest {
         run("plan round trip", CoreTest::planRoundTrip);
         run("crash signature ignores lines, lambdas and mixin hashes", CoreTest::signature);
         run("fix outcomes: held, recurred, undone", CoreTest::outcomes);
+        run("reports: payload, outbox, install token", CoreTest::reports);
         run("rules bundle and version in file names", CoreTest::rules);
         run("lab rules in the diagnosis", CoreTest::labHints);
         run("lag spike: owner of a sampled stack", CoreTest::spikeOwner);
@@ -501,6 +509,118 @@ public final class CoreTest {
         g.startup();
         eq(Outcomes.Status.UNDONE, g.outcomes.fixes.get(0).status, "undone by the player");
         eq(3, g.outcomes.fixes.size(), "three fixes kept");
+    }
+
+    static byte[] zip(String... nameThenContent) throws IOException {
+        ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+        try (ZipOutputStream z = new ZipOutputStream(bytes)) {
+            for (int i = 0; i < nameThenContent.length; i += 2) {
+                z.putNextEntry(new ZipEntry(nameThenContent[i]));
+                z.write(nameThenContent[i + 1].getBytes(StandardCharsets.UTF_8));
+            }
+        }
+        return bytes.toByteArray();
+    }
+
+    static void reply(HttpExchange ex, int status, String body) throws IOException {
+        byte[] b = body.getBytes(StandardCharsets.UTF_8);
+        ex.sendResponseHeaders(status, b.length);
+        try (OutputStream o = ex.getResponseBody()) {
+            o.write(b);
+        }
+    }
+
+    static void reports() throws Exception {
+        Path game = tmp();
+        Path mods = game.resolve("mods");
+        Files.createDirectories(mods);
+        // a jar whose file name holds a user name, with a mod bundled in it
+        byte[] inner = zip("fabric.mod.json", "{\"id\":\"inner\",\"version\":\"2.0\"}");
+        try (ZipOutputStream z = new ZipOutputStream(Files.newOutputStream(mods.resolve("Steve's bad-1.0.jar")))) {
+            z.putNextEntry(new ZipEntry("fabric.mod.json"));
+            z.write("{\"id\":\"bad\",\"version\":\"1.0\"}".getBytes(StandardCharsets.UTF_8));
+            z.putNextEntry(new ZipEntry("bad/Bad.class"));
+            z.write(1);
+            z.putNextEntry(new ZipEntry("META-INF/jars/inner.jar"));
+            z.write(inner);
+        }
+        Files.write(mods.resolve("neo.jar"), zip(
+                "META-INF/mods.toml", "[[mods]]\nmodId=\"neo\"\nversion=\"${file.jarVersion}\"\n",
+                "META-INF/MANIFEST.MF", "Manifest-Version: 1.0\nImplementation-Version: 3.1\n"));
+        Path crashes = game.resolve("crash-reports");
+        Files.createDirectories(crashes);
+        Files.write(crashes.resolve("crash-1.txt"),
+                "java.lang.RuntimeException: x\n\tat knot//bad.Bad.run$0(Bad.java:1)\n".getBytes(StandardCharsets.UTF_8));
+        Guardian g = new Guardian(game);
+        g.mcVersion = "26.2";
+        g.loader = "fabric";
+        g.loaderVersion = "0.17.3";
+        Diagnosis d = g.startup();
+        check(d != null && d.top().id.equals("bad"), "crash diagnosed");
+        g.shareCrash(false, null);
+        eq(0, g.reports.pending().size(), "not shared, not queued");
+        eq(false, g.shareChoice(), "choice kept");
+
+        List<String> got = new ArrayList<>();
+        int[] status = {200};
+        HttpServer server = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
+        server.createContext("/v1/install", ex -> reply(ex, 200, "{\"install\":\"" + "ab".repeat(16) + "\"}"));
+        server.createContext("/v1/crash", ex -> {
+            got.add(new String(ex.getRequestBody().readAllBytes(), StandardCharsets.UTF_8));
+            reply(ex, status[0], "{\"id\":\"r1\",\"seen\":3,\"fixes\":[]}");
+        });
+        server.start();
+        try {
+            Reports r = new Reports(g, "http://127.0.0.1:" + server.getAddress().getPort() + "/");
+            String json = r.crash(d, r.disableFix(d.top()));
+            check(!json.contains("Steve") && !json.contains(".jar"), "no file names: " + json);
+            check(json.startsWith("{\"v\":1,\"install\":\"\",\"env\":{\"mc\":\"26.2\",\"loader\":\"fabric\","
+                    + "\"loader_version\":\"0.17.3\""), json);
+            check(json.contains("{\"id\":\"bad\",\"version\":\"1.0\",\"sha1\":\""), "top-level mod: " + json);
+            check(json.contains("{\"id\":\"neo\",\"version\":\"3.1\","), "version from the manifest: " + json);
+            check(json.contains("\"id\":\"inner\",\"version\":\"2.0\",\"sha1\":\"" + ModSet.sha1(inner)
+                    + "\",\"in\":\"bad\"}"), "bundled mod: " + json);
+            check(json.contains("\"signature\":\"" + d.signature + "\",\"kind\":\"GENERIC\","
+                    + "\"exception\":\"java.lang.RuntimeException\",\"frames\":[\"bad.Bad.run$\"],"
+                    + "\"suspects\":[\"bad\"],\"fix\":{\"title\":\"disable:bad\",\"disabled\":[\"bad\"]}}"), json);
+            String readable = r.readable(json);
+            check(readable.contains("\n  \"signature\": \"" + d.signature + "\","), readable);
+            check(readable.contains("\n    {\"id\": \"neo\", \"version\": \"3.1\", "), "one mod per line: " + readable);
+            check(readable.contains("\"fix\": {\"title\": \"disable:bad\", \"disabled\": [\"bad\"]}\n}"), readable);
+
+            r.queue("crash", json);
+            check(r.send(), "all sent");
+            eq(1, got.size(), "posted");
+            check(got.get(0).contains("\"install\":\"" + "ab".repeat(16) + "\""), "token filled in");
+            eq(0, r.pending().size(), "outbox empty");
+            check(Files.readString(game.resolve("modkeel/install.txt")).equals("ab".repeat(16)), "token kept");
+            try (var sent = Files.list(r.sent)) {
+                check(sent.anyMatch(f -> {
+                    try {
+                        return Files.readString(f).contains("\"answer\":{\"id\":\"r1\"");
+                    } catch (IOException e) {
+                        return false;
+                    }
+                }), "sent copy with the answer");
+            }
+
+            status[0] = 503;
+            r.queue("crash", json);
+            check(!r.send(), "busy server: retry later");
+            eq(1, r.pending().size(), "kept");
+            status[0] = 400;
+            check(r.send(), "a refused payload is not retried");
+            eq(0, r.pending().size(), "dropped");
+            Path old = r.queue("crash", json);
+            Files.setLastModifiedTime(old, FileTime.fromMillis(System.currentTimeMillis() - 8L * 24 * 3600 * 1000));
+            int posted = got.size();
+            r.send();
+            eq(posted, got.size(), "a week-old report is not sent");
+            eq(0, r.pending().size(), "and is dropped");
+            eq(false, new Reports(g, "").enabled(), "empty endpoint turns sending off");
+        } finally {
+            server.stop(0);
+        }
     }
 
     static void rules() throws Exception {

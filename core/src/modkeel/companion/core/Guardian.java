@@ -32,6 +32,10 @@ public final class Guardian {
     public Rules rules = Rules.load();
     /** The running Minecraft version, set by the loader adapter before {@link #startup()}. */
     public String mcVersion = "";
+    /** The loader ("fabric", "neoforge", "forge") and its version, set with {@link #mcVersion}. */
+    public String loader = "";
+    public String loaderVersion = "";
+    public final Reports reports;
     private ModSet current;
     private Owners owners;
 
@@ -75,6 +79,7 @@ public final class Guardian {
         this.home = this.gameDir.resolve("modkeel");
         this.state = State.load(this.gameDir);
         this.outcomes = Outcomes.load(this.home);
+        this.reports = new Reports(this);
     }
 
     /** At launch, before any screen: what the last fix did, which fixes were undone, and the crash. */
@@ -85,6 +90,7 @@ public final class Guardian {
             outcomes.checkUndone(modsDir);
             outcomes.bindSet(current().fingerprint());
         }
+        reports.sendLater(); // what a closed game left in the outbox
         return checkCrashes();
     }
 
@@ -304,6 +310,24 @@ public final class Guardian {
         Log.info("world " + name + " was open at the crash; last saved "
                  + w.unsavedMinutes() + " min before it");
         return w;
+    }
+
+    /** Whether the player shared the last crash: the crash screen starts with that choice. */
+    public boolean shareChoice() {
+        return state.get("share", "false").equals("true");
+    }
+
+    /**
+     * The player's choice on the crash screen. Shared, the crash goes to the outbox with the
+     * fix they picked (null for none) and is sent in the background.
+     */
+    public void shareCrash(boolean share, Reports.Fix fix) {
+        state.set("share", share);
+        state.save();
+        if (share && crash != null && reports.enabled()) {
+            reports.queue("crash", reports.crash(crash, fix));
+            reports.sendLater();
+        }
     }
 
     // ---- lab rules -----------------------------------------------------------------------

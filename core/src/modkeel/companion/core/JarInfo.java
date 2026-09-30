@@ -25,12 +25,19 @@ public final class JarInfo {
     private static final Pattern JSON_NAME = Pattern.compile("\"name\"\\s*:\\s*\"((?:[^\"\\\\]|\\\\.)*)\"");
     private static final Pattern TOML_ID = Pattern.compile("(?m)^\\s*modId\\s*=\\s*\"([^\"]+)\"");
     private static final Pattern TOML_NAME = Pattern.compile("(?m)^\\s*displayName\\s*=\\s*\"([^\"]+)\"");
-    private static final Pattern JSON_DEPENDS = Pattern.compile("\"depends\"\\s*:\\s*\\{([^}]*)\\}");
+    private static final Pattern JSON_VERSION = Pattern.compile("\"version\"\\s*:\\s*\"([^\"]+)\"");
+    private static final Pattern TOML_VERSION = Pattern.compile("(?m)^\\s*version\\s*=\\s*\"([^\"]+)\"");
+    private static final Pattern MANIFEST_VERSION = Pattern.compile("(?m)^Implementation-Version:\\s*(\\S+)");
+    private static final Pattern JSON_DEPENDS =Pattern.compile("\"depends\"\\s*:\\s*\\{([^}]*)\\}");
     private static final Pattern JSON_KEY = Pattern.compile("\"([^\"]+)\"\\s*:");
     private static final Pattern MIXIN_CONFIG = Pattern.compile("(?i)[^/]*mixin[^/]*\\.json");
 
     public String id;
     public String name;
+    /** Declared version ("${file.jarVersion}" resolved from the manifest), or null. */
+    public String version;
+    /** Content hash of a nested jar; null for a top-level one (see {@link ModSet}). */
+    public String sha1;
     public final String file;
     public final String bundledIn;
     /** False for a plain library with no mod metadata. */
@@ -62,6 +69,7 @@ public final class JarInfo {
                              int depth) throws IOException {
         JarInfo info = new JarInfo(file, bundledIn);
         out.add(info);
+        String manifestVersion = null;
         ZipInputStream zip = new ZipInputStream(raw);
         ZipEntry e;
         while ((e = zip.getNextEntry()) != null) {
@@ -75,6 +83,7 @@ public final class JarInfo {
                 String json = new String(zip.readAllBytes(), StandardCharsets.UTF_8);
                 info.id = first(JSON_ID, json, info.id);
                 info.name = first(JSON_NAME, json, info.name);
+                info.version = first(JSON_VERSION, json, info.version);
                 Matcher dep = JSON_DEPENDS.matcher(json);
                 if (dep.find()) {
                     Matcher key = JSON_KEY.matcher(dep.group(1));
@@ -86,10 +95,16 @@ public final class JarInfo {
                 String toml = new String(zip.readAllBytes(), StandardCharsets.UTF_8);
                 info.id = first(TOML_ID, toml, info.id);
                 info.name = first(TOML_NAME, toml, info.name);
+                info.version = first(TOML_VERSION, toml, info.version);
+            } else if (n.equals("META-INF/MANIFEST.MF")) {
+                manifestVersion = first(MANIFEST_VERSION,
+                        new String(zip.readAllBytes(), StandardCharsets.UTF_8), null);
             } else if (n.endsWith(".jar") && depth < 2) {
                 byte[] nested = zip.readAllBytes();
+                int at = out.size();
                 read(new ByteArrayInputStream(nested), n.substring(n.lastIndexOf('/') + 1),
                      bundledIn != null ? bundledIn : file, out, depth + 1);
+                out.get(at).sha1 = ModSet.sha1(nested);
             } else if (!e.isDirectory()) {
                 Matcher m = MIXIN_CONFIG.matcher(n.substring(n.lastIndexOf('/') + 1));
                 if (m.matches()) {
@@ -98,6 +113,9 @@ public final class JarInfo {
             }
         }
         info.declared = info.id != null;
+        if (info.version != null && info.version.startsWith("${")) {
+            info.version = manifestVersion;
+        }
         if (info.id == null) {
             // a plain library: name it after its file
             info.id = file.replaceAll("(?i)\\.jar$", "");

@@ -34,11 +34,18 @@ public final class Common {
     private Common() {
     }
 
-    /** @param selfJar this mod's jar, which also holds the helper that applies fixes */
-    public static void init(Path gameDir, String mcVersion, Supplier<Path> selfJar) {
+    /**
+     * @param loader "fabric", "quilt", "neoforge" or "forge", with its version: both only go
+     *               into reports the player chose to share
+     * @param selfJar this mod's jar, which also holds the helper that applies fixes
+     */
+    public static void init(Path gameDir, String mcVersion, String loader, String loaderVersion,
+                            Supplier<Path> selfJar) {
         Log.sink = LoggerFactory.getLogger("modkeel")::info;
         guardian = new Guardian(gameDir);
         guardian.mcVersion = mcVersion;
+        guardian.loader = loader;
+        guardian.loaderVersion = loaderVersion;
         Common.selfJar = selfJar;
         spikes = new Spikes(guardian::owners, Sections.load());
         spikes.counter = Common::countEntities;

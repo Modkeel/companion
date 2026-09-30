@@ -10,6 +10,7 @@ import java.util.List;
 import com.mojang.blaze3d.platform.NativeImage;
 import modkeel.companion.core.Log;
 import net.minecraft.client.gui.components.AbstractWidget;
+import net.minecraft.client.gui.components.Checkbox;
 import net.minecraft.client.gui.components.ImageWidget;
 import net.minecraft.client.gui.components.toasts.SystemToast;
 import net.minecraft.client.gui.screens.FaviconTexture;
@@ -90,5 +91,10 @@ public final class Compat {
     /** A toast in the corner that replaces the previous one. */
     public static void toast(Minecraft mc, Component title, Component message) {
         SystemToast.addOrUpdate(mc.gui.toastManager(), SystemToast.SystemToastId.PERIODIC_NOTIFICATION, title, message);
+    }
+
+    /** A checkbox sized to its label; read it back with {@code selected()}. */
+    public static Checkbox checkbox(Component label, Font font, boolean selected) {
+        return Checkbox.builder(label, font).selected(selected).build();
     }
 }

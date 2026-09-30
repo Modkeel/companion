@@ -14,15 +14,20 @@ public final class CompanionMod implements ModInitializer {
     @Override
     public void onInitialize() {
         FabricLoader loader = FabricLoader.getInstance();
-        Common.init(loader.getGameDir(), loader.getModContainer("minecraft")
-                .map(c -> c.getMetadata().getVersion().getFriendlyString()).orElse(""),
-                CompanionMod::selfJar);
+        boolean quilt = loader.isModLoaded("quilt_loader");
+        Common.init(loader.getGameDir(), version(loader, "minecraft"), quilt ? "quilt" : "fabric",
+                version(loader, quilt ? "quilt_loader" : "fabricloader"), CompanionMod::selfJar);
         ServerLifecycleEvents.SERVER_STARTING.register(Common::serverStarting);
         ServerLifecycleEvents.SERVER_STOPPED.register(server -> Common.serverStopped());
         ServerTickEvents.END_SERVER_TICK.register(server -> Common.serverTick());
         if (loader.getEnvironmentType() == EnvType.SERVER) {
             Common.dedicatedServerStartup();
         }
+    }
+
+    private static String version(FabricLoader loader, String id) {
+        return loader.getModContainer(id).map(c -> c.getMetadata().getVersion().getFriendlyString())
+                .orElse("");
     }
 
     private static Path selfJar() {

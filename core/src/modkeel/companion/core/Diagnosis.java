@@ -53,6 +53,9 @@ public final class Diagnosis {
      * every machine.
      */
     public String signature = "";
+    /** Root exception type and its first frames, normalised: what the signature is built from. */
+    public String exception = "";
+    public List<String> frames = new ArrayList<>();
 
     public Suspect top() {
         return suspects.isEmpty() ? null : suspects.get(0);
@@ -88,6 +91,8 @@ public final class Diagnosis {
         }
         d.kind = kind(report);
         d.signature = signature(report, d.kind);
+        d.exception = root == null ? "" : root.type;
+        d.frames = frames(report);
 
         Map<String, Suspect> byId = new LinkedHashMap<>();
         for (String id : report.loadingIssues) {
@@ -197,13 +202,8 @@ public final class Diagnosis {
         CrashReport.Cause root = report.root();
         if (root != null) {
             sb.append('|').append(root.type);
-            int n = 0;
-            for (CrashReport.Frame f : root.frames) {
-                if (n++ == 6) {
-                    break;
-                }
-                String method = f.method.replaceAll("\\$[0-9a-f]{6}\\$", "\\$").replaceAll("\\$\\d+", "\\$");
-                sb.append('|').append(f.className).append('.').append(method);
+            for (String f : frames(report)) {
+                sb.append('|').append(f);
             }
         }
         for (String id : report.fromMod) {
@@ -216,6 +216,22 @@ public final class Diagnosis {
             sb.append("|loading:").append(id);
         }
         return ModSet.sha1(sb.toString().getBytes(java.nio.charset.StandardCharsets.UTF_8)).substring(0, 16);
+    }
+
+    /** The root cause's first six frames, without lambda counters or mixin hashes. */
+    static List<String> frames(CrashReport report) {
+        List<String> out = new ArrayList<>();
+        CrashReport.Cause root = report.root();
+        if (root != null) {
+            for (CrashReport.Frame f : root.frames) {
+                if (out.size() == 6) {
+                    break;
+                }
+                String method = f.method.replaceAll("\\$[0-9a-f]{6}\\$", "\\$").replaceAll("\\$\\d+", "\\$");
+                out.add(f.className + "." + method);
+            }
+        }
+        return out;
     }
 
     private static Kind kind(CrashReport report) {

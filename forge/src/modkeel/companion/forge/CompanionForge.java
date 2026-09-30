@@ -11,12 +11,14 @@ import net.minecraftforge.fml.ModList;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.loading.FMLEnvironment;
 import net.minecraftforge.fml.loading.FMLPaths;
+import net.minecraftforge.versions.forge.ForgeVersion;
 
 /** Forge entrypoint: world backups and the last good set, on clients and servers. */
 @Mod("modkeel")
 public final class CompanionForge {
     public CompanionForge() {
         Common.init(FMLPaths.GAMEDIR.get(), SharedConstants.getCurrentVersion().getName(),
+                "forge", ForgeVersion.getVersion(),
                 () -> ModList.get().getModFileById("modkeel").getFile().getFilePath());
         // explicit event classes: Forge's bus cannot always read them from a lambda
         MinecraftForge.EVENT_BUS.addListener(EventPriority.NORMAL, false, ServerStartingEvent.class,

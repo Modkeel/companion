@@ -119,6 +119,11 @@ public final class Client {
             } else {
                 Log.info("showing the crash screen");
                 mc.execute(() -> Compat.setScreen(mc, new CrashScreen(screen, g)));
+                if ("report".equals(test)) {
+                    Log.info("showing the report screen");
+                    mc.execute(() -> Compat.setScreen(mc, new ReportScreen(Compat.screen(mc),
+                            g.reports.readable(g.reports.crash(g.crash, null)))));
+                }
             }
         } else if ("health".equals(test) && !crashHandled) {
             crashHandled = true;
@@ -149,11 +154,14 @@ public final class Client {
     /** Test hook: pick a fix without clicking (-Dmodkeel.test.autofix=disable|revert). */
     private static void autofix(Minecraft mc, Guardian g, String action) {
         Diagnosis.Suspect s = g.crash.top();
+        boolean share = Boolean.getBoolean("modkeel.test.share");
         if (action.equals("disable") && s != null && s.file != null) {
             Log.info("autofix: disabling " + s.id);
+            g.shareCrash(share, g.reports.disableFix(s));
             applyCrashFixAndQuit(mc, g, g.disablePlan(s));
         } else if (action.equals("revert") && g.canRevert()) {
             Log.info("autofix: reverting to the last good set");
+            g.shareCrash(share, g.reports.revertFix());
             applyCrashFixAndQuit(mc, g, g.revertPlan());
         } else {
             Log.info("autofix: nothing to do for " + action);

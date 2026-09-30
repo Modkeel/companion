@@ -11,11 +11,13 @@ import modkeel.companion.core.Diagnosis;
 import modkeel.companion.core.Guardian;
 import modkeel.companion.core.Msg;
 import modkeel.companion.core.Outcomes;
+import modkeel.companion.core.Reports;
 import modkeel.companion.core.Rules;
 import modkeel.companion.core.Log;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.components.Checkbox;
 import net.minecraft.client.gui.components.MultiLineTextWidget;
 import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.layouts.HeaderAndFooterLayout;
@@ -30,6 +32,10 @@ public final class CrashScreen extends Screen {
     private final Diagnosis d;
     private HeaderAndFooterLayout layout;
     private Scroll scroll;
+    /** "Share this crash": kept across re-inits (a confirm screen and back). */
+    private boolean share;
+    private Checkbox shareBox;
+    private boolean decided;
     /** Textures made for this screen, closed with it. */
     private final List<AutoCloseable> owned = new ArrayList<>();
 
@@ -38,11 +44,12 @@ public final class CrashScreen extends Screen {
         this.next = next;
         this.g = g;
         this.d = g.crash;
+        this.share = g.shareChoice();
     }
 
     @Override
     protected void init() {
-        layout = new HeaderAndFooterLayout(this, 33, 60);
+        layout = new HeaderAndFooterLayout(this, 33, g.reports.enabled() ? 84 : 60);
         Compat.titleHeader(layout, title, font);
         int w = Math.min(width - 40, 380);
         Stack body = Stack.vertical(8);
@@ -86,6 +93,18 @@ public final class CrashScreen extends Screen {
         scroll = layout.addToContents(new Scroll(minecraft, body, Compat.contentHeight(layout)));
 
         Stack footer = layout.addToFooter(Stack.vertical(4));
+        shareBox = null;
+        if (g.reports.enabled()) {
+            Stack row0 = footer.addChild(Stack.horizontal(8));
+            shareBox = row0.addChild(Compat.checkbox(Component.translatable("modkeel.share.checkbox"),
+                    font, share));
+            shareBox.setTooltip(Tooltip.create(Component.translatable("modkeel.share.tooltip")));
+            row0.addChild(Button.builder(Component.translatable("modkeel.share.what"),
+                    b -> Compat.setScreen(minecraft, new ReportScreen(this,
+                            g.reports.readable(g.reports.crash(d, s == null || s.file == null
+                                    ? null : g.reports.disableFix(s))))))
+                    .width(100).build());
+        }
         Stack row1 = footer.addChild(Stack.horizontal(8));
         Stack row2 = footer.addChild(Stack.horizontal(8));
 
@@ -98,7 +117,10 @@ public final class CrashScreen extends Screen {
                 b -> Compat.setScreen(minecraft, Client.confirm(this,
                         Component.translatable("modkeel.revert.confirm_title"),
                         revertMessage(g),
-                        () -> Client.applyCrashFixAndQuit(minecraft, g, g.revertPlan()))))
+                        () -> {
+                            decide(g.reports.revertFix());
+                            Client.applyCrashFixAndQuit(minecraft, g, g.revertPlan());
+                        })))
                 .width(150).build());
         revert.active = g.canRevert();
         if (!revert.active) {
@@ -156,8 +178,19 @@ public final class CrashScreen extends Screen {
         }
     }
 
+    /** The player picked a fix (null: none); the crash is shared with it if they chose to. */
+    private void decide(Reports.Fix fix) {
+        if (!decided) {
+            decided = true;
+            g.shareCrash(share, fix);
+        }
+    }
+
     @Override
     public void removed() {
+        if (shareBox != null) {
+            share = shareBox.selected();
+        }
         for (AutoCloseable c : owned) {
             try {
                 c.close();
@@ -178,7 +211,10 @@ public final class CrashScreen extends Screen {
         msg.append("\n\n").append(Component.translatable("modkeel.restart_note"));
         Compat.setScreen(minecraft, Client.confirm(this,
                 Component.translatable("modkeel.disable.confirm_title", s.name), msg,
-                () -> Client.applyCrashFixAndQuit(minecraft, g, g.disablePlan(s))));
+                () -> {
+                    decide(g.reports.disableFix(s));
+                    Client.applyCrashFixAndQuit(minecraft, g, g.disablePlan(s));
+                }));
     }
 
     static Component revertMessage(Guardian g) {
@@ -238,6 +274,10 @@ public final class CrashScreen extends Screen {
 
     @Override
     public void onClose() {
+        if (shareBox != null) {
+            share = shareBox.selected();
+        }
+        decide(null);
         Compat.setScreen(minecraft, next);
     }
 }
