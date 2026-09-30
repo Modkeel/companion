@@ -9,6 +9,7 @@ import java.util.Deque;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.stream.Collectors;
 import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Consumer;
@@ -19,7 +20,7 @@ import java.util.function.Supplier;
  * watchdog thread notices when the beats stop, samples that thread's stack until they resume,
  * and names the mod whose code the thread was running. Samples no mod owns are split by the
  * part of Minecraft they are in ({@link Sections}); every busy sample also says what it waited
- * on (the processor, the graphics card, the disk).
+ * on (the processor, the graphics card, the disk, the game's worker threads).
  */
 public final class Spikes {
     /** Which thread stalled: the render thread (the picture froze) or the server thread (the world stopped). */
@@ -50,6 +51,23 @@ public final class Spikes {
         }
     }
 
+    /** How many entities of one type the world held right after a spike. */
+    public static final class Crowd {
+        /** The entity type's translation key. */
+        public final String type;
+        public final int count;
+
+        Crowd(String type, int count) {
+            this.type = type;
+            this.count = count;
+        }
+
+        @Override
+        public String toString() {
+            return count + " " + type;
+        }
+    }
+
     public static final class Spike {
         public final Where where;
         /** When it ended, epoch ms. */
@@ -63,11 +81,18 @@ public final class Spikes {
         public final int gpuPercent;
         /** Share of the busy samples waiting on the disk, 0-100. */
         public final int diskPercent;
+        /** Share of the busy samples blocked on the game's worker threads (chunks), 0-100. */
+        public final int waitPercent;
         /** The processor was nearly full and mostly with other programs. */
         public final boolean otherPrograms;
+        /**
+         * The most common entity types in the world right after a world spike, largest first;
+         * filled a moment after the spike, from the server thread.
+         */
+        public volatile List<Crowd> crowds = List.of();
 
         Spike(Where where, long at, long millis, int gcPercent, List<Share> shares, int gpuPercent,
-              int diskPercent, boolean otherPrograms) {
+              int diskPercent, int waitPercent, boolean otherPrograms) {
             this.where = where;
             this.at = at;
             this.millis = millis;
@@ -75,7 +100,21 @@ public final class Spikes {
             this.shares = shares;
             this.gpuPercent = gpuPercent;
             this.diskPercent = diskPercent;
+            this.waitPercent = waitPercent;
             this.otherPrograms = otherPrograms;
+        }
+
+        /** Keeps the biggest crowds from a count of entities per type. */
+        public void count(Map<String, Integer> perType) {
+            crowds = perType.entrySet().stream()
+                    .filter(e -> e.getValue() >= CROWD)
+                    .sorted((a, b) -> b.getValue() - a.getValue())
+                    .limit(CROWDS)
+                    .map(e -> new Crowd(e.getKey(), e.getValue()))
+                    .collect(Collectors.toList());
+            if (!crowds.isEmpty()) {
+                Log.info("lag spike entities: " + crowds);
+            }
         }
 
         public Share top() {
@@ -92,7 +131,8 @@ public final class Spikes {
             for (Share s : shares) {
                 b.append(", ").append(s.key()).append(' ').append(s.percent).append('%');
             }
-            b.append("; gpu ").append(gpuPercent).append("%, disk ").append(diskPercent).append('%');
+            b.append("; gpu ").append(gpuPercent).append("%, disk ").append(diskPercent)
+                    .append("%, wait ").append(waitPercent).append('%');
             if (otherPrograms) {
                 b.append(", other programs busy");
             }
@@ -130,6 +170,9 @@ public final class Spikes {
 
     public static final int MIN_SHARE = 10;
     public static final int KEEP = 30;
+    /** Entity types at least this common are worth naming after a spike, at most {@link #CROWDS}. */
+    public static final int CROWD = 50;
+    public static final int CROWDS = 3;
 
     /** A beat this late starts sampling. */
     public long startMs = Long.getLong("modkeel.spikes.start_ms", 150);
@@ -138,6 +181,8 @@ public final class Spikes {
     public long sampleMs = 10;
     /** Called on the sampler thread for each recorded spike. */
     public volatile Consumer<Spike> listener;
+    /** Called on the sampler thread for each world spike, to count its entities. */
+    public volatile Consumer<Spike> counter;
 
     /** System processor load at least this, with the game using under half of it: other programs. */
     static final double BUSY_SYSTEM = 0.9;
@@ -261,18 +306,29 @@ public final class Spikes {
     private void sample(Watch w) {
         Thread.State state = w.thread.getState();
         StackTraceElement[] stack = w.thread.getStackTrace();
-        if (state != Thread.State.RUNNABLE || stack.length == 0) {
+        if (stack.length == 0) {
+            w.idle++;
+            return;
+        }
+        String section = sections.of(stack);
+        Sections.Resource resource;
+        if (state == Thread.State.RUNNABLE) {
+            resource = Sections.resource(stack);
+        } else if (section != null) {
+            // blocked in the middle of the game's work (a chunk it needs now): its worker threads
+            resource = Sections.Resource.WAIT;
+        } else {
+            // parked between ticks or frames
             w.idle++;
             return;
         }
         w.busy++;
         String owner = owner(stack, owners.get());
-        if (owner.equals(VANILLA)) {
-            String section = sections.of(stack);
-            owner = section == null ? VANILLA : VANILLA + ":" + section;
+        if (owner.equals(VANILLA) && section != null) {
+            owner = VANILLA + ":" + section;
         }
         w.counts.merge(owner, 1, Integer::sum);
-        w.resources[Sections.resource(stack).ordinal()]++;
+        w.resources[resource.ordinal()]++;
     }
 
     private void record(Watch w, long millis) {
@@ -299,10 +355,11 @@ public final class Spikes {
                 });
         int gpu = w.resources[Sections.Resource.GPU.ordinal()] * 100 / w.busy;
         int disk = w.resources[Sections.Resource.DISK.ordinal()] * 100 / w.busy;
+        int wait = w.resources[Sections.Resource.WAIT.ordinal()] * 100 / w.busy;
         double[] load = this.load;
         boolean others = load != null && load[0] >= BUSY_SYSTEM && load[1] < load[0] / 2;
         Spike s = new Spike(w.where, System.currentTimeMillis(), millis, gcPercent, shares, gpu,
-                disk, others);
+                disk, wait, others);
         synchronized (recent) {
             recent.addFirst(s);
             while (recent.size() > KEEP) {
@@ -310,6 +367,10 @@ public final class Spikes {
             }
         }
         Log.info("lag spike: " + s);
+        Consumer<Spike> c = counter;
+        if (c != null && s.where == Where.WORLD) {
+            c.accept(s);
+        }
         Consumer<Spike> l = listener;
         if (l != null) {
             l.accept(s);

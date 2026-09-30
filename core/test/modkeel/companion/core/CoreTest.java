@@ -39,6 +39,7 @@ public final class CoreTest {
         run("lab rules in the diagnosis", CoreTest::labHints);
         run("lag spike: owner of a sampled stack", CoreTest::spikeOwner);
         run("lag spike: busy stall named, idle stall ignored", CoreTest::spikeLive);
+        run("lag spike: blocked on worker threads, and the crowds after it", CoreTest::spikeWait);
         run("lag spike: part of Minecraft and resource of a stack", CoreTest::spikeSections);
         System.out.println(passed + " passed, " + failed + " failed");
         if (failed > 0) {
@@ -623,6 +624,45 @@ public final class CoreTest {
         check(s.top().percent >= 50, "share " + s.top().percent);
         eq("BUSYMOD Mod", s.top().name, "display name");
         eq(0, s.gpuPercent, "no graphics wait");
+    }
+
+    static void spikeWait() throws Exception {
+        Owners o = owners(tmp().resolve("mods"));
+        // the latch stands for a chunk the game waits on
+        Spikes spikes = new Spikes(() -> o, Sections.parse(
+                List.of("java.util.concurrent.CountDownLatch\tchunks"), List.of()));
+        spikes.startMs = 60;
+        spikes.reportMs = 150;
+        spikes.start();
+        Throwable[] error = {null};
+        Thread game = new Thread(() -> {
+            try {
+                Spikes.Watch w = spikes.watch(Spikes.Where.WORLD);
+                beatFor(w, 100);
+                Thread.sleep(400); // parked between ticks: nothing to blame
+                beatFor(w, 100);
+                new java.util.concurrent.CountDownLatch(1).await(400, java.util.concurrent.TimeUnit.MILLISECONDS);
+                beatFor(w, 100);
+            } catch (Throwable e) {
+                error[0] = e;
+            }
+        });
+        game.start();
+        game.join();
+        Thread.sleep(50);
+        spikes.stop();
+        check(error[0] == null, "game thread: " + error[0]);
+        List<Spikes.Spike> recent = spikes.recent();
+        eq(1, recent.size(), "only the blocked stall: " + recent);
+        Spikes.Spike s = recent.get(0);
+        eq("chunks", s.top().section, "part of the game");
+        check(s.waitPercent >= 90, "wait " + s.waitPercent);
+
+        s.count(java.util.Map.of("entity.minecraft.item", 1200, "entity.minecraft.zombie", 400,
+                "entity.minecraft.cow", 12, "entity.minecraft.skeleton", 60,
+                "entity.minecraft.creeper", 55));
+        eq("[1200 entity.minecraft.item, 400 entity.minecraft.zombie, 60 entity.minecraft.skeleton]",
+                s.crowds.toString(), "biggest crowds, rare types left out");
     }
 
     static StackTraceElement[] stack(String... frames) {

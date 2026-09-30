@@ -105,6 +105,8 @@
   "modkeel.spikes.gc": "nettoyage mémoire de Java",
   "modkeel.spikes.res.gpu": "Attente de la carte graphique",
   "modkeel.spikes.res.disk": "Attente du disque",
+  "modkeel.spikes.res.wait": "Attente du travail en arrière-plan",
+  "modkeel.spikes.crowds": "Le plus courant dans le monde : %s",
   "modkeel.spikes.other_programs": "D'autres programmes utilisaient le processeur",
   "modkeel.spikes.gc_hint": "Le nettoyage mémoire de Java en a causé certaines. Donner plus de RAM à Minecraft dans ton launcher aide souvent.",
   "modkeel.spikes.gpu_hint": "Certains gels attendaient la carte graphique : baissez la distance de rendu ou vérifiez que Minecraft utilise votre carte graphique dédiée.",

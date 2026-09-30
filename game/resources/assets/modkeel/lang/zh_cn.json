@@ -105,6 +105,8 @@
   "modkeel.spikes.gc": "Java 内存清理",
   "modkeel.spikes.res.gpu": "等待显卡",
   "modkeel.spikes.res.disk": "等待磁盘",
+  "modkeel.spikes.res.wait": "等待后台任务",
+  "modkeel.spikes.crowds": "世界中最多的：%s",
   "modkeel.spikes.other_programs": "其他程序正在占用处理器",
   "modkeel.spikes.gc_hint": "其中一些由 Java 内存清理引起。在启动器中给 Minecraft 分配更多内存通常有帮助。",
   "modkeel.spikes.gpu_hint": "部分卡顿在等待显卡：请降低渲染距离，或检查 Minecraft 是否在使用独立显卡。",

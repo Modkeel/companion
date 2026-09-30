@@ -105,6 +105,8 @@
   "modkeel.spikes.gc": "Java-Speicherbereinigung",
   "modkeel.spikes.res.gpu": "Warten auf die Grafikkarte",
   "modkeel.spikes.res.disk": "Warten auf die Festplatte",
+  "modkeel.spikes.res.wait": "Warten auf Hintergrundarbeit",
+  "modkeel.spikes.crowds": "Am häufigsten in der Welt: %s",
   "modkeel.spikes.other_programs": "Andere Programme haben den Prozessor belegt",
   "modkeel.spikes.gc_hint": "Einige davon kamen von der Java-Speicherbereinigung. Mehr RAM für Minecraft im Launcher hilft oft.",
   "modkeel.spikes.gpu_hint": "Einige Ruckler warteten auf die Grafikkarte: Sichtweite verringern oder prüfen, ob Minecraft deine dedizierte Grafikkarte nutzt.",

@@ -1,6 +1,8 @@
 package modkeel.companion.game;
 
 import java.nio.file.Path;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.function.Supplier;
 
 import modkeel.companion.core.Diagnosis;
@@ -10,6 +12,8 @@ import modkeel.companion.core.Outcomes;
 import modkeel.companion.core.Sections;
 import modkeel.companion.core.Spikes;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.storage.LevelResource;
 import org.slf4j.LoggerFactory;
 
@@ -20,6 +24,7 @@ import org.slf4j.LoggerFactory;
 public final class Common {
     public static Guardian guardian;
     public static Spikes spikes;
+    private static volatile MinecraftServer server;
     private static Supplier<Path> selfJar;
     private static int ticks;
     /** Play is counted towards fix outcomes once a minute. */
@@ -36,6 +41,7 @@ public final class Common {
         guardian.mcVersion = mcVersion;
         Common.selfJar = selfJar;
         spikes = new Spikes(guardian::owners, Sections.load());
+        spikes.counter = Common::countEntities;
         // read every jar now, off the game threads, so the first spike is named without delay
         background(guardian::owners);
         spikes.start();
@@ -46,13 +52,32 @@ public final class Common {
     }
 
     public static void serverStarting(MinecraftServer server) {
+        Common.server = server;
         ticks = 0;
         marked = false;
         guardian.onWorldStarting(server.getWorldPath(LevelResource.ROOT));
     }
 
     public static void serverStopped() {
+        server = null;
         guardian.onWorldStopped();
+    }
+
+    /** After a world spike, on the server thread: which entities fill the world. */
+    private static void countEntities(Spikes.Spike s) {
+        MinecraftServer srv = server;
+        if (srv == null) {
+            return;
+        }
+        srv.execute(() -> {
+            Map<String, Integer> perType = new HashMap<>();
+            for (ServerLevel level : srv.getAllLevels()) {
+                for (Entity e : level.getAllEntities()) {
+                    perType.merge(e.getType().getDescriptionId(), 1, Integer::sum);
+                }
+            }
+            s.count(perType);
+        });
     }
 
     public static void serverTick() {

@@ -105,6 +105,8 @@
   "modkeel.spikes.gc": "очистка памяти Java",
   "modkeel.spikes.res.gpu": "Ожидание видеокарты",
   "modkeel.spikes.res.disk": "Ожидание диска",
+  "modkeel.spikes.res.wait": "Ожидание фоновой работы",
+  "modkeel.spikes.crowds": "Больше всего в мире: %s",
   "modkeel.spikes.other_programs": "Процессор был занят другими программами",
   "modkeel.spikes.gc_hint": "Часть из них вызвала очистка памяти Java. Часто помогает выделить Minecraft больше RAM в лаунчере.",
   "modkeel.spikes.gpu_hint": "Некоторые зависания ждали видеокарту: уменьшите дальность прорисовки или проверьте, что Minecraft использует дискретную видеокарту.",

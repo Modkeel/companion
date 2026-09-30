@@ -20,8 +20,8 @@ import java.util.Set;
  * intermediary class names already resolved to a section.
  */
 public final class Sections {
-    /** What a busy sample was doing. */
-    public enum Resource { CPU, GPU, DISK }
+    /** What a busy sample was doing; WAIT is blocked inside the game, on its worker threads. */
+    public enum Resource { CPU, GPU, DISK, WAIT }
 
     private static final class Row {
         final String prefix;

@@ -1,5 +1,6 @@
 package modkeel.companion.game;
 
+import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
@@ -58,6 +59,10 @@ public final class SpikeScreen extends Screen {
             Component causes = causes(s);
             if (causes != null) {
                 row.addChild(CrashScreen.text(causes.copy().withStyle(ChatFormatting.GRAY), w));
+            }
+            Component crowds = crowds(s, minecraft.options.languageCode);
+            if (crowds != null) {
+                row.addChild(CrashScreen.text(crowds.copy().withStyle(ChatFormatting.GRAY), w));
             }
             body.addChild(row);
         }
@@ -124,7 +129,8 @@ public final class SpikeScreen extends Screen {
         MutableComponent out = Component.empty();
         String[][] items = {{"modkeel.spikes.gc", "" + s.gcPercent},
                             {"modkeel.spikes.res.gpu", "" + s.gpuPercent},
-                            {"modkeel.spikes.res.disk", "" + s.diskPercent}};
+                            {"modkeel.spikes.res.disk", "" + s.diskPercent},
+                            {"modkeel.spikes.res.wait", "" + s.waitPercent}};
         for (String[] item : items) {
             if (Integer.parseInt(item[1]) >= SHOWN) {
                 if (!out.getSiblings().isEmpty()) {
@@ -142,6 +148,29 @@ public final class SpikeScreen extends Screen {
         return out.getSiblings().isEmpty() ? null : out;
     }
 
+    /**
+     * "Most common in the world: Item ×1,200 · Zombie ×400", when Minecraft's own entities took
+     * part of the spike. Null otherwise.
+     */
+    static Component crowds(Spikes.Spike s, String languageCode) {
+        boolean entities = s.shares.stream().anyMatch(
+                sh -> sh.name == null && "entities".equals(sh.section) && sh.percent >= SHOWN);
+        List<Spikes.Crowd> crowds = s.crowds;
+        if (!entities || crowds.isEmpty()) {
+            return null;
+        }
+        NumberFormat n = NumberFormat.getIntegerInstance(
+                Locale.forLanguageTag(languageCode.replace('_', '-')));
+        MutableComponent list = Component.empty();
+        for (Spikes.Crowd c : crowds) {
+            if (!list.getSiblings().isEmpty()) {
+                list.append(" · ");
+            }
+            list.append(Component.translatable(c.type)).append(" ×" + n.format(c.count));
+        }
+        return Component.translatable("modkeel.spikes.crowds", list);
+    }
+
     /** The toast's second line: the biggest cause, or the biggest share. */
     static Component mostly(Spikes.Spike s) {
         if (s.gcPercent >= HEAVY) {
@@ -155,6 +184,10 @@ public final class SpikeScreen extends Screen {
         if (s.diskPercent >= HEAVY) {
             return Component.translatable("modkeel.spikes.toast_cause",
                     Component.translatable("modkeel.spikes.res.disk"), s.diskPercent);
+        }
+        if (s.waitPercent >= HEAVY) {
+            return Component.translatable("modkeel.spikes.toast_cause",
+                    Component.translatable("modkeel.spikes.res.wait"), s.waitPercent);
         }
         if (s.otherPrograms) {
             return Component.translatable("modkeel.spikes.other_programs");

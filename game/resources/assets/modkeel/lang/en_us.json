@@ -105,6 +105,8 @@
   "modkeel.spikes.gc": "Java memory cleanup",
   "modkeel.spikes.res.gpu": "Graphics card wait",
   "modkeel.spikes.res.disk": "Disk wait",
+  "modkeel.spikes.res.wait": "Waiting on background work",
+  "modkeel.spikes.crowds": "Most common in the world: %s",
   "modkeel.spikes.other_programs": "Other programs were using the processor",
   "modkeel.spikes.gc_hint": "Java memory cleanup caused some of these. Giving Minecraft more RAM in your launcher often helps.",
   "modkeel.spikes.gpu_hint": "Some froze waiting on the graphics card: lower the render distance, or check that Minecraft uses your dedicated graphics card.",
