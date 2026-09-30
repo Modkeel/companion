@@ -25,12 +25,34 @@ final class Keel {
 
     /** A black outline, a fill, a light top-left edge and a dark bottom-right edge. */
     static void bevel(Paint p, int x, int y, int w, int h, int fill, int light, int dark) {
-        p.fill(x, y, x + w, y + h, BLACK);
+        outline(p, x, y, w, h, BLACK);
         p.fill(x + 1, y + 1, x + w - 1, y + h - 1, fill);
         p.fill(x + 1, y + 1, x + w - 1, y + 2, light);
         p.fill(x + 1, y + 2, x + 2, y + h - 1, light);
         p.fill(x + 2, y + h - 2, x + w - 1, y + h - 1, dark);
         p.fill(x + w - 2, y + 2, x + w - 1, y + h - 2, dark);
+    }
+
+    /** Only the 1 px frame: a translucent fill inside it must not sit on black. */
+    static void outline(Paint p, int x, int y, int w, int h, int color) {
+        p.fill(x, y, x + w, y + 1, color);
+        p.fill(x, y + h - 1, x + w, y + h, color);
+        p.fill(x, y + 1, x + 1, y + h - 1, color);
+        p.fill(x + w - 1, y + 1, x + w, y + h - 1, color);
+    }
+
+    static final int PANEL_MARGIN = 8;
+
+    /** A translucent dark panel behind a screen's content: the world behind stays visible. */
+    static void panel(Paint p, int x, int y, int w, int h) {
+        bevel(p, x, y, w, h, 0x60202020, 0x14FFFFFF, 0x40000000);
+    }
+
+    /** A header or footer strip, with a black line on the side facing the content. */
+    static void strip(Paint p, int x, int y, int w, int h, boolean footer) {
+        p.fill(x, y, x + w, y + h, 0x66000000);
+        int line = footer ? y : y + h - 1;
+        p.fill(x, line, x + w, line + 1, BLACK);
     }
 
     static void card(Paint p, int x, int y, int w, int h) {

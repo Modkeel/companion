@@ -65,6 +65,7 @@ public final class SpikeScreen extends Screen {
         }));
         footer.addChild(new KeelButton(150, Component.translatable("gui.done"), b -> onClose()));
 
+        addRenderableOnly(new Backdrop(width, height, 33, 33, w));
         layout.visitWidgets(this::addRenderableWidget);
         repositionElements();
     }
