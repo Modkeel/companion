@@ -1,14 +1,11 @@
 package modkeel.companion.game;
 
 import java.text.NumberFormat;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
 import modkeel.companion.core.Spikes;
 import net.minecraft.ChatFormatting;
-import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.layouts.HeaderAndFooterLayout;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
@@ -46,25 +43,10 @@ public final class SpikeScreen extends Screen {
         }
         boolean memory = false;
         boolean graphics = false;
-        SimpleDateFormat clock = new SimpleDateFormat("HH:mm:ss", Locale.ROOT);
         for (Spikes.Spike s : spikes) {
             memory |= s.gcPercent >= HEAVY;
             graphics |= s.gpuPercent >= HEAVY;
-            Stack row = Stack.vertical(1);
-            row.defaultCellSetting().alignHorizontallyCenter();
-            row.addChild(CrashScreen.text(Component.translatable("modkeel.spikes.row",
-                    clock.format(new Date(s.at)), seconds(s.millis),
-                    Component.translatable("modkeel.spikes." + s.where.name().toLowerCase(Locale.ROOT)),
-                    shares(s)), w));
-            Component causes = causes(s);
-            if (causes != null) {
-                row.addChild(CrashScreen.text(causes.copy().withStyle(ChatFormatting.GRAY), w));
-            }
-            Component crowds = crowds(s, minecraft.options.languageCode);
-            if (crowds != null) {
-                row.addChild(CrashScreen.text(crowds.copy().withStyle(ChatFormatting.GRAY), w));
-            }
-            body.addChild(row);
+            body.addChild(new SpikeCard(s, w, minecraft.options.languageCode));
         }
         if (memory) {
             body.addChild(CrashScreen.text(Component.translatable("modkeel.spikes.gc_hint")
@@ -77,12 +59,11 @@ public final class SpikeScreen extends Screen {
         scroll = layout.addToContents(new Scroll(minecraft, body, Compat.contentHeight(layout)));
 
         Stack footer = layout.addToFooter(Stack.horizontal(8));
-        footer.addChild(Button.builder(alertsLabel(), b -> {
+        footer.addChild(new KeelButton(150, alertsLabel(), b -> {
             Client.setSpikeAlerts(!Client.spikeAlerts());
             b.setMessage(alertsLabel());
-        }).width(150).build());
-        footer.addChild(Button.builder(Component.translatable("gui.done"), b -> onClose())
-                .width(150).build());
+        }));
+        footer.addChild(new KeelButton(150, Component.translatable("gui.done"), b -> onClose()));
 
         layout.visitWidgets(this::addRenderableWidget);
         repositionElements();
@@ -107,18 +88,19 @@ public final class SpikeScreen extends Screen {
                         Component.translatable("modkeel.spikes.section." + s.section));
     }
 
-    /** "Create 70%, Minecraft: entities 20%". */
-    static Component shares(Spikes.Spike s) {
-        MutableComponent out = Component.empty();
-        for (Spikes.Share share : s.shares) {
-            if (!out.getSiblings().isEmpty()) {
-                out.append(", ");
-            }
-            out.append(name(share).copy().withStyle(share.name == null ? ChatFormatting.GRAY
-                                                                        : ChatFormatting.YELLOW))
-                    .append(" " + share.percent + "%");
+    /** For a bar's legend: a mod's name, the part of Minecraft ("mobs and entities"), or "Minecraft". */
+    static Component shortName(Spikes.Share s) {
+        if (s.name != null) {
+            return Component.literal(s.name);
         }
-        return out;
+        return s.section == null ? Component.literal("Minecraft")
+                : Component.translatable("modkeel.spikes.section." + s.section);
+    }
+
+    /** A cause big enough to act on: the card's cause line turns yellow. */
+    static boolean heavy(Spikes.Spike s) {
+        return s.gcPercent >= HEAVY || s.gpuPercent >= HEAVY || s.diskPercent >= HEAVY
+                || s.waitPercent >= HEAVY || s.otherPrograms;
     }
 
     /**
