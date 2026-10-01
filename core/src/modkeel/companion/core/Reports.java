@@ -375,7 +375,7 @@ public final class Reports {
                 String kind = name.substring(name.indexOf('-') + 1, name.length() - ".json".length());
                 String json = new String(Files.readAllBytes(f), StandardCharsets.UTF_8);
                 json = INSTALL_FIELD.matcher(json).replaceFirst("\"install\":\"" + token + "\"");
-                HttpResponse<String> r = post("/v1/" + kind, json);
+                HttpResponse<String> r = post("/v1/" + kind, json, name);
                 int status = r.statusCode();
                 if (status / 100 == 2) {
                     Files.createDirectories(sent);
@@ -421,7 +421,7 @@ public final class Reports {
         if (t != null) {
             return t;
         }
-        HttpResponse<String> r = post("/v1/install", "");
+        HttpResponse<String> r = post("/v1/install", "", null);
         Matcher m = INSTALL_ANSWER.matcher(r.body());
         if (r.statusCode() != 200 || !m.find()) {
             throw new IOException("no install token (" + r.statusCode() + ")");
@@ -443,16 +443,19 @@ public final class Reports {
         return null;
     }
 
-    private HttpResponse<String> post(String path, String json) throws IOException, InterruptedException {
+    /** {@code key} (null: none) names the report: a resend after a lost answer is stored once. */
+    private HttpResponse<String> post(String path, String json, String key) throws IOException, InterruptedException {
         if (http == null) {
             http = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(10)).build();
         }
-        HttpRequest req = HttpRequest.newBuilder(URI.create(api + path))
+        HttpRequest.Builder req = HttpRequest.newBuilder(URI.create(api + path))
                 .timeout(Duration.ofSeconds(20))
                 .header("content-type", "application/json")
-                .POST(HttpRequest.BodyPublishers.ofString(json))
-                .build();
-        return http.send(req, HttpResponse.BodyHandlers.ofString());
+                .POST(HttpRequest.BodyPublishers.ofString(json));
+        if (key != null) {
+            req.header("idempotency-key", key);
+        }
+        return http.send(req.build(), HttpResponse.BodyHandlers.ofString());
     }
 
     private void prune() {
