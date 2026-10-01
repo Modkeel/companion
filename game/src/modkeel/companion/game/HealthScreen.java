@@ -98,7 +98,7 @@ public final class HealthScreen extends Screen {
         if (g.crash == null && CrashScreen.stuck(g)) {
             body.addChild(Text.loose(Component.translatable("modkeel.cta"), w, Keel.AQUA));
         }
-        scroll = layout.addToContents(new Scroll(minecraft, body, Compat.contentHeight(layout)));
+        scroll = Compat.contents(layout, new Scroll(minecraft, body, Compat.contentHeight(layout)));
 
         Stack footer = layout.addToFooter(Stack.horizontal(8));
         Button revert = footer.addChild(new KeelButton(120, Component.translatable("modkeel.revert"),

@@ -36,7 +36,7 @@ public final class ReportScreen extends Screen {
         body.addChild(Text.loose(Component.translatable(note), w, Keel.GRAY));
         Card c = body.addChild(new Card(w));
         c.add(Text.in(Component.literal(payload), c.inner(), Keel.SOFT));
-        scroll = layout.addToContents(new Scroll(minecraft, body, Compat.contentHeight(layout)));
+        scroll = Compat.contents(layout, new Scroll(minecraft, body, Compat.contentHeight(layout)));
         layout.addToFooter(new KeelButton(150, CommonComponents.GUI_BACK, b -> onClose()));
         addRenderableOnly(new Backdrop(width, height, 33, 33, scroll));
         layout.visitWidgets(this::addRenderableWidget);

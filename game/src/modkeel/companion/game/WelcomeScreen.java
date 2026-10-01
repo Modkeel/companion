@@ -30,7 +30,7 @@ public final class WelcomeScreen extends Screen {
         }
         body.addChild(Text.loose(Component.translatable("modkeel.welcome.privacy"), w, Keel.GRAY));
         body.addChild(Text.loose(Component.translatable("modkeel.welcome.later"), w, Keel.GRAY));
-        scroll = layout.addToContents(new Scroll(minecraft, body, Compat.contentHeight(layout)));
+        scroll = Compat.contents(layout, new Scroll(minecraft, body, Compat.contentHeight(layout)));
 
         Stack footer = layout.addToFooter(Stack.horizontal(8));
         footer.addChild(new KeelButton(150, Component.translatable("modkeel.health.app"),

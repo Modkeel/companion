@@ -20,6 +20,8 @@ import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.components.AbstractButton;
 import net.minecraft.client.gui.components.StringWidget;
 import net.minecraft.client.gui.layouts.HeaderAndFooterLayout;
+import net.minecraft.client.gui.layouts.LayoutElement;
+import net.minecraft.client.gui.layouts.LayoutSettings;
 import net.minecraft.client.gui.screens.ConfirmLinkScreen;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
@@ -54,6 +56,11 @@ public final class Compat {
 
     public static void titleHeader(HeaderAndFooterLayout layout, Component title, Font font) {
         layout.addToHeader(new StringWidget(title, font));
+    }
+
+    /** Put the body right under the header: 1.20.1 adds a 30 px top margin later versions dropped. */
+    public static <T extends LayoutElement> T contents(HeaderAndFooterLayout layout, T element) {
+        return layout.addToContents(element, LayoutSettings.defaults().align(0.5F, 0.0F));
     }
 
     public static int contentHeight(HeaderAndFooterLayout layout) {

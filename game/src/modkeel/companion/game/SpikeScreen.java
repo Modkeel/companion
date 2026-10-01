@@ -54,7 +54,7 @@ public final class SpikeScreen extends Screen {
         if (graphics) {
             body.addChild(Text.loose(Component.translatable("modkeel.spikes.gpu_hint"), w, Keel.YELLOW));
         }
-        scroll = layout.addToContents(new Scroll(minecraft, body, Compat.contentHeight(layout)));
+        scroll = Compat.contents(layout, new Scroll(minecraft, body, Compat.contentHeight(layout)));
 
         Stack footer = layout.addToFooter(Stack.horizontal(8));
         footer.addChild(new KeelButton(150, alertsLabel(), b -> {

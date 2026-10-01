@@ -20,6 +20,7 @@ import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.components.AbstractButton;
 import net.minecraft.client.gui.components.StringWidget;
 import net.minecraft.client.gui.layouts.HeaderAndFooterLayout;
+import net.minecraft.client.gui.layouts.LayoutElement;
 import net.minecraft.client.gui.screens.ConfirmLinkScreen;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.input.KeyEvent;
@@ -46,6 +47,10 @@ public final class Compat {
 
     public static void titleHeader(HeaderAndFooterLayout layout, Component title, Font font) {
         layout.addTitleHeader(title, font);
+    }
+
+    public static <T extends LayoutElement> T contents(HeaderAndFooterLayout layout, T element) {
+        return layout.addToContents(element);
     }
 
     public static int contentHeight(HeaderAndFooterLayout layout) {

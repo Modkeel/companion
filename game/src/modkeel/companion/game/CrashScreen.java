@@ -99,7 +99,7 @@ public final class CrashScreen extends Screen {
         }
         body.addChild(Text.loose(Component.translatable("modkeel.crash.later"), w, Keel.GRAY));
 
-        scroll = layout.addToContents(new Scroll(minecraft, body, Compat.contentHeight(layout)));
+        scroll = Compat.contents(layout, new Scroll(minecraft, body, Compat.contentHeight(layout)));
 
         Stack footer = layout.addToFooter(Stack.vertical(4));
         shareBox = null;
