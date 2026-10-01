@@ -607,7 +607,14 @@ public final class CoreTest {
             check(said.contains("error=RuntimeException") && said.contains("frames=1")
                     && said.contains("suspects=bad") && said.contains("fix_disable=bad")
                     && said.contains("install="), "plain words: " + said);
-            check(said.contains("mods=" + (json.split("\"sha1\"").length - 1)), "mods counted: " + said);
+            int top = json.split("\"in\":null").length - 1;
+            int bundled = json.split("\"sha1\"").length - 1 - top;
+            check(said.contains(bundled == 0 ? "mods=" + top : "mods_bundled=" + top + "|" + bundled),
+                    "mods counted: " + said);
+            List<Sent.Line> nested = Sent.lines("{\"mods\":[{\"id\":\"fabric-api\",\"in\":null},"
+                    + "{\"id\":\"fabric-api-base\",\"in\":\"fabric-api\"},{\"id\":\"x\",\"in\":null}]}");
+            eq("modkeel.sent.mods_bundled", nested.get(0).key, "bundled mods apart");
+            eq(List.of("2", "1"), List.of(nested.get(0).args), "2 in the folder, 1 inside them");
             check(Sent.lines("not json").isEmpty(), "bad payload: no lines");
             said.clear();
             for (Sent.Line l : Sent.lines("{\"v\":1,\"install\":\"\",\"env\":{},\"set\":\"ab\",\"mods\":null,"

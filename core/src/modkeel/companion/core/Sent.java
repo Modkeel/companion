@@ -43,7 +43,18 @@ public final class Sent {
                     gigabytes(env.get("ram_mb"))));
         }
         if (p.get("mods") instanceof List) {
-            out.add(new Line("mods", String.valueOf(((List<?>) p.get("mods")).size())));
+            // the mods folder holds the top ones; the rest ship inside them (Fabric API's modules)
+            int top = 0;
+            int bundled = 0;
+            for (Object m : (List<?>) p.get("mods")) {
+                if (m instanceof Map && ((Map<?, ?>) m).get("in") != null) {
+                    bundled++;
+                } else {
+                    top++;
+                }
+            }
+            out.add(bundled == 0 ? new Line("mods", String.valueOf(top))
+                    : new Line("mods_bundled", String.valueOf(top), String.valueOf(bundled)));
         } else if (p.containsKey("mods")) {
             out.add(new Line("mods_known"));
         }

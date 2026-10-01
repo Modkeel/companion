@@ -27,6 +27,9 @@ public final class Client {
     static final long TOAST_EVERY_MS = 60_000;
 
     private static boolean crashHandled;
+    /** What the title screen opens, held until resources load: 1.20.1 shows the title screen
+     *  mid-load, and a screen built then keeps raw translation keys. */
+    private static Runnable whenLoaded;
     private static Spikes.Watch frames;
     private static volatile long inWorldSince;
     private static long lastToast;
@@ -42,6 +45,11 @@ public final class Client {
 
     /** Called by the loader at the end of every client tick, on the render thread. */
     public static void clientTick(Minecraft mc) {
+        if (whenLoaded != null && !Compat.loading(mc)) {
+            Runnable r = whenLoaded;
+            whenLoaded = null;
+            r.run();
+        }
         if (frames == null) {
             frames = Common.spikes.watch(Spikes.Where.FRAME);
         }
@@ -116,27 +124,33 @@ public final class Client {
             }
             String auto = System.getProperty("modkeel.test.autofix");
             if (auto != null) {
-                mc.execute(() -> autofix(mc, g, auto));
+                whenLoaded = () -> autofix(mc, g, auto);
             } else {
-                Log.info("showing the crash screen");
-                mc.execute(() -> Compat.setScreen(mc, new CrashScreen(screen, g)));
-                if ("report".equals(test)) {
-                    Log.info("showing the report screen");
-                    mc.execute(() -> Compat.setScreen(mc, new ReportScreen(Compat.screen(mc),
-                            g.reports.readable(g.reports.crash(g.crash, null)))));
-                }
+                whenLoaded = () -> {
+                    Log.info("showing the crash screen");
+                    Compat.setScreen(mc, new CrashScreen(screen, g));
+                    if ("report".equals(test)) {
+                        Log.info("showing the report screen");
+                        Compat.setScreen(mc, new ReportScreen(Compat.screen(mc),
+                                g.reports.readable(g.reports.crash(g.crash, null))));
+                    }
+                };
             }
         } else if ("health".equals(test) && !crashHandled) {
             crashHandled = true;
-            Log.info("showing the health screen");
-            mc.execute(() -> Compat.setScreen(mc, new HealthScreen(screen, g)));
+            whenLoaded = () -> {
+                Log.info("showing the health screen");
+                Compat.setScreen(mc, new HealthScreen(screen, g));
+            };
         } else if (!crashHandled && (test == null ? g.state.get("welcomed", null) == null
                                                   : test.equals("welcome"))) {
             crashHandled = true;
             g.state.set("welcomed", System.currentTimeMillis());
             g.state.save();
-            Log.info("showing the welcome screen");
-            mc.execute(() -> Compat.setScreen(mc, new WelcomeScreen(screen)));
+            whenLoaded = () -> {
+                Log.info("showing the welcome screen");
+                Compat.setScreen(mc, new WelcomeScreen(screen));
+            };
         }
     }
 

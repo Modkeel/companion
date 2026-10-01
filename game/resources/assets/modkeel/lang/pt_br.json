@@ -19,6 +19,7 @@
   "modkeel.sessions.note": "Enviado na próxima vez que o jogo abrir: minutos em um mundo, se crashou, as 20 piores travadas e os mods que as causam, e a lista de mods uma vez por conjunto. Sem nomes, caminhos de arquivos ou logs.",
   "modkeel.sent.setup": "Minecraft %1$s, %2$s %3$s, Java %4$s, %5$s, %6$s GB de RAM",
   "modkeel.sent.mods": "Seus %s mods: nome, versão e uma impressão digital de cada arquivo",
+  "modkeel.sent.mods_bundled": "Seus %1$s mods e os %2$s que vêm dentro deles: nome, versão e uma impressão digital de cada arquivo",
   "modkeel.sent.mods_known": "Sua lista de mods: já enviada para estes mods",
   "modkeel.sent.error": "O erro: %s",
   "modkeel.sent.frames": "Onde aconteceu: %s linhas com nomes de código",

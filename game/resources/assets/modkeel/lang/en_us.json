@@ -19,6 +19,7 @@
   "modkeel.sessions.note": "Sent when the game starts next: minutes in a world, whether it crashed, the 20 worst lag spikes and the mods behind them, and the mod list once per set. No names, file paths or logs.",
   "modkeel.sent.setup": "Minecraft %1$s, %2$s %3$s, Java %4$s, %5$s, %6$s GB RAM",
   "modkeel.sent.mods": "Your %s mods: name, version and a fingerprint of each file",
+  "modkeel.sent.mods_bundled": "Your %1$s mods and the %2$s bundled in them: name, version and a fingerprint of each file",
   "modkeel.sent.mods_known": "Your mod list: already sent for these mods",
   "modkeel.sent.error": "The error: %s",
   "modkeel.sent.frames": "Where it happened: %s lines of code names",

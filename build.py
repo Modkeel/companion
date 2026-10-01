@@ -94,10 +94,12 @@ def mod_jar(mc: str, loader: str = "fabric") -> Path:
 
 
 def test_jars(mc: str, loader: str = "fabric") -> list[Path]:
-    """The crasher first, then any helper the test needs on that loader."""
+    """The crasher first, then any helper the test needs on that loader. Named per version
+    like the mod jar: --all builds every target into the same folder."""
+    tail = f"{loader}-{variant(mc)}.jar"
     if loader == "fabric":
-        return [BUILD / "mfcrash.jar"]
-    return [BUILD / f"mfcrash-{loader}.jar", BUILD / f"mfidle-{loader}.jar"]
+        return [BUILD / f"mfcrash-{tail}"]
+    return [BUILD / f"mfcrash-{tail}", BUILD / f"mfidle-{tail}"]
 
 
 def build_core(tmp: Path) -> Path:
@@ -207,7 +209,7 @@ def build(mc: str, loader: str = "fabric", run_tests: bool = True) -> dict[str, 
             crash_out = remap.compile_fabric(
                 mc, sorted((HERE / "testmods" / "mfcrash").rglob("*.java")), tmp / "mfcrash",
                 "lifecycle-events-v1|api-base")
-            write_jar(BUILD / "mfcrash.jar", {"fabric.mod.json": json.dumps(
+            write_jar(test_jars(mc, loader)[0], {"fabric.mod.json": json.dumps(
                 {"schemaVersion": 1, "id": "mfcrash", "version": "1.0",
                  "name": "Crash Test Mod", "environment": "client",
                  "entrypoints": {"client": ["modkeel.testmods.MfCrash"]},
@@ -222,11 +224,12 @@ def build(mc: str, loader: str = "fabric", run_tests: bool = True) -> dict[str, 
                 "${" + loader + "}", loader_range)
             write_jar(mod, loader_metadata(loader, v, toml, "Modkeel Companion"), [core, classes],
                       resources)
-            for test_mod, name in (("mfcrash", "Crash Test Mod"),
-                                   ("mfidle", "Mouse Release Test Mod")):
+            for (test_mod, name), jar in zip((("mfcrash", "Crash Test Mod"),
+                                              ("mfidle", "Mouse Release Test Mod")),
+                                             test_jars(mc, loader)):
                 out = compile_(mc, sorted((HERE / "testmods" / f"{test_mod}-{loader}").rglob(
                     "*.java")), tmp / test_mod)
-                write_jar(BUILD / f"{test_mod}-{loader}.jar",
+                write_jar(jar,
                           loader_metadata(loader, v, test_mod_toml(test_mod, name, mc, loader),
                                           name), [out], [])
     print(f"built {mod.name} ({mod.stat().st_size // 1024} KB) and the test mods")
