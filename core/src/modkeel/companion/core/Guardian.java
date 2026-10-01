@@ -36,6 +36,7 @@ public final class Guardian {
     public String loader = "";
     public String loaderVersion = "";
     public final Reports reports;
+    public final Sessions sessions;
     private ModSet current;
     private Owners owners;
 
@@ -81,6 +82,7 @@ public final class Guardian {
         this.outcomes = Outcomes.load(this.home);
         this.reports = new Reports(this);
         this.reports.afterSend = () -> outcomes.queueSteps(reports);
+        this.sessions = new Sessions(this);
     }
 
     /** At launch, before any screen: what the last fix did, which fixes were undone, and the crash. */
@@ -92,15 +94,38 @@ public final class Guardian {
             outcomes.bindSet(current().fingerprint());
         }
         Diagnosis d = checkCrashes();
+        if (Boolean.getBoolean("modkeel.test.share_sessions")) {
+            setShareSessions(true);
+        }
+        sessions.begin(d != null);
         reportSteps();
         reports.sendLater(); // what a closed game left in the outbox
         return d;
     }
 
-    /** Play on the current set: fixes being watched may now count as held. */
-    public void addPlay(long ticks) {
+    /**
+     * Play on the current set, with the lag spikes measured so far: fixes being watched may
+     * now count as held, and the session journal grows.
+     */
+    public void addPlay(long ticks, List<Spikes.Spike> recent) {
         outcomes.addTicks(ticks);
+        sessions.played(ticks, recent);
         reportSteps();
+    }
+
+    /** "Always share": session summaries go out too (see {@link Sessions}). */
+    public boolean shareSessions() {
+        return state.get("shareSessions", "false").equals("true");
+    }
+
+    public void setShareSessions(boolean on) {
+        state.set("shareSessions", on);
+        state.save();
+    }
+
+    /** "Always share" is offered from the second shared crash on, until it is picked. */
+    public boolean offerSessions() {
+        return reports.enabled() && !shareSessions() && state.getLong("sharedCrashes", 0) >= 1;
     }
 
     /** Queue and send what changed on shared fixes (the player agreed when sharing the crash). */
@@ -345,6 +370,8 @@ public final class Guardian {
         state.save();
         sharedCrash = null;
         if (share && crash != null && reports.enabled()) {
+            state.set("sharedCrashes", state.getLong("sharedCrashes", 0) + 1);
+            state.save();
             Path f = reports.queue("crash", reports.crash(crash, fix));
             sharedCrash = f == null ? null : f.getFileName().toString();
             reports.sendLater();

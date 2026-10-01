@@ -12,13 +12,20 @@ import net.minecraft.network.chat.Component;
 public final class ReportScreen extends Screen {
     private final Screen back;
     private final String payload;
+    private final String note;
     private HeaderAndFooterLayout layout;
     private Scroll scroll;
 
     public ReportScreen(Screen back, String payload) {
+        this(back, payload, "modkeel.share.note");
+    }
+
+    /** {@code note} is the translation key that says when this report leaves. */
+    public ReportScreen(Screen back, String payload, String note) {
         super(Component.translatable("modkeel.share.what"));
         this.back = back;
         this.payload = payload;
+        this.note = note;
     }
 
     @Override
@@ -27,7 +34,7 @@ public final class ReportScreen extends Screen {
         Compat.titleHeader(layout, title, font);
         int w = Math.min(width - 40, 380);
         Stack body = Stack.vertical(8);
-        body.addChild(CrashScreen.text(Component.translatable("modkeel.share.note")
+        body.addChild(CrashScreen.text(Component.translatable(note)
                 .withStyle(ChatFormatting.GRAY), w));
         body.addChild(new MultiLineTextWidget(Component.literal(payload), font).setMaxWidth(w));
         scroll = layout.addToContents(new Scroll(minecraft, body, Compat.contentHeight(layout)));

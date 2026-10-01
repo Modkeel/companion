@@ -135,6 +135,20 @@ public final class HealthScreen extends Screen {
                     Component.translatable("modkeel.outcome." + f.status.name().toLowerCase(java.util.Locale.ROOT),
                             f.ticks / 72000, f.ticks / 1200 % 60)), w));
         }
+        if (g.reports.enabled()) {
+            boolean on = g.shareSessions();
+            Stack row = body.addChild(Stack.horizontal(8));
+            row.defaultCellSetting().alignVerticallyMiddle();
+            row.addChild(Compat.maxWidth(new StringWidget(Component.translatable(on
+                    ? "modkeel.sessions.on" : "modkeel.sessions.off").withStyle(ChatFormatting.GRAY), font), w - 216));
+            row.addChild(Button.builder(Component.translatable(on ? "modkeel.sessions.stop" : "modkeel.sessions.start"),
+                    b -> {
+                        g.setShareSessions(!on);
+                        Compat.setScreen(minecraft, this);
+                    }).width(100).build())
+                    .setTooltip(Tooltip.create(Component.translatable("modkeel.sessions.tooltip")));
+            row.addChild(CrashScreen.whatIsSent(this, g));
+        }
         if (g.crash == null && CrashScreen.stuck(g)) {
             body.addChild(CrashScreen.text(Component.translatable("modkeel.cta").withStyle(ChatFormatting.AQUA), w));
         }

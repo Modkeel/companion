@@ -44,6 +44,7 @@ public final class CoreTest {
         run("fix outcomes: held, recurred, undone", CoreTest::outcomes);
         run("reports: payload, outbox, install token", CoreTest::reports);
         run("reports: a shared fix sends its steps", CoreTest::reportSteps);
+        run("reports: session summaries, only when always shared", CoreTest::sessions);
         run("rules bundle and version in file names", CoreTest::rules);
         run("lab rules in the diagnosis", CoreTest::labHints);
         run("lag spike: owner of a sampled stack", CoreTest::spikeOwner);
@@ -664,17 +665,17 @@ public final class CoreTest {
             check(waitFor(() -> Outcomes.load(g.home).fixes.get(0).report.equals(id)),
                     "linked to the report id once sent");
 
-            g.addPlay(Outcomes.HELD_TICKS);
+            g.addPlay(Outcomes.HELD_TICKS, List.of());
             check(waitFor(() -> steps.size() == 1), "held 1 h sent");
             eq("{\"v\":1,\"install\":\"" + "ab".repeat(16) + "\",\"report\":\"" + id
                     + "\",\"status\":\"held-1h\",\"ticks\":" + Outcomes.HELD_TICKS + "}", steps.get(0), "outcome");
-            g.addPlay(1);
+            g.addPlay(1, List.of());
             check(waitFor(() -> g.reports.pending().isEmpty()), "outbox empty");
             eq(1, steps.size(), "a step is sent once");
 
             Guardian again = new Guardian(game);
             again.startup();
-            again.addPlay(4 * Outcomes.HELD_TICKS);
+            again.addPlay(4 * Outcomes.HELD_TICKS, List.of());
             check(waitFor(() -> steps.size() == 2), "held 5 h sent after a restart");
             check(steps.get(1).contains("\"status\":\"held-5h\""), steps.get(1));
 
@@ -684,6 +685,80 @@ public final class CoreTest {
             Outcomes old = Outcomes.load(game.resolve("modkeel"));
             eq("-", old.fixes.get(0).report, "a line from before reports reads as not shared");
             eq("old line", old.fixes.get(0).title, "title kept");
+        } finally {
+            System.clearProperty("modkeel.api");
+            server.stop(0);
+        }
+    }
+
+    static Spikes.Spike spike(Spikes.Where where, long at, long ms, Spikes.Share... shares) {
+        return new Spikes.Spike(where, at, ms, 5, List.of(shares), 0, 0, 0, false);
+    }
+
+    static void sessions() throws Exception {
+        Path game = tmp();
+        Path mods = game.resolve("mods");
+        jar(mods, "bad.jar", "bad", null, "bad/Bad.class");
+        List<String> got = java.util.Collections.synchronizedList(new ArrayList<>());
+        HttpServer server = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
+        server.createContext("/v1/install", ex -> reply(ex, 200, "{\"install\":\"" + "ab".repeat(16) + "\"}"));
+        server.createContext("/v1/session", ex -> {
+            got.add(new String(ex.getRequestBody().readAllBytes(), StandardCharsets.UTF_8));
+            reply(ex, 200, "{\"ok\":true}");
+        });
+        server.start();
+        try {
+            System.setProperty("modkeel.api", "http://127.0.0.1:" + server.getAddress().getPort());
+            Guardian g = new Guardian(game);
+            g.mcVersion = "26.2";
+            g.loader = "fabric";
+            g.startup();
+            long t0 = System.currentTimeMillis() + 1;
+            List<Spikes.Spike> spikes = new ArrayList<>();
+            for (int i = 0; i < 25; i++) {
+                spikes.add(spike(Spikes.Where.FRAME, t0 + i, 200 + i));
+            }
+            spikes.add(spike(Spikes.Where.WORLD, t0 + 100, 1300,
+                    new Spikes.Share("Bad", "Bad Mod", null, 70),
+                    new Spikes.Share(Spikes.VANILLA, null, "chunks", 20)));
+            g.addPlay(1300, spikes);
+            g.addPlay(1200, spikes); // the same spikes again count once
+            String preview = g.sessions.preview();
+            check(preview.contains("\"minutes\":3,\"crashed\":false,\"spikes\":[{\"where\":\"world\",\"ms\":1300,"
+                    + "\"gc\":5,\"wait\":0,\"gpu\":0,\"disk\":0,\"owners\":[{\"mod\":\"bad\",\"section\":null,\"pct\":70},"
+                    + "{\"mod\":\"minecraft\",\"section\":\"chunks\",\"pct\":20}]}"), "worst spike first: " + preview);
+            eq(20, preview.split("\"where\"").length - 1, "the 20 worst spikes");
+            check(!preview.contains("Bad Mod"), "no mod names");
+
+            new Guardian(game).startup();
+            Thread.sleep(300);
+            eq(0, got.size(), "not sent without always share");
+
+            Guardian a = new Guardian(game);
+            a.mcVersion = "26.2";
+            a.loader = "fabric";
+            a.startup();
+            check(!a.offerSessions(), "not offered before a shared crash");
+            a.setShareSessions(true);
+            a.addPlay(100, List.of());
+            Guardian b = new Guardian(game);
+            b.mcVersion = "26.2";
+            b.loader = "fabric";
+            b.startup();
+            check(waitFor(() -> got.size() == 1), "sent on the next start");
+            String first = got.get(0);
+            check(first.contains("\"set\":\"" + b.current().fingerprint() + "\",\"mods\":[{\"id\":\"bad\""), first);
+            check(first.contains("\"minutes\":1,\"crashed\":false,\"spikes\":[]"), first);
+            check(first.contains("\"install\":\"" + "ab".repeat(16) + "\""), "token filled in");
+
+            b.addPlay(100, List.of());
+            Path crashes = game.resolve("crash-reports");
+            Files.createDirectories(crashes);
+            Files.write(crashes.resolve("crash-1.txt"),
+                    "java.lang.RuntimeException: x\n\tat knot//bad.Bad.run(Bad.java:1)\n".getBytes(StandardCharsets.UTF_8));
+            new Guardian(game).startup();
+            check(waitFor(() -> got.size() == 2), "crashed session sent");
+            check(got.get(1).contains("\"mods\":null,\"minutes\":1,\"crashed\":true"), "mods once per set: " + got.get(1));
         } finally {
             System.clearProperty("modkeel.api");
             server.stop(0);

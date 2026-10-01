@@ -35,6 +35,10 @@ public final class CrashScreen extends Screen {
     /** "Share this crash": kept across re-inits (a confirm screen and back). */
     private boolean share;
     private Checkbox shareBox;
+    /** "Also share play sessions", offered from the second shared crash on. */
+    private boolean sessions;
+    private Checkbox sessionsBox;
+    private final boolean offerSessions;
     private boolean decided;
     /** Textures made for this screen, closed with it. */
     private final List<AutoCloseable> owned = new ArrayList<>();
@@ -45,11 +49,12 @@ public final class CrashScreen extends Screen {
         this.g = g;
         this.d = g.crash;
         this.share = g.shareChoice();
+        this.offerSessions = g.offerSessions();
     }
 
     @Override
     protected void init() {
-        layout = new HeaderAndFooterLayout(this, 33, g.reports.enabled() ? 84 : 60);
+        layout = new HeaderAndFooterLayout(this, 33, !g.reports.enabled() ? 60 : offerSessions ? 108 : 84);
         Compat.titleHeader(layout, title, font);
         int w = Math.min(width - 40, 380);
         Stack body = Stack.vertical(8);
@@ -104,6 +109,14 @@ public final class CrashScreen extends Screen {
                             g.reports.readable(g.reports.crash(d, s == null || s.file == null
                                     ? null : g.reports.disableFix(s))))))
                     .width(100).build());
+        }
+        sessionsBox = null;
+        if (offerSessions) {
+            Stack row = footer.addChild(Stack.horizontal(8));
+            sessionsBox = row.addChild(Compat.checkbox(Component.translatable("modkeel.sessions.checkbox"),
+                    font, sessions));
+            sessionsBox.setTooltip(Tooltip.create(Component.translatable("modkeel.sessions.tooltip")));
+            row.addChild(whatIsSent(this, g));
         }
         Stack row1 = footer.addChild(Stack.horizontal(8));
         Stack row2 = footer.addChild(Stack.horizontal(8));
@@ -178,19 +191,38 @@ public final class CrashScreen extends Screen {
         }
     }
 
+    /** "What is sent" for session summaries: this session so far. */
+    static Button whatIsSent(Screen back, Guardian g) {
+        return Button.builder(Component.translatable("modkeel.share.what"),
+                b -> Compat.setScreen(net.minecraft.client.Minecraft.getInstance(), new ReportScreen(back,
+                        g.reports.readable(g.sessions.preview()), "modkeel.sessions.note")))
+                .width(100).build();
+    }
+
     /** The player picked a fix (null: none); the crash is shared with it if they chose to. */
     private void decide(Reports.Fix fix) {
         if (!decided) {
             decided = true;
+            keepChoices();
             g.shareCrash(share, fix);
+            if (sessions) {
+                g.setShareSessions(true);
+            }
+        }
+    }
+
+    private void keepChoices() {
+        if (shareBox != null) {
+            share = shareBox.selected();
+        }
+        if (sessionsBox != null) {
+            sessions = sessionsBox.selected();
         }
     }
 
     @Override
     public void removed() {
-        if (shareBox != null) {
-            share = shareBox.selected();
-        }
+        keepChoices();
         for (AutoCloseable c : owned) {
             try {
                 c.close();
@@ -274,9 +306,6 @@ public final class CrashScreen extends Screen {
 
     @Override
     public void onClose() {
-        if (shareBox != null) {
-            share = shareBox.selected();
-        }
         decide(null);
         Compat.setScreen(minecraft, next);
     }
