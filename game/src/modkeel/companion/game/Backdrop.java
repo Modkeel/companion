@@ -27,6 +27,10 @@ final class Backdrop extends Canvas {
         Keel.strip(p, 0, 0, w, header, false);
         Keel.strip(p, 0, h - footer, w, footer, true);
         int x = view.getX() - Keel.PANEL_MARGIN;
-        Keel.panel(p, x, header, view.getWidth() + 2 * Keel.PANEL_MARGIN, h - header - footer);
+        int pw = view.getWidth() + 2 * Keel.PANEL_MARGIN;
+        int mid = h - header - footer;
+        Keel.checks(p, 0, header, x, mid);
+        Keel.checks(p, x + pw, header, w - x - pw, mid);
+        Keel.panel(p, x, header, pw, mid);
     }
 }

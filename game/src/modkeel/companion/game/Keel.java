@@ -110,6 +110,25 @@ final class Keel {
         }
     }
 
+    private static final int CHECK = 4;
+
+    /**
+     * Faint checks for the screen around the panel, so no zone is a flat color. Zones that touch
+     * never share a pattern: checks outside, stripes on the panel, mirrored stripes above and below.
+     */
+    static void checks(Paint p, int x, int y, int w, int h) {
+        for (int cy = y - Math.floorMod(y, CHECK); cy < y + h; cy += CHECK) {
+            for (int cx = x - Math.floorMod(x, CHECK); cx < x + w; cx += CHECK) {
+                boolean light = ((cx / CHECK) + (cy / CHECK)) % 2 == 0;
+                int a = Math.max(x, cx);
+                int b = Math.max(y, cy);
+                int c = Math.min(x + w, cx + CHECK);
+                int d = Math.min(y + h, cy + CHECK);
+                p.fill(a, b, c, d, light ? 0x0FFFFFFF : 0x0F000000);
+            }
+        }
+    }
+
     static void card(Paint p, int x, int y, int w, int h) {
         bevel(p, x, y, w, h, 0xEB343434, 0x1AFFFFFF, 0x73000000);
     }
