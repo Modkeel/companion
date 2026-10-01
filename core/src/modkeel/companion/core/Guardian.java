@@ -108,8 +108,13 @@ public final class Guardian {
      * now count as held, and the session journal grows.
      */
     public void addPlay(long ticks, List<Spikes.Spike> recent) {
+        addPlay(ticks, recent, new Activity());
+    }
+
+    /** The same, with what that play did with each mod (see {@link Activity}). */
+    public void addPlay(long ticks, List<Spikes.Spike> recent, Activity activity) {
         outcomes.addTicks(ticks);
-        sessions.played(ticks, recent);
+        sessions.played(ticks, recent, activity);
         reportSteps();
     }
 

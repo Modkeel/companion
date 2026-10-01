@@ -45,6 +45,7 @@ public final class CoreTest {
         run("reports: payload, outbox, install token", CoreTest::reports);
         run("reports: a shared fix sends its steps", CoreTest::reportSteps);
         run("reports: session summaries, only when always shared", CoreTest::sessions);
+        run("per-mod activity: growth, peaks, journal", CoreTest::activity);
         run("rules bundle and version in file names", CoreTest::rules);
         run("lab rules in the diagnosis", CoreTest::labHints);
         run("lag spike: owner of a sampled stack", CoreTest::spikeOwner);
@@ -763,6 +764,54 @@ public final class CoreTest {
             System.clearProperty("modkeel.api");
             server.stop(0);
         }
+    }
+
+    static void activity() throws Exception {
+        java.util.Map<String, long[]> before = new java.util.HashMap<>();
+        before.put("create", new long[]{10, 0, 5, 0, 1, 0, 0});
+        java.util.Map<String, long[]> after = new java.util.HashMap<>();
+        after.put("create", new long[]{14, 2, 5, 0, 1, 0, 0});
+        after.put("ae2", new long[]{0, 0, 3, 0, 0, 0, 0});
+        Activity first = new Activity();
+        check(!first.addGrowth(null, after), "first sight is only a baseline");
+        eq(0, first.mods.size(), "nothing counted on first sight");
+        check(first.addGrowth(before, after), "growth seen");
+        eq(4L, first.of("create")[Activity.MINED], "mined grew by 4");
+        eq(2L, first.of("create")[Activity.CRAFTED], "crafted grew by 2");
+        eq(0L, first.of("create")[Activity.USED], "used did not grow");
+        eq(3L, first.of("ae2")[Activity.USED], "a new mod counts from zero");
+        first.peak("create", Activity.MACHINES, 30);
+        first.count("twilightforest", Activity.HERE, 1200);
+        first.activeTicks = 1200;
+        Activity second = new Activity();
+        second.peak("create", Activity.MACHINES, 12);
+        second.count("create", Activity.MINED, 1);
+        second.count("twilightforest", Activity.HERE, 100);
+        second.activeTicks = 100;
+        first.add(second);
+        eq(5L, first.of("create")[Activity.MINED], "counts sum");
+        eq(30L, first.of("create")[Activity.MACHINES], "machines keep the peak");
+        String json = first.json();
+        check(json.startsWith("{\"create\":{\"mined\":5,\"crafted\":2,\"used\":0,\"killed\":0,\"adv\":0,"
+                + "\"machines\":30,\"here\":0}"), "busiest mod first: " + json);
+        check(json.contains("\"twilightforest\":{\"mined\":0,\"crafted\":0,\"used\":0,\"killed\":0,\"adv\":0,"
+                + "\"machines\":0,\"here\":2}"), "here in minutes: " + json);
+        Activity bad = new Activity();
+        bad.count("Bad Name", Activity.MINED, 1);
+        eq("{}", bad.json(), "only valid mod ids leave");
+
+        Path game = Files.createTempDirectory("mk-activity");
+        Guardian g = new Guardian(game);
+        g.mcVersion = "26.2";
+        g.loader = "fabric";
+        g.startup();
+        g.addPlay(1200, List.of(), first);
+        g.addPlay(1200, List.of(), second);
+        String preview = g.sessions.preview();
+        check(preview.contains("\"active_minutes\":2,\"activity\":{\"create\":{\"mined\":6,"), preview);
+        Sessions.Journal j = Sessions.Journal.parse(Files.readAllLines(game.resolve("modkeel/session.txt")));
+        eq(6L, j.activity.of("create")[Activity.MINED], "the journal keeps the activity");
+        eq(1400L, j.activity.activeTicks, "and the active ticks");
     }
 
     static void rules() throws Exception {

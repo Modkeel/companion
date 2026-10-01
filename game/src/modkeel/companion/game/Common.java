@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Supplier;
 
+import modkeel.companion.core.Activity;
 import modkeel.companion.core.Diagnosis;
 import modkeel.companion.core.Guardian;
 import modkeel.companion.core.Log;
@@ -13,7 +14,11 @@ import modkeel.companion.core.Sections;
 import modkeel.companion.core.Spikes;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.stats.Stats;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.storage.LevelResource;
 import org.slf4j.LoggerFactory;
 
@@ -30,6 +35,10 @@ public final class Common {
     /** Play is counted towards fix outcomes once a minute. */
     private static final int PLAY_CHUNK = (int) Math.min(1200, Outcomes.HELD_TICKS);
     private static boolean marked;
+    private static Tracker tracker = new Tracker();
+    private static boolean trackerFailed;
+    /** Test hook: the players mine and use stone every second (-Dmodkeel.test.play=true). */
+    private static final boolean TEST_PLAY = Boolean.getBoolean("modkeel.test.play");
 
     private Common() {
     }
@@ -62,6 +71,7 @@ public final class Common {
         Common.server = server;
         ticks = 0;
         marked = false;
+        tracker = new Tracker();
         guardian.onWorldStarting(server.getWorldPath(LevelResource.ROOT));
     }
 
@@ -94,8 +104,34 @@ public final class Common {
             marked = true;
             background(guardian::markGood);
         }
+        if (ticks % 20 == 0) {
+            track(() -> {
+                tracker.meet(server);
+                if (TEST_PLAY) {
+                    for (ServerPlayer p : server.getPlayerList().getPlayers()) {
+                        p.awardStat(Stats.BLOCK_MINED.get(Blocks.STONE));
+                        p.awardStat(Stats.ITEM_USED.get(Items.STONE));
+                    }
+                }
+            });
+        }
         if (ticks % PLAY_CHUNK == 0) {
-            background(() -> guardian.addPlay(PLAY_CHUNK, spikes.recent()));
+            Activity[] played = {new Activity()};
+            track(() -> played[0] = tracker.sample(server, PLAY_CHUNK));
+            background(() -> guardian.addPlay(PLAY_CHUNK, spikes.recent(), played[0]));
+        }
+    }
+
+    /** Measuring play must never break the game: on the first error it stops, once logged. */
+    private static void track(Runnable r) {
+        if (trackerFailed || server == null) {
+            return;
+        }
+        try {
+            r.run();
+        } catch (RuntimeException | LinkageError e) {
+            trackerFailed = true;
+            Log.warn("per-mod activity off for this run", e);
         }
     }
 

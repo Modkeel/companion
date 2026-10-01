@@ -28,6 +28,7 @@ public final class Sessions {
         long ticks;
         /** The worst spikes: "at\tms\tjson", worst first. */
         final List<String> spikes = new ArrayList<>();
+        final Activity activity = new Activity();
 
         long minutes() {
             return (ticks + 1199) / 1200;
@@ -38,6 +39,10 @@ public final class Sessions {
                     "env\t" + env, "ticks\t" + ticks));
             for (String s : spikes) {
                 out.add("spike\t" + s);
+            }
+            out.add("active\t" + activity.activeTicks);
+            for (String a : activity.lines()) {
+                out.add("act\t" + a);
             }
             return out;
         }
@@ -55,6 +60,8 @@ public final class Sessions {
                     case "env": j.env = p[1]; break;
                     case "ticks": j.ticks = Long.parseLong(p[1]); break;
                     case "spike": j.spikes.add(p[1]); break;
+                    case "active": j.activity.activeTicks = Long.parseLong(p[1]); break;
+                    case "act": j.activity.parseLine(p[1]); break;
                     default: break;
                 }
             }
@@ -87,12 +94,16 @@ public final class Sessions {
         save();
     }
 
-    /** Play in a world, with the spikes measured so far (newest first, any age). */
-    synchronized void played(long ticks, List<Spikes.Spike> recent) {
+    /**
+     * Play in a world, with the spikes measured so far (newest first, any age) and what that
+     * play did with each mod.
+     */
+    synchronized void played(long ticks, List<Spikes.Spike> recent, Activity activity) {
         if (now == null) {
             return;
         }
         now.ticks += ticks;
+        now.activity.add(activity);
         for (Spikes.Spike s : recent) {
             if (s.at < now.start) {
                 continue;
@@ -134,14 +145,17 @@ public final class Sessions {
                 g.state.save();
             }
         }
+        long minutes = Math.max(1, Math.min(j.minutes(), 7 * 24 * 60));
         List<String> spikes = new ArrayList<>();
         for (String s : j.spikes) {
             spikes.add(s.split("\t", 3)[2]);
         }
         return "{\"v\":1,\"install\":\"\",\"env\":" + (j.env.equals("{}") ? g.reports.env() : j.env)
                 + ",\"set\":" + Reports.q(set) + ",\"mods\":" + mods
-                + ",\"minutes\":" + Math.max(1, Math.min(j.minutes(), 7 * 24 * 60))
-                + ",\"crashed\":" + crashed + ",\"spikes\":[" + String.join(",", spikes) + "]}";
+                + ",\"minutes\":" + minutes
+                + ",\"crashed\":" + crashed + ",\"spikes\":[" + String.join(",", spikes) + "]"
+                + ",\"active_minutes\":" + Math.min(Activity.minutes(j.activity.activeTicks), minutes)
+                + ",\"activity\":" + j.activity.json() + "}";
     }
 
     /** A spike for the server: where, how long, and who owned it; no stacks, no names. */
