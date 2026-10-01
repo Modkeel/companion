@@ -17,7 +17,7 @@
   "modkeel.sessions.start": "Отправлять",
   "modkeel.sessions.stop": "Остановить",
   "modkeel.sessions.note": "Отправляется при следующем запуске игры: минуты в мире, был ли вылет, 20 худших лагов и моды, которые их вызвали, и список модов один раз на набор. Без имён, путей к файлам и логов.",
-  "modkeel.sent.setup": "Твоя система: Minecraft %1$s, %2$s %3$s, Java %4$s, %5$s, %6$s ГБ памяти",
+  "modkeel.sent.setup": "Minecraft %1$s, %2$s %3$s, Java %4$s, %5$s, %6$s ГБ ОЗУ",
   "modkeel.sent.mods": "Твои моды (%s): имя, версия и отпечаток каждого файла",
   "modkeel.sent.mods_known": "Список модов: уже отправлен для этих модов",
   "modkeel.sent.error": "Ошибка: %s",

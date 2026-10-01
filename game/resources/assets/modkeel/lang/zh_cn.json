@@ -17,7 +17,7 @@
   "modkeel.sessions.start": "分享",
   "modkeel.sessions.stop": "停止",
   "modkeel.sessions.note": "在下次启动游戏时发送：在世界中的分钟数、是否崩溃、最严重的 20 次卡顿及其相关模组，以及每套模组只发送一次的模组列表。不含名字、文件路径或日志。",
-  "modkeel.sent.setup": "你的配置：Minecraft %1$s，%2$s %3$s，Java %4$s，%5$s，%6$s GB 内存",
+  "modkeel.sent.setup": "Minecraft %1$s，%2$s %3$s，Java %4$s，%5$s，%6$s GB 内存",
   "modkeel.sent.mods": "你的 %s 个模组：名称、版本和每个文件的指纹",
   "modkeel.sent.mods_known": "模组列表：这些模组已发送过",
   "modkeel.sent.error": "错误：%s",

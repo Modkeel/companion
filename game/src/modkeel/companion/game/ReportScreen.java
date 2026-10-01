@@ -30,9 +30,12 @@ public final class ReportScreen extends Page {
     protected void body(Stack body, int w) {
         body.addChild(Text.loose(Component.translatable(note), w, Keel.GRAY));
         Card c = body.addChild(new Card(w));
+        int dash = font.width("- ");
         for (Sent.Line line : Sent.lines(payload)) {
-            c.add(Text.in(Component.literal("- ").append(Component.translatable(line.key, (Object[]) line.args)),
-                    c.inner(), Keel.SOFT));
+            // a wrapped line starts under the text, not under the dash
+            Stack row = c.add(Stack.horizontal(0));
+            row.addChild(Text.in(Component.literal("-"), dash, Keel.SOFT));
+            row.addChild(Text.in(Component.translatable(line.key, (Object[]) line.args), c.inner() - dash, Keel.SOFT));
         }
         if (exact) {
             Card data = body.addChild(new Card(w));

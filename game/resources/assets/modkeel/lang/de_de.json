@@ -17,7 +17,7 @@
   "modkeel.sessions.start": "Teilen",
   "modkeel.sessions.stop": "Stoppen",
   "modkeel.sessions.note": "Wird beim nächsten Spielstart gesendet: Minuten in einer Welt, ob es abstürzte, die 20 schlimmsten Ruckler und die Mods dahinter, und die Modliste einmal pro Set. Keine Namen, Dateipfade oder Logs.",
-  "modkeel.sent.setup": "Dein System: Minecraft %1$s, %2$s %3$s, Java %4$s, %5$s, %6$s GB Speicher",
+  "modkeel.sent.setup": "Minecraft %1$s, %2$s %3$s, Java %4$s, %5$s, %6$s GB RAM",
   "modkeel.sent.mods": "Deine %s Mods: Name, Version und ein Fingerabdruck jeder Datei",
   "modkeel.sent.mods_known": "Deine Modliste: für diese Mods schon gesendet",
   "modkeel.sent.error": "Der Fehler: %s",

@@ -17,7 +17,7 @@
   "modkeel.sessions.start": "Partager",
   "modkeel.sessions.stop": "Arrêter",
   "modkeel.sessions.note": "Envoyé au prochain lancement : minutes dans un monde, s'il a crashé, les 20 pires saccades et les mods en cause, et la liste des mods une fois par ensemble. Aucun nom, chemin de fichier ni log.",
-  "modkeel.sent.setup": "Ta config : Minecraft %1$s, %2$s %3$s, Java %4$s, %5$s, %6$s Go de mémoire",
+  "modkeel.sent.setup": "Minecraft %1$s, %2$s %3$s, Java %4$s, %5$s, %6$s Go de RAM",
   "modkeel.sent.mods": "Tes %s mods : nom, version et une empreinte de chaque fichier",
   "modkeel.sent.mods_known": "Ta liste de mods : déjà envoyée pour ces mods",
   "modkeel.sent.error": "L'erreur : %s",
