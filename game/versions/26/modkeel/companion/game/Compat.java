@@ -93,6 +93,10 @@ public final class Compat {
         SystemToast.addOrUpdate(mc.gui.toastManager(), SystemToast.SystemToastId.PERIODIC_NOTIFICATION, title, message);
     }
 
+    /** Screens draw their own background from 1.20.2 on: nothing to add. */
+    public static void background(Screen screen, java.util.function.Consumer<AbstractWidget> add) {
+    }
+
     /** A checkbox sized to its label; read it back with {@code selected()}. */
     public static Checkbox checkbox(Component label, Font font, boolean selected) {
         return Checkbox.builder(label, font).selected(selected).build();

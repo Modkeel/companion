@@ -30,6 +30,7 @@ public final class ReportScreen extends Screen {
 
     @Override
     protected void init() {
+        Compat.background(this, this::addRenderableOnly);
         layout = new HeaderAndFooterLayout(this, 33, 33);
         Compat.titleHeader(layout, title, font);
         int w = Math.min(width - 40, 380);

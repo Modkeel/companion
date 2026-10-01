@@ -101,6 +101,23 @@ public final class Compat {
         SystemToast.addOrUpdate(mc.getToasts(), SystemToast.SystemToastIds.PERIODIC_NOTIFICATION, title, message);
     }
 
+    /**
+     * 1.20.1 screens draw no background unless they ask: without one, the last frame stays under
+     * the screen (the loading overlay, text from before a scroll). A widget drawn first paints it.
+     */
+    public static void background(Screen screen, java.util.function.Consumer<AbstractWidget> add) {
+        add.accept(new Canvas(screen.width, screen.height) {
+            @Override
+            protected void renderWidget(net.minecraft.client.gui.GuiGraphics g, int mouseX, int mouseY, float delta) {
+                screen.renderBackground(g);
+            }
+
+            @Override
+            protected void paint(Paint p, int mouseX, int mouseY) {
+            }
+        });
+    }
+
     /** A checkbox sized to its label; read it back with {@code selected()}. */
     public static Checkbox checkbox(Component label, Font font, boolean selected) {
         return new Checkbox(0, 0, font.width(label) + 24, 20, label, selected);

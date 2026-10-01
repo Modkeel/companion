@@ -40,6 +40,7 @@ public final class HealthScreen extends Screen {
 
     @Override
     protected void init() {
+        Compat.background(this, this::addRenderableOnly);
         layout = new HeaderAndFooterLayout(this, 33, 36);
         Compat.titleHeader(layout, title, font);
         int w = Math.min(width - 40, 380);

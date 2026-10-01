@@ -54,6 +54,7 @@ public final class CrashScreen extends Screen {
 
     @Override
     protected void init() {
+        Compat.background(this, this::addRenderableOnly);
         layout = new HeaderAndFooterLayout(this, 33, !g.reports.enabled() ? 60 : offerSessions ? 108 : 84);
         Compat.titleHeader(layout, title, font);
         int w = Math.min(width - 40, 380);
