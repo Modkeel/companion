@@ -21,7 +21,9 @@ import net.minecraft.network.chat.contents.TranslatableContents;
  *
  * FILE holds the buttons still to press, one per line, as a translation key ("gui.yes") or the
  * literal label ("Modkeel"); a leading "?" makes a step optional: skipped when this screen has no
- * such button (the welcome screen shows only on some starts). Each time a screen has been up for a moment, the driver logs
+ * such button (the welcome screen shows only on some starts). The step "scroll" turns the mouse
+ * wheel down over the screen in a few jumps, a frame after each and one once it stops, then
+ * goes on with the next step on the same screen. Each time a screen has been up for a moment, the driver logs
  * "tour: shot N", waits until tour.py writes N to FILE.ack (the capture is taken), then presses
  * the next button. A step is removed from FILE before it is pressed, so a fix that closes the
  * game resumes on the next launch with the steps after it.
@@ -29,6 +31,10 @@ import net.minecraft.network.chat.contents.TranslatableContents;
 final class Tour {
     private static final long STABLE_MS = 1500;
     private static final long ACK_MS = 60_000;
+    /** Wheel turns per "scroll" step, each this many notches: before, middle, end. */
+    private static final int JUMPS = 2;
+    private static final int NOTCHES = 6;
+    private static final int SETTLE_FRAMES = 1;
 
     private Tour() {
     }
@@ -79,6 +85,15 @@ final class Tour {
                 return;
             }
             List<String> steps = read(file);
+            while (!steps.isEmpty() && steps.get(0).equals("scroll")) {
+                steps.remove(0);
+                write(file, steps);
+                shot = scrollFrames(mc, s, ack, shot);
+                if (shot < 0) {
+                    Log.info("tour: no capture ack, stopping");
+                    return;
+                }
+            }
             AbstractButton b = null;
             String step = null;
             while (b == null && !steps.isEmpty()) {
@@ -101,6 +116,24 @@ final class Tour {
             AbstractButton button = b;
             mc.execute(() -> Compat.press(button));
         }
+    }
+
+    /** Frames while scrolling down, then while still; returns the last shot, or -1. */
+    private static int scrollFrames(Minecraft mc, Screen s, Path ack, int shot) {
+        for (int i = 1; i <= JUMPS + SETTLE_FRAMES; i++) {
+            boolean turning = i <= JUMPS;
+            if (turning) {
+                mc.execute(() -> Compat.scroll(s, s.width / 2.0, s.height / 2.0, -NOTCHES));
+            }
+            sleep(turning ? 150 : 500);
+            shot++;
+            Log.info("tour: shot " + shot + " " + s.getClass().getSimpleName() + " | "
+                    + (turning ? "scroll " + i : "scroll stopped"));
+            if (!waitAck(ack, shot)) {
+                return -1;
+            }
+        }
+        return shot;
     }
 
     /** The first active button whose label is `step`, searching nested containers too. */

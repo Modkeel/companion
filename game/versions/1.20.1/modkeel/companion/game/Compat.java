@@ -78,6 +78,11 @@ public final class Compat {
         button.onPress();
     }
 
+    /** The mouse wheel over (x, y): negative notches scroll down. */
+    public static void scroll(Screen screen, double x, double y, double notches) {
+        screen.mouseScrolled(x, y, notches);
+    }
+
     /** A world's icon.png as a widget, or null. The texture goes into {@code owned} to close later. */
     public static AbstractWidget worldIcon(Minecraft mc, String world, Path png, int size,
                                            List<AutoCloseable> owned) {
