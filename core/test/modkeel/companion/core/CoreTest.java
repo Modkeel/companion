@@ -599,6 +599,24 @@ public final class CoreTest {
             check(readable.contains("\n  \"signature\": \"" + d.signature + "\","), readable);
             check(readable.contains("\n    {\"id\": \"neo\", \"version\": \"3.1\", "), "one mod per line: " + readable);
             check(readable.contains("\"fix\": {\"title\": \"disable:bad\", \"disabled\": [\"bad\"]}\n}"), readable);
+            List<String> said = new ArrayList<>();
+            for (Sent.Line l : Sent.lines(json)) {
+                said.add(l.key.substring("modkeel.sent.".length()) + "=" + String.join("|", l.args));
+            }
+            check(said.get(0).startsWith("setup=26.2|Fabric|0.17.3|"), "setup line: " + said);
+            check(said.contains("error=RuntimeException") && said.contains("frames=1")
+                    && said.contains("suspects=bad") && said.contains("fix_disable=bad")
+                    && said.contains("install="), "plain words: " + said);
+            check(said.contains("mods=" + (json.split("\"sha1\"").length - 1)), "mods counted: " + said);
+            check(Sent.lines("not json").isEmpty(), "bad payload: no lines");
+            said.clear();
+            for (Sent.Line l : Sent.lines("{\"v\":1,\"install\":\"\",\"env\":{},\"set\":\"ab\",\"mods\":null,"
+                    + "\"minutes\":42,\"crashed\":false,\"spikes\":[{\"ms\":300},{\"ms\":900}],"
+                    + "\"active_minutes\":30,\"activity\":{\"create\":{\"here\":5}}}")) {
+                said.add(l.key.substring("modkeel.sent.".length()) + "=" + String.join("|", l.args));
+            }
+            eq(List.of("mods_known=", "minutes=42|30", "not_crashed=", "spikes=2",
+                    "activity=1", "install="), said, "session in plain words");
 
             r.queue("crash", json);
             check(r.send(), "all sent");

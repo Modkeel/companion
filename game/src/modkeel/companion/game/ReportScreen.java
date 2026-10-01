@@ -1,17 +1,14 @@
 package modkeel.companion.game;
 
-import net.minecraft.client.gui.layouts.HeaderAndFooterLayout;
+import modkeel.companion.core.Sent;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
 
-/** "What is sent": the exact report, as the server will get it. */
-public final class ReportScreen extends Screen {
-    private final Screen back;
+/** "What is sent": the report in plain words, and the exact data the server will get. */
+public final class ReportScreen extends Page {
     private final String payload;
     private final String note;
-    private HeaderAndFooterLayout layout;
-    private Scroll scroll;
+    private final boolean exact;
 
     public ReportScreen(Screen back, String payload) {
         this(back, payload, "modkeel.share.note");
@@ -19,40 +16,34 @@ public final class ReportScreen extends Screen {
 
     /** {@code note} is the translation key that says when this report leaves. */
     public ReportScreen(Screen back, String payload, String note) {
-        super(Component.translatable("modkeel.share.what"));
-        this.back = back;
+        this(back, payload, note, false);
+    }
+
+    private ReportScreen(Screen back, String payload, String note, boolean exact) {
+        super(Component.translatable("modkeel.share.what"), back);
         this.payload = payload;
         this.note = note;
+        this.exact = exact;
     }
 
     @Override
-    protected void init() {
-        Compat.background(this, this::addRenderableOnly);
-        layout = new HeaderAndFooterLayout(this, 33, 33);
-        Compat.titleHeader(layout, title, font);
-        int w = Keel.bodyWidth(width, 380);
-        Stack body = Stack.vertical(6);
-        body.defaultCellSetting().alignHorizontallyCenter();
+    protected void body(Stack body, int w) {
         body.addChild(Text.loose(Component.translatable(note), w, Keel.GRAY));
         Card c = body.addChild(new Card(w));
-        c.add(Text.in(Component.literal(payload), c.inner(), Keel.SOFT));
-        scroll = Compat.contents(layout, new Scroll(minecraft, body, Compat.contentHeight(layout)));
-        layout.addToFooter(new KeelButton(150, CommonComponents.GUI_BACK, b -> onClose()));
-        addRenderableOnly(new Backdrop(width, height, 33, 33, scroll));
-        layout.visitWidgets(this::addRenderableWidget);
-        addRenderableOnly(new Edges(width, height, scroll, body));
-        repositionElements();
+        for (Sent.Line line : Sent.lines(payload)) {
+            c.add(Text.in(Component.literal("- ").append(Component.translatable(line.key, (Object[]) line.args)),
+                    c.inner(), Keel.SOFT));
+        }
+        if (exact) {
+            Card data = body.addChild(new Card(w));
+            data.add(Text.in(Component.literal(payload), data.inner(), Keel.GRAY));
+        }
     }
 
     @Override
-    protected void repositionElements() {
-        scroll.arrangeElements();
-        scroll.setMaxHeight(Compat.contentHeight(layout));
-        Keel.arrange(layout, scroll);
-    }
-
-    @Override
-    public void onClose() {
-        Compat.setScreen(minecraft, back);
+    protected void footer(Stack footer) {
+        footer.addChild(new KeelButton(150, Component.translatable(exact ? "modkeel.sent.hide" : "modkeel.sent.show"),
+                b -> Compat.setScreen(minecraft, new ReportScreen(back, payload, note, !exact))));
+        super.footer(footer);
     }
 }
