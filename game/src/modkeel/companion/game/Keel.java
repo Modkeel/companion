@@ -50,7 +50,7 @@ final class Keel {
     /** Screen edge to panel edge. */
     static final int GUTTER = 10;
     /** Air inside the scroll area: above and below the content, and beside it. */
-    static final int INSET_Y = 6;
+    static final int INSET_Y = 10;
     static final int INSET_X = 4;
     /** What a scroll area adds on each side of its content: gap and scroll bar. */
     private static final int SCROLL_RESERVE = 10;
