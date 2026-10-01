@@ -32,7 +32,7 @@ final class Scroll implements Layout {
     private int maxHeight;
 
     Scroll(Minecraft minecraft, Layout content, int maxHeight) {
-        this.content = content;
+        this.content = Keel.inset(content);
         this.maxHeight = maxHeight;
     }
 

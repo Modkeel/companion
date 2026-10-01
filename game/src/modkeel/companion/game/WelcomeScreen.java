@@ -20,7 +20,7 @@ public final class WelcomeScreen extends Screen {
         Compat.background(this, this::addRenderableOnly);
         layout = new HeaderAndFooterLayout(this, 33, 36);
         Compat.titleHeader(layout, title, font);
-        int w = Math.min(width - 40, 360);
+        int w = Keel.bodyWidth(width, 360);
         Stack body = Stack.vertical(6);
         body.defaultCellSetting().alignHorizontallyCenter();
         Card c = body.addChild(new Card(w));

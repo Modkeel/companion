@@ -56,7 +56,7 @@ public final class CrashScreen extends Screen {
         Compat.background(this, this::addRenderableOnly);
         layout = new HeaderAndFooterLayout(this, 33, footerHeight());
         Compat.titleHeader(layout, title, font);
-        int w = Math.min(width - 40, 380);
+        int w = Keel.bodyWidth(width, 380);
         Stack body = Stack.vertical(6);
         body.defaultCellSetting().alignHorizontallyCenter();
 

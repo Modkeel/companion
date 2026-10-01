@@ -1,6 +1,8 @@
 package modkeel.companion.game;
 
 import net.minecraft.client.gui.Font;
+import net.minecraft.client.gui.layouts.Layout;
+import net.minecraft.client.gui.layouts.SpacerElement;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.FormattedCharSequence;
 
@@ -45,6 +47,32 @@ final class Keel {
     }
 
     static final int PANEL_MARGIN = 8;
+    /** Screen edge to panel edge. */
+    static final int GUTTER = 10;
+    /** Air inside the scroll area: above and below the content, and beside it. */
+    static final int INSET_Y = 6;
+    static final int INSET_X = 4;
+    /** What a scroll area adds on each side of its content: gap and scroll bar. */
+    private static final int SCROLL_RESERVE = 10;
+
+    /** A scrolling body's width on a screen this wide: the panel keeps a gutter to the edges. */
+    static int bodyWidth(int screenWidth, int max) {
+        int reserve = GUTTER + PANEL_MARGIN + SCROLL_RESERVE + INSET_X;
+        return Math.max(100, Math.min(screenWidth - 2 * reserve, max));
+    }
+
+    /** The body with air around it, so nothing sits on the scroll area's edges or its bar. */
+    static Layout inset(Layout body) {
+        Stack column = Stack.vertical(0);
+        column.addChild(SpacerElement.height(INSET_Y));
+        column.addChild(body);
+        column.addChild(SpacerElement.height(INSET_Y));
+        Stack row = Stack.horizontal(0);
+        row.addChild(SpacerElement.width(INSET_X));
+        row.addChild(column);
+        row.addChild(SpacerElement.width(INSET_X));
+        return row;
+    }
 
     /** A translucent dark panel behind a screen's content: the world behind stays visible. */
     static void panel(Paint p, int x, int y, int w, int h) {

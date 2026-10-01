@@ -30,7 +30,7 @@ public final class ReportScreen extends Screen {
         Compat.background(this, this::addRenderableOnly);
         layout = new HeaderAndFooterLayout(this, 33, 33);
         Compat.titleHeader(layout, title, font);
-        int w = Math.min(width - 40, 380);
+        int w = Keel.bodyWidth(width, 380);
         Stack body = Stack.vertical(6);
         body.defaultCellSetting().alignHorizontallyCenter();
         body.addChild(Text.loose(Component.translatable(note), w, Keel.GRAY));
