@@ -3,6 +3,7 @@ package modkeel.companion.core;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.DirectoryStream;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
@@ -92,10 +93,31 @@ public final class Backups {
         return out;
     }
 
+    /** Why a backup was made, beside it as a {@link Msg} ("before playing with 2 new mods"). */
+    public static void setReason(Path zip, String msg) throws IOException {
+        Files.write(reasonFile(zip), msg.getBytes(StandardCharsets.UTF_8));
+    }
+
+    /** The stored reason, or null (backups from before reasons were kept). */
+    public static String reason(Path zip) {
+        try {
+            Path f = reasonFile(zip);
+            return Files.exists(f) ? new String(Files.readAllBytes(f), StandardCharsets.UTF_8) : null;
+        } catch (IOException e) {
+            Log.warn("cannot read the reason of " + zip, e);
+            return null;
+        }
+    }
+
+    private static Path reasonFile(Path zip) {
+        return zip.resolveSibling(zip.getFileName().toString().replaceAll("\\.zip$", "") + ".txt");
+    }
+
     public static void prune(Path gameDir, String world, int keep) {
         List<Path> all = list(gameDir, world);
         for (int i = keep; i < all.size(); i++) {
             try {
+                Files.deleteIfExists(reasonFile(all.get(i)));
                 Files.delete(all.get(i));
             } catch (IOException e) {
                 Log.warn("cannot delete " + all.get(i), e);

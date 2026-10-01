@@ -7,6 +7,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
+import modkeel.companion.core.Backups;
 import modkeel.companion.core.Guardian;
 import modkeel.companion.core.Log;
 import net.minecraft.client.Minecraft;
@@ -144,6 +145,11 @@ final class Tour {
                     : new ReportScreen(back, g.reports.readable(g.reports.crash(g.crash, null)));
             case "health" -> new HealthScreen(back, g);
             case "spike" -> new SpikeScreen(back);
+            case "worlds" -> new WorldsScreen(back, g);
+            case "world" -> Backups.worlds(g.gameDir).isEmpty() ? null
+                    : new WorldScreen(back, g, Backups.worlds(g.gameDir).get(0));
+            case "mods" -> new ModsScreen(back, g);
+            case "settings" -> new SettingsScreen(back, g);
             default -> null;
         };
     }

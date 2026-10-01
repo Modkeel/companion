@@ -121,7 +121,13 @@ public final class Compat {
         add.accept(new Canvas(screen.width, screen.height) {
             @Override
             protected void renderWidget(net.minecraft.client.gui.GuiGraphics g, int mouseX, int mouseY, float delta) {
-                screen.renderBackground(g);
+                // without a world, the dirt texture would show through Keel's translucent zones;
+                // 26.x shows a dark blurred panorama there, so a plain mid-gray stands in for it
+                if (Minecraft.getInstance().level == null) {
+                    g.fill(0, 0, screen.width, screen.height, 0xFF383838);
+                } else {
+                    screen.renderBackground(g);
+                }
             }
 
             @Override

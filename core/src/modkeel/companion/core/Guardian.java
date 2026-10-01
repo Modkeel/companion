@@ -181,10 +181,12 @@ public final class Guardian {
         try {
             boolean changed;
             String before = "none";
+            String reason = Msg.of("modkeel.copy.first");
             if (Files.exists(stored)) {
                 ModSet old = ModSet.read(stored);
                 changed = !old.fingerprint().equals(now.fingerprint());
                 before = old.jars.size() + " mods";
+                reason = copyReason(old, now);
             } else {
                 // first time with Modkeel: back up any world that already existed
                 changed = Files.exists(worldDir.resolve("level.dat"));
@@ -198,6 +200,7 @@ public final class Guardian {
                     long t0 = System.currentTimeMillis();
                     backup = Backups.dir(gameDir, world).resolve(Backups.stamp() + ".zip");
                     Backups.zip(worldDir, backup);
+                    Backups.setReason(backup, reason);
                     Backups.prune(gameDir, world, KEEP_BACKUPS);
                     Log.info("mods changed (" + before + " -> " + now.jars.size() + " mods): backed up "
                              + world + " in " + (System.currentTimeMillis() - t0) + " ms to " + backup);
@@ -208,6 +211,23 @@ public final class Guardian {
             Log.warn("backup of " + world + " failed", e);
         }
         return backup;
+    }
+
+    /** "Before playing with 2 new mods", "...without 1 mod", "...with 3 mods changed". */
+    static String copyReason(ModSet old, ModSet now) {
+        Set<String> was = new HashSet<>();
+        old.jars.forEach(j -> was.add(j.sha1));
+        Set<String> is = new HashSet<>();
+        now.jars.forEach(j -> is.add(j.sha1));
+        long added = is.stream().filter(h -> !was.contains(h)).count();
+        long removed = was.stream().filter(h -> !is.contains(h)).count();
+        if (removed == 0) {
+            return Msg.of("modkeel.copy.added", added);
+        }
+        if (added == 0) {
+            return Msg.of("modkeel.copy.removed", removed);
+        }
+        return Msg.of("modkeel.copy.changed", Math.max(added, removed));
     }
 
     /**

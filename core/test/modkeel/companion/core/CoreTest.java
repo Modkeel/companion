@@ -263,12 +263,15 @@ public final class CoreTest {
         Path zip = Backups.dir(game, "World").resolve("20260928-100000.zip");
         Backups.zip(w, zip);
         check(Files.size(zip) > 0, "zip written");
+        Backups.setReason(zip, Msg.of("modkeel.copy.added", 2));
+        eq(Msg.of("modkeel.copy.added", 2), Backups.reason(zip), "reason kept beside the zip");
         for (String stamp : new String[] {"20260928-100001", "20260928-100002", "20260928-100003"}) {
             Files.copy(zip, zip.resolveSibling(stamp + ".zip"));
         }
         Backups.prune(game, "World", 3);
         List<Path> left = Backups.list(game, "World");
         eq(3, left.size(), "pruned to 3");
+        check(!Files.exists(zip.resolveSibling("20260928-100000.txt")), "pruned reason deleted");
         eq("20260928-100003.zip", left.get(0).getFileName().toString(), "newest first");
         eq(List.of("World"), Backups.worlds(game), "worlds");
 
@@ -286,13 +289,17 @@ public final class CoreTest {
         jar(game.resolve("mods"), "a.jar", "a", null, "a/A.class");
         Path w = world(game.resolve("saves"), "World");
         Guardian g = new Guardian(game);
-        check(g.onWorldStarting(w) != null, "first launch with Modkeel backs up an existing world");
+        Path first = g.onWorldStarting(w);
+        check(first != null, "first launch with Modkeel backs up an existing world");
+        eq(Msg.of("modkeel.copy.first"), Backups.reason(first), "first copy's reason");
         check(Files.exists(w.resolve("modkeel/modset.txt")), "world mod set stored");
         g = new Guardian(game);
         eq(null, g.onWorldStarting(w), "same mods: no backup");
         jar(game.resolve("mods"), "b.jar", "b", null, "b/B.class");
         g = new Guardian(game);
-        check(g.onWorldStarting(w) != null, "new mod: backup");
+        Path added = g.onWorldStarting(w);
+        check(added != null, "new mod: backup");
+        eq(Msg.of("modkeel.copy.added", 1), Backups.reason(added), "new mod's reason");
         Path fresh = game.resolve("saves/New");
         Files.createDirectories(fresh);
         eq(null, new Guardian(game).onWorldStarting(fresh), "a brand new world needs no backup");

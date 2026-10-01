@@ -114,6 +114,15 @@ public final class CrashScreen extends Screen {
         repositionElements();
     }
 
+    /** How sure, in words: "It was", "It was probably", "It may have been". */
+    static Component likely(Diagnosis d) {
+        return Component.translatable("modkeel.crash.likely." + switch (d.confidence) {
+            case HIGH -> "high";
+            case MEDIUM -> "medium";
+            default -> "low";
+        });
+    }
+
     static boolean canDisable(Diagnosis.Suspect s) {
         return s != null && s.file != null;
     }
@@ -139,12 +148,7 @@ public final class CrashScreen extends Screen {
         Card card = body.addChild(new Card(w, Keel.EDGE_WARN));
         int in = card.inner();
         if (s != null) {
-            String sure = switch (d.confidence) {
-                case HIGH -> "high";
-                case MEDIUM -> "medium";
-                default -> "low";
-            };
-            card.add(Text.in(Component.translatable("modkeel.crash.likely." + sure), in, Keel.GRAY));
+            card.add(Text.in(likely(d), in, Keel.GRAY));
             card.add(new Heading(Component.literal(s.name), in));
             MutableComponent reasons = Component.empty();
             for (String reason : s.reasons) {

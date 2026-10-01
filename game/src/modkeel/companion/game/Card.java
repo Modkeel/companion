@@ -2,8 +2,10 @@ package modkeel.companion.game;
 
 import java.util.function.Consumer;
 
+import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.layouts.Layout;
 import net.minecraft.client.gui.layouts.LayoutElement;
+import net.minecraft.network.chat.Component;
 
 /**
  * A Keel card holding other elements: a heading, text, rows with buttons. Its background is a
@@ -35,6 +37,20 @@ final class Card implements Layout {
 
     <T extends LayoutElement> T add(T element) {
         return inner.addChild(element);
+    }
+
+    /** A line of text with its buttons on the right. */
+    void row(Component text, int color, Button... buttons) {
+        Stack row = add(Stack.horizontal(8));
+        row.defaultCellSetting().alignVerticallyMiddle();
+        int left = inner();
+        for (Button b : buttons) {
+            left -= b.getWidth() + 8;
+        }
+        row.addChild(Text.in(text, left, color));
+        for (Button b : buttons) {
+            row.addChild(b);
+        }
     }
 
     @Override
