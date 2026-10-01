@@ -77,13 +77,13 @@ final class Keel {
     /** A translucent dark panel behind a screen's content: the world behind stays visible. */
     static void panel(Paint p, int x, int y, int w, int h) {
         bevel(p, x, y, w, h, 0x60202020, 0x14FFFFFF, 0x40000000);
-        stripes(p, x + 2, y + 2, w - 4, h - 4);
+        stripes(p, x + 2, y + 2, w - 4, h - 4, false);
     }
 
     /** A header or footer strip, with a black line on the side facing the content. */
     static void strip(Paint p, int x, int y, int w, int h, boolean footer) {
         p.fill(x, y, x + w, y + h, 0x66000000);
-        stripes(p, x, y, w, h);
+        stripes(p, x, y, w, h, true);
         int line = footer ? y : y + h - 1;
         p.fill(x, line, x + w, line + 1, BLACK);
     }
@@ -91,11 +91,15 @@ final class Keel {
     private static final int STRIPE = 5;
     private static final int STRIPE_COLOR = 0x0DFFFFFF;
 
-    /** Faint 45° stripes, like the mockup's background: one run per stripe per row. */
-    static void stripes(Paint p, int x, int y, int w, int h) {
+    /**
+     * Faint 45° stripes, one run per stripe per row. Header and footer lean the other way from
+     * the panel, so neighboring zones read as separate. Phase follows the screen, not the zone.
+     */
+    static void stripes(Paint p, int x, int y, int w, int h, boolean mirrored) {
         int period = 2 * STRIPE;
         for (int row = 0; row < h; row++) {
-            int shift = row % period;
+            int r = Math.floorMod(y + row, period);
+            int shift = Math.floorMod((mirrored ? period - 1 - r : r) + x, period);
             for (int sx = x - shift; sx < x + w; sx += period) {
                 int a = Math.max(x, sx);
                 int b = Math.min(x + w, sx + STRIPE);
