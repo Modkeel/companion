@@ -133,20 +133,43 @@ final class Keel {
         bevel(p, x, y, w, h, 0xEB343434, 0x1AFFFFFF, 0x73000000);
     }
 
-    /** A gray Java button with a darker lip along its bottom; white outline when hovered. */
+    /** Status edges on a card's left side: fine, look at this, something broke. */
+    static final int EDGE_OK = 0xFF5F8F4E;
+    static final int EDGE_WARN = 0xFFB08A3A;
+    static final int EDGE_BAD = 0xFFA04545;
+
+    static void card(Paint p, int x, int y, int w, int h, int edge) {
+        card(p, x, y, w, h);
+        if (edge != 0) {
+            p.fill(x + 1, y + 1, x + 3, y + h - 1, edge);
+        }
+    }
+
+    /**
+     * A gray Java button with a darker lip along its bottom; white outline when hovered. The
+     * primary one (the action a screen recommends) is a muted green.
+     */
     static void button(Paint p, Font font, int x, int y, int w, int h, boolean hovered,
-                       boolean active, Component label) {
+                       boolean active, boolean primary, Component label) {
         boolean hot = hovered && active;
+        boolean green = primary && active;
         p.fill(x, y, x + w, y + h, hot ? TEXT : BLACK);
-        p.fill(x + 1, y + 1, x + w - 1, y + h - 1,
-               !active ? 0xFF4A4A4A : hot ? 0xFF8C8C8C : 0xFF727272);
-        int light = !active ? 0xFF5E5E5E : hot ? 0xFFC8C8C8 : 0xFFB0B0B0;
+        p.fill(x + 1, y + 1, x + w - 1, y + h - 1, !active ? 0xFF4A4A4A
+               : green ? (hot ? 0xFF5A8049 : 0xFF4C6E3E) : hot ? 0xFF8C8C8C : 0xFF727272);
+        int light = !active ? 0xFF5E5E5E : green ? (hot ? 0xFF8DB37C : 0xFF769C66)
+                : hot ? 0xFFC8C8C8 : 0xFFB0B0B0;
         p.fill(x + 1, y + 1, x + w - 1, y + 2, light);
         p.fill(x + 1, y + 2, x + 2, y + h - 4, light);
-        p.fill(x + w - 2, y + 2, x + w - 1, y + h - 4, 0xFF4A4A4A);
-        p.fill(x + 1, y + h - 4, x + w - 1, y + h - 1, !active ? 0xFF303030 : 0xFF3D3D3D);
+        p.fill(x + w - 2, y + 2, x + w - 1, y + h - 4, green ? 0xFF3A5530 : 0xFF4A4A4A);
+        p.fill(x + 1, y + h - 4, x + w - 1, y + h - 1,
+               !active ? 0xFF303030 : green ? 0xFF2C4224 : 0xFF3D3D3D);
         FormattedCharSequence text = label.getVisualOrderText();
         int tw = font.width(text);
+        if (tw > w - 8) {
+            String cut = font.plainSubstrByWidth(label.getString(), w - 8 - font.width("…"));
+            text = Component.literal(cut + "…").getVisualOrderText();
+            tw = font.width(text);
+        }
         p.text(font, text, x + (w - tw) / 2, y + (h - 4 - 8) / 2 + 1,
                active ? TEXT : 0xFFA0A0A0, true);
     }

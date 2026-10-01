@@ -104,7 +104,7 @@ public final class HealthScreen extends Screen {
         Button revert = footer.addChild(new KeelButton(120, Component.translatable("modkeel.revert"),
                 b -> Compat.setScreen(minecraft, Client.confirm(this,
                         Component.translatable("modkeel.revert.confirm_title"),
-                        CrashScreen.revertMessage(g),
+                        CrashScreen.revertMessage(g), Component.translatable("modkeel.revert.go"),
                         () -> Client.applyAndQuit(minecraft, g, g.revertPlan())))));
         revert.active = g.canRevert();
         if (g.lastGood() == null) {

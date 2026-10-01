@@ -15,6 +15,7 @@ import net.minecraft.client.gui.screens.ConfirmScreen;
 import net.minecraft.client.gui.screens.PauseScreen;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.TitleScreen;
+import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
 
 /** Client side: the crash screen before the title screen, the Modkeel button, lag spike alerts. */
@@ -169,6 +170,12 @@ public final class Client {
     }
 
     static Screen confirm(Screen back, Component title, Component message, Runnable yes) {
+        return confirm(back, title, message, CommonComponents.GUI_YES, yes);
+    }
+
+    /** The yes button names the action ("Disable and close"), never just "Yes". */
+    static Screen confirm(Screen back, Component title, Component message, Component action,
+                          Runnable yes) {
         Minecraft mc = Minecraft.getInstance();
         return new ConfirmScreen(ok -> {
             if (ok) {
@@ -176,6 +183,6 @@ public final class Client {
             } else {
                 Compat.setScreen(mc, back);
             }
-        }, title, message);
+        }, title, message, action, CommonComponents.GUI_CANCEL);
     }
 }

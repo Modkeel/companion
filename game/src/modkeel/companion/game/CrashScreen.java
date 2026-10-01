@@ -24,11 +24,15 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 
-/** Shown once before the title screen when the last session crashed. */
+/**
+ * Shown once before the title screen when the last session crashed. Calm first (the world is
+ * safe), then the cause in one sentence, then one green button; the rest waits behind
+ * {@link CrashOptionsScreen}.
+ */
 public final class CrashScreen extends Screen {
     private final Screen next;
-    private final Guardian g;
-    private final Diagnosis d;
+    final Guardian g;
+    final Diagnosis d;
     private HeaderAndFooterLayout layout;
     private Scroll scroll;
     /** "Share this crash": kept across re-inits (a confirm screen and back). */
@@ -61,47 +65,29 @@ public final class CrashScreen extends Screen {
         body.defaultCellSetting().alignHorizontallyCenter();
 
         rescue(body, w);
-
-        // The likely cause as the card's title, how sure as a pill, then why and what that kind of crash
-        // means; the raw error lives in the report button's tooltip
-        Diagnosis.Suspect s = d.top();
-        Card cause = body.addChild(new Card(w));
-        int in = cause.inner();
-        if (s != null) {
-            cause.add(new Heading(Component.translatable("modkeel.crash.suspect", s.name), in, Keel.YELLOW,
-                    Component.translatable("modkeel.confidence.pill", Component.translatable(
-                            "modkeel.confidence." + d.confidence.name().toLowerCase(Locale.ROOT)))));
-            MutableComponent reasons = Component.empty();
-            for (String reason : s.reasons) {
-                if (!reasons.getSiblings().isEmpty()) {
-                    reasons.append("; ");
-                }
-                reasons.append(msg(reason));
-            }
-            cause.add(Text.in(reasons, in, Keel.GRAY));
-        } else {
-            cause.add(new Heading(Component.translatable("modkeel.crash.no_suspect_title"), in, Keel.YELLOW));
-        }
-        cause.add(Text.in(Component.translatable("modkeel.kind." + d.kind.name().toLowerCase(Locale.ROOT)),
-                in, Keel.SOFT));
-        if (s == null) {
-            cause.add(Text.in(Component.translatable("modkeel.crash.no_suspect"), in, Keel.SOFT));
-        } else if (d.suspects.size() > 1) {
-            List<String> others = new ArrayList<>();
-            for (Diagnosis.Suspect o : d.suspects.subList(1, d.suspects.size())) {
-                others.add(o.name);
-            }
-            cause.add(Text.in(Component.translatable("modkeel.crash.others", String.join(", ", others)),
-                    in, Keel.GRAY));
-        }
+        cause(body, w);
         if (stuck(g)) {
             body.addChild(Text.loose(Component.translatable("modkeel.cta"), w, Keel.AQUA));
         }
-        body.addChild(Text.loose(Component.translatable("modkeel.crash.later"), w, Keel.GRAY));
 
         scroll = Compat.contents(layout, new Scroll(minecraft, body, Compat.contentHeight(layout)));
 
         Stack footer = layout.addToFooter(Stack.vertical(4));
+        Diagnosis.Suspect s = d.top();
+        if (canDisable(s)) {
+            footer.addChild(new KeelButton(304, Component.translatable("modkeel.crash.fix", s.name),
+                    b -> confirmDisable(this, s)).primary());
+        } else if (g.canRevert()) {
+            footer.addChild(new KeelButton(304, Component.translatable("modkeel.crash.fix_revert"),
+                    b -> confirmRevert(this)).primary());
+        }
+        Stack row = footer.addChild(Stack.horizontal(4));
+        row.addChild(new KeelButton(150, Component.translatable("modkeel.crash.more"),
+                b -> Compat.setScreen(minecraft, new CrashOptionsScreen(this))));
+        Button later = row.addChild(new KeelButton(150, Component.translatable("modkeel.crash.not_now"),
+                b -> onClose()));
+        later.setTooltip(Tooltip.create(Component.translatable("modkeel.crash.later")));
+
         shareBox = null;
         if (g.reports.enabled()) {
             Stack row0 = footer.addChild(Stack.horizontal(8));
@@ -110,45 +96,17 @@ public final class CrashScreen extends Screen {
             shareBox.setTooltip(Tooltip.create(Component.translatable("modkeel.share.tooltip")));
             row0.addChild(new KeelButton(100, Component.translatable("modkeel.share.what"),
                     b -> Compat.setScreen(minecraft, new ReportScreen(this,
-                            g.reports.readable(g.reports.crash(d, s == null || s.file == null
-                                    ? null : g.reports.disableFix(s)))))));
+                            g.reports.readable(g.reports.crash(d, canDisable(s)
+                                    ? g.reports.disableFix(s) : null))))));
         }
         sessionsBox = null;
         if (offerSessions) {
-            Stack row = footer.addChild(Stack.horizontal(8));
-            sessionsBox = row.addChild(Compat.checkbox(Component.translatable("modkeel.sessions.checkbox"),
+            Stack row1 = footer.addChild(Stack.horizontal(8));
+            sessionsBox = row1.addChild(Compat.checkbox(Component.translatable("modkeel.sessions.checkbox"),
                     font, sessions));
             sessionsBox.setTooltip(Tooltip.create(Component.translatable("modkeel.sessions.tooltip")));
-            row.addChild(whatIsSent(this, g));
+            row1.addChild(whatIsSent(this, g));
         }
-        Stack row1 = footer.addChild(Stack.horizontal(8));
-        Stack row2 = footer.addChild(Stack.horizontal(8));
-
-        Button disable = row1.addChild(new KeelButton(150, Component.translatable(s == null
-                        ? "modkeel.crash.disable_none" : "modkeel.crash.disable"),
-                b -> confirmDisable(s)));
-        disable.active = s != null && s.file != null;
-
-        Button revert = row1.addChild(new KeelButton(150, Component.translatable("modkeel.revert"),
-                b -> Compat.setScreen(minecraft, Client.confirm(this,
-                        Component.translatable("modkeel.revert.confirm_title"),
-                        revertMessage(g),
-                        () -> {
-                            decide(g.reports.revertFix());
-                            Client.applyCrashFixAndQuit(minecraft, g, g.revertPlan());
-                        }))));
-        revert.active = g.canRevert();
-        if (!revert.active) {
-            revert.setTooltip(Tooltip.create(Component.translatable("modkeel.revert.none")));
-        }
-
-        Button report = row2.addChild(new KeelButton(150, Component.translatable("modkeel.crash.open_report"),
-                b -> Compat.openPath(g.crashFile)));
-        if (!d.error.isEmpty()) {
-            report.setTooltip(Tooltip.create(Component.literal(clip(d.error, 300))));
-        }
-        row2.addChild(new KeelButton(150, Component.translatable("modkeel.crash.continue"),
-                b -> onClose()));
 
         addRenderableOnly(new Backdrop(width, height, 33, footerHeight(), scroll));
         layout.visitWidgets(this::addRenderableWidget);
@@ -156,8 +114,67 @@ public final class CrashScreen extends Screen {
         repositionElements();
     }
 
+    static boolean canDisable(Diagnosis.Suspect s) {
+        return s != null && s.file != null;
+    }
+
+    /** One row per line of buttons: the fix (if any), More/Not now, sharing, sessions. */
     private int footerHeight() {
-        return !g.reports.enabled() ? 60 : offerSessions ? 108 : 84;
+        int rows = 1;
+        if (canDisable(d.top()) || g.canRevert()) {
+            rows++;
+        }
+        if (g.reports.enabled()) {
+            rows++;
+        }
+        if (offerSessions) {
+            rows++;
+        }
+        return 12 + 24 * rows;
+    }
+
+    /** The likely cause as the card's title, how sure in the words above it, then why. */
+    private void cause(Stack body, int w) {
+        Diagnosis.Suspect s = d.top();
+        Card card = body.addChild(new Card(w, Keel.EDGE_WARN));
+        int in = card.inner();
+        if (s != null) {
+            String sure = switch (d.confidence) {
+                case HIGH -> "high";
+                case MEDIUM -> "medium";
+                default -> "low";
+            };
+            card.add(Text.in(Component.translatable("modkeel.crash.likely." + sure), in, Keel.GRAY));
+            card.add(new Heading(Component.literal(s.name), in));
+            MutableComponent reasons = Component.empty();
+            for (String reason : s.reasons) {
+                if (!reasons.getSiblings().isEmpty()) {
+                    reasons.append("; ");
+                }
+                reasons.append(msg(reason));
+            }
+            card.add(Text.in(Component.literal(sentence(reasons.getString())), in, Keel.SOFT));
+        } else {
+            card.add(new Heading(Component.translatable("modkeel.crash.unclear"), in));
+            if (g.lastGood() != null) {
+                int changed = g.changedSinceGood().size();
+                card.add(Text.in(changed > 0 ? Component.translatable("modkeel.crash.changed", changed)
+                        : Component.translatable("modkeel.crash.unchanged"), in, Keel.SOFT));
+            }
+        }
+        if (d.kind == Diagnosis.Kind.OUT_OF_MEMORY) {
+            card.add(Text.in(Component.translatable("modkeel.kind.out_of_memory"), in, Keel.GRAY));
+        }
+    }
+
+    /** "its code is in the error" -> "Its code is in the error." */
+    static String sentence(String s) {
+        if (s.isEmpty()) {
+            return s;
+        }
+        String first = s.substring(0, s.offsetByCodePoints(0, 1));
+        return first.toUpperCase(Locale.ROOT) + s.substring(first.length())
+                + (s.endsWith(".") ? "" : ".");
     }
 
     /** The world that was open: it is still there, and how much of it Minecraft had saved. */
@@ -166,7 +183,7 @@ public final class CrashScreen extends Screen {
         if (world == null) {
             return;
         }
-        Card card = body.addChild(new Card(w));
+        Card card = body.addChild(new Card(w, Keel.EDGE_OK));
         Stack row = card.add(Stack.horizontal(8));
         int icon = 32;
         AbstractWidget image = Compat.worldIcon(minecraft, world.name, world.dir.resolve("icon.png"),
@@ -177,16 +194,17 @@ public final class CrashScreen extends Screen {
             in -= icon + 8;
         }
         Stack lines = row.addChild(Stack.vertical(4));
-        lines.addChild(new Heading(Component.literal(world.name), in,
-                Component.translatable("modkeel.rescue.pill_safe")));
+        lines.addChild(new Heading(Component.translatable("modkeel.rescue.title"), in));
         long minutes = world.unsavedMinutes();
         if (minutes == 0) {
-            lines.addChild(Text.in(Component.translatable("modkeel.rescue.saved_at_crash"), in, Keel.SOFT));
+            lines.addChild(Text.in(Component.translatable("modkeel.rescue.saved", world.name),
+                    in, Keel.SOFT));
         } else if (minutes > 0) {
-            lines.addChild(Text.in(Component.translatable("modkeel.rescue.saved_before", minutes), in, Keel.SOFT));
+            lines.addChild(Text.in(Component.translatable("modkeel.rescue.saved_min", world.name,
+                    minutes), in, Keel.SOFT));
         }
         if (world.backup != null) {
-            lines.addChild(Text.in(Component.translatable("modkeel.rescue.backup",
+            lines.addChild(Text.in(Component.translatable("modkeel.rescue.copy",
                     backupTime(world.backup.getFileName().toString(), minecraft.options.languageCode)),
                     in, Keel.GRAY));
         }
@@ -246,28 +264,38 @@ public final class CrashScreen extends Screen {
         owned.clear();
     }
 
-    private void confirmDisable(Diagnosis.Suspect s) {
-        MutableComponent msg = Component.translatable("modkeel.disable.confirm", s.file);
+    /** Asks before disabling {@code s}: what happens, and that it can be undone. */
+    void confirmDisable(Screen back, Diagnosis.Suspect s) {
+        MutableComponent msg = Component.translatable("modkeel.disable.points");
         List<String> deps = g.dependents(s.id);
         if (!deps.isEmpty()) {
             msg.append("\n\n").append(Component.translatable("modkeel.disable.dependents",
                     String.join(", ", deps)).withStyle(ChatFormatting.YELLOW));
         }
-        msg.append("\n\n").append(Component.translatable("modkeel.restart_note"));
-        Compat.setScreen(minecraft, Client.confirm(this,
+        Compat.setScreen(minecraft, Client.confirm(back,
                 Component.translatable("modkeel.disable.confirm_title", s.name), msg,
+                Component.translatable("modkeel.disable.go"),
                 () -> {
                     decide(g.reports.disableFix(s));
                     Client.applyCrashFixAndQuit(minecraft, g, g.disablePlan(s));
                 }));
     }
 
+    void confirmRevert(Screen back) {
+        Compat.setScreen(minecraft, Client.confirm(back,
+                Component.translatable("modkeel.revert.confirm_title"), revertMessage(g),
+                Component.translatable("modkeel.revert.go"),
+                () -> {
+                    decide(g.reports.revertFix());
+                    Client.applyCrashFixAndQuit(minecraft, g, g.revertPlan());
+                }));
+    }
+
     static Component revertMessage(Guardian g) {
         List<String> names = new ArrayList<>();
         g.changedSinceGood().forEach(j -> names.add(j.file));
-        MutableComponent msg = Component.translatable("modkeel.revert.confirm",
+        return Component.translatable("modkeel.revert.points",
                 names.isEmpty() ? "-" : clip(String.join(", ", names), 300));
-        return msg.append("\n\n").append(Component.translatable("modkeel.restart_note"));
     }
 
     /**

@@ -19,8 +19,13 @@ final class Card implements Layout {
     private int y;
 
     Card(int width) {
+        this(width, 0);
+    }
+
+    /** A card with a status edge on its left ({@link Keel#EDGE_OK} and the others; 0: none). */
+    Card(int width, int edge) {
         this.width = width;
-        this.bg = new Bg(width);
+        this.bg = new Bg(width, edge);
     }
 
     /** The width left for content. */
@@ -85,13 +90,16 @@ final class Card implements Layout {
     }
 
     private static final class Bg extends Canvas {
-        Bg(int width) {
+        private final int edge;
+
+        Bg(int width, int edge) {
             super(width, 0);
+            this.edge = edge;
         }
 
         @Override
         protected void paint(Paint p, int mouseX, int mouseY) {
-            Keel.card(p, getX(), getY(), getWidth(), getHeight());
+            Keel.card(p, getX(), getY(), getWidth(), getHeight(), edge);
         }
     }
 }

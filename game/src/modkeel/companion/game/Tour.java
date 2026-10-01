@@ -139,6 +139,7 @@ final class Tour {
         return switch (name) {
             case "welcome" -> new WelcomeScreen(back);
             case "crash" -> g.crash == null ? null : new CrashScreen(back, g);
+            case "more" -> g.crash == null ? null : new CrashOptionsScreen(new CrashScreen(back, g));
             case "report" -> g.crash == null ? null
                     : new ReportScreen(back, g.reports.readable(g.reports.crash(g.crash, null)));
             case "health" -> new HealthScreen(back, g);
