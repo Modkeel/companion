@@ -341,7 +341,7 @@ public final class CrashScreen extends Screen {
     protected void repositionElements() {
         scroll.arrangeElements();
         scroll.setMaxHeight(Compat.contentHeight(layout));
-        layout.arrangeElements();
+        Keel.arrange(layout, scroll);
     }
 
     @Override

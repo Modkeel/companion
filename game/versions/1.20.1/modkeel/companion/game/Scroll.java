@@ -207,7 +207,9 @@ final class Scroll implements Layout {
             }
             g.disableScissor();
             if (maxScroll() > 0) {
-                // the same two greys as 1.20.1's own scroll bars
+                // a black track, like the later vanilla scroller, marks where the view ends;
+                // the thumb has the same two greys as 1.20.1's own scroll bars
+                g.fill(barX(), getY(), barX() + BAR, getY() + height, 0xFF000000);
                 int barY = getY() + (int) (scroll * (height - barHeight()) / maxScroll());
                 g.fill(barX(), barY, barX() + BAR, barY + barHeight(), 0xFF808080);
                 g.fill(barX(), barY, barX() + BAR - 1, barY + barHeight() - 1, 0xFFC0C0C0);

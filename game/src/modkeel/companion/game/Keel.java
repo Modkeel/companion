@@ -1,7 +1,9 @@
 package modkeel.companion.game;
 
 import net.minecraft.client.gui.Font;
+import net.minecraft.client.gui.layouts.HeaderAndFooterLayout;
 import net.minecraft.client.gui.layouts.Layout;
+import net.minecraft.client.gui.layouts.LayoutElement;
 import net.minecraft.client.gui.layouts.SpacerElement;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.FormattedCharSequence;
@@ -59,6 +61,15 @@ final class Keel {
     static int bodyWidth(int screenWidth, int max) {
         int reserve = GUTTER + PANEL_MARGIN + SCROLL_RESERVE + INSET_X;
         return Math.max(100, Math.min(screenWidth - 2 * reserve, max));
+    }
+
+    /**
+     * Lay the screen out with the body right under the header. From 1.21 on vanilla puts a
+     * short body 30 below the header (a long one higher, up to the footer); 1.20.1 at the top.
+     */
+    static void arrange(HeaderAndFooterLayout layout, LayoutElement body) {
+        layout.arrangeElements();
+        body.setY(layout.getHeaderHeight());
     }
 
     /** The body with air around it, so nothing sits on the scroll area's edges or its bar. */
