@@ -1,7 +1,5 @@
 package modkeel.companion.game;
 
-import net.minecraft.ChatFormatting;
-import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.layouts.HeaderAndFooterLayout;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
@@ -23,26 +21,26 @@ public final class WelcomeScreen extends Screen {
         layout = new HeaderAndFooterLayout(this, 33, 36);
         Compat.titleHeader(layout, title, font);
         int w = Math.min(width - 40, 360);
-        Stack body = Stack.vertical(8);
+        Stack body = Stack.vertical(6);
         body.defaultCellSetting().alignHorizontallyCenter();
-        body.addChild(CrashScreen.text(Component.translatable("modkeel.welcome.intro")
-                .withStyle(ChatFormatting.YELLOW), w));
+        Card c = body.addChild(new Card(w));
+        c.add(new Heading(Component.translatable("modkeel.welcome.intro"), c.inner(), Keel.YELLOW));
         for (String k : new String[] {"backup", "crash", "good"}) {
-            body.addChild(CrashScreen.text(Component.translatable("modkeel.welcome." + k), w));
+            c.add(Text.in(Component.translatable("modkeel.welcome." + k), c.inner(), Keel.SOFT));
         }
-        body.addChild(CrashScreen.text(Component.translatable("modkeel.welcome.privacy")
-                .withStyle(ChatFormatting.GRAY), w));
-        body.addChild(CrashScreen.text(Component.translatable("modkeel.welcome.later")
-                .withStyle(ChatFormatting.GRAY), w));
+        body.addChild(Text.loose(Component.translatable("modkeel.welcome.privacy"), w, Keel.GRAY));
+        body.addChild(Text.loose(Component.translatable("modkeel.welcome.later"), w, Keel.GRAY));
         scroll = layout.addToContents(new Scroll(minecraft, body, Compat.contentHeight(layout)));
 
         Stack footer = layout.addToFooter(Stack.horizontal(8));
-        footer.addChild(Button.builder(Component.translatable("modkeel.health.app"),
-                b -> Compat.openLink(this, HealthScreen.APP_URL)).width(150).build());
-        footer.addChild(Button.builder(Component.translatable("modkeel.welcome.ok"),
-                b -> onClose()).width(150).build());
+        footer.addChild(new KeelButton(150, Component.translatable("modkeel.health.app"),
+                b -> Compat.openLink(this, HealthScreen.APP_URL)));
+        footer.addChild(new KeelButton(150, Component.translatable("modkeel.welcome.ok"),
+                b -> onClose()));
 
+        addRenderableOnly(new Backdrop(width, height, 33, 36, scroll));
         layout.visitWidgets(this::addRenderableWidget);
+        addRenderableOnly(new Edges(width, height, scroll, body));
         repositionElements();
     }
 

@@ -1,20 +1,23 @@
 package modkeel.companion.game;
 
+import net.minecraft.client.gui.layouts.Layout;
+
 /**
  * Behind one of our screens: darker strips for the header and footer and a translucent panel
- * behind the content column, so text reads well while the paused world still shows through.
+ * behind the scroll area, so text reads well while the paused world still shows through. The
+ * panel's edges are the scroll area's: content is cut exactly at its border, never above it.
  */
 final class Backdrop extends Canvas {
     private final int header;
     private final int footer;
-    private final int column;
+    private final Layout view;
 
-    /** @param column the content's width; the panel adds a margin around it */
-    Backdrop(int screenWidth, int screenHeight, int header, int footer, int column) {
+    /** @param view the scroll area; the panel spans it, scroll bar included */
+    Backdrop(int screenWidth, int screenHeight, int header, int footer, Layout view) {
         super(screenWidth, screenHeight);
         this.header = header;
         this.footer = footer;
-        this.column = column;
+        this.view = view;
     }
 
     @Override
@@ -23,7 +26,7 @@ final class Backdrop extends Canvas {
         int h = getHeight();
         Keel.strip(p, 0, 0, w, header, false);
         Keel.strip(p, 0, h - footer, w, footer, true);
-        int x = (w - column) / 2 - Keel.PANEL_MARGIN;
-        Keel.panel(p, x, header + 4, column + 2 * Keel.PANEL_MARGIN, h - header - footer - 8);
+        int x = view.getX() - Keel.PANEL_MARGIN;
+        Keel.panel(p, x, header, view.getWidth() + 2 * Keel.PANEL_MARGIN, h - header - footer);
     }
 }

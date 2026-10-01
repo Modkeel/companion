@@ -5,7 +5,6 @@ import java.util.List;
 import java.util.Locale;
 
 import modkeel.companion.core.Spikes;
-import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.layouts.HeaderAndFooterLayout;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
@@ -37,10 +36,10 @@ public final class SpikeScreen extends Screen {
         body.defaultCellSetting().alignHorizontallyCenter();
 
         List<Spikes.Spike> spikes = Common.spikes.recent();
-        body.addChild(CrashScreen.text(Component.translatable("modkeel.spikes.intro",
-                seconds(Common.spikes.reportMs)).withStyle(ChatFormatting.GRAY), w));
+        body.addChild(Text.loose(Component.translatable("modkeel.spikes.intro",
+                seconds(Common.spikes.reportMs)), w, Keel.GRAY));
         if (spikes.isEmpty()) {
-            body.addChild(CrashScreen.text(Component.translatable("modkeel.spikes.none"), w));
+            body.addChild(Text.loose(Component.translatable("modkeel.spikes.none"), w, Keel.SOFT));
         }
         boolean memory = false;
         boolean graphics = false;
@@ -50,12 +49,10 @@ public final class SpikeScreen extends Screen {
             body.addChild(new SpikeCard(s, w, minecraft.options.languageCode));
         }
         if (memory) {
-            body.addChild(CrashScreen.text(Component.translatable("modkeel.spikes.gc_hint")
-                    .withStyle(ChatFormatting.YELLOW), w));
+            body.addChild(Text.loose(Component.translatable("modkeel.spikes.gc_hint"), w, Keel.YELLOW));
         }
         if (graphics) {
-            body.addChild(CrashScreen.text(Component.translatable("modkeel.spikes.gpu_hint")
-                    .withStyle(ChatFormatting.YELLOW), w));
+            body.addChild(Text.loose(Component.translatable("modkeel.spikes.gpu_hint"), w, Keel.YELLOW));
         }
         scroll = layout.addToContents(new Scroll(minecraft, body, Compat.contentHeight(layout)));
 
@@ -66,8 +63,9 @@ public final class SpikeScreen extends Screen {
         }));
         footer.addChild(new KeelButton(150, Component.translatable("gui.done"), b -> onClose()));
 
-        addRenderableOnly(new Backdrop(width, height, 33, 33, w));
+        addRenderableOnly(new Backdrop(width, height, 33, 33, scroll));
         layout.visitWidgets(this::addRenderableWidget);
+        addRenderableOnly(new Edges(width, height, scroll, body));
         repositionElements();
     }
 

@@ -1,8 +1,5 @@
 package modkeel.companion.game;
 
-import net.minecraft.ChatFormatting;
-import net.minecraft.client.gui.components.Button;
-import net.minecraft.client.gui.components.MultiLineTextWidget;
 import net.minecraft.client.gui.layouts.HeaderAndFooterLayout;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.CommonComponents;
@@ -34,13 +31,16 @@ public final class ReportScreen extends Screen {
         layout = new HeaderAndFooterLayout(this, 33, 33);
         Compat.titleHeader(layout, title, font);
         int w = Math.min(width - 40, 380);
-        Stack body = Stack.vertical(8);
-        body.addChild(CrashScreen.text(Component.translatable(note)
-                .withStyle(ChatFormatting.GRAY), w));
-        body.addChild(new MultiLineTextWidget(Component.literal(payload), font).setMaxWidth(w));
+        Stack body = Stack.vertical(6);
+        body.defaultCellSetting().alignHorizontallyCenter();
+        body.addChild(Text.loose(Component.translatable(note), w, Keel.GRAY));
+        Card c = body.addChild(new Card(w));
+        c.add(Text.in(Component.literal(payload), c.inner(), Keel.SOFT));
         scroll = layout.addToContents(new Scroll(minecraft, body, Compat.contentHeight(layout)));
-        layout.addToFooter(Button.builder(CommonComponents.GUI_BACK, b -> onClose()).width(150).build());
+        layout.addToFooter(new KeelButton(150, CommonComponents.GUI_BACK, b -> onClose()));
+        addRenderableOnly(new Backdrop(width, height, 33, 33, scroll));
         layout.visitWidgets(this::addRenderableWidget);
+        addRenderableOnly(new Edges(width, height, scroll, body));
         repositionElements();
     }
 

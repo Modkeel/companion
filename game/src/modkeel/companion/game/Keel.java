@@ -14,6 +14,9 @@ final class Keel {
     static final int SOFT = 0xFFE0E0E0;
     static final int GRAY = 0xFFC6C6C6;
     static final int YELLOW = 0xFFFFFF55;
+    static final int AQUA = 0xFF55FFFF;
+    static final int RED = 0xFFFF5555;
+    static final int GOLD = 0xFFFFAA00;
     /** Bar segments in order: neighbours never look alike. */
     static final int[] SEGMENTS = {0xFFFFC629, 0xFF4F9BFF, 0xFF4FD34F, 0xFFC07AFF, 0xFFFF6F4F,
                                    0xFF3FD8D0};
