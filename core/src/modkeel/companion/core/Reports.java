@@ -129,9 +129,13 @@ public final class Reports {
     }
 
     /** How a shared fix went ({@code status} as the API names it). */
-    public String outcome(String report, String status, long ticks) {
-        return "{\"v\":1,\"install\":\"\",\"report\":" + q(report) + ",\"status\":" + q(status)
-                + ",\"ticks\":" + Math.min(Math.max(ticks, 0), Integer.MAX_VALUE) + "}";
+    public String outcome(Outcomes.Fix f) {
+        // activity null: nothing to judge by (no suspect left enabled, or play not measured)
+        String activity = f.measured && !f.suspects.isEmpty() ? f.played.only(f.suspects).json() : "null";
+        return "{\"v\":1,\"install\":\"\",\"report\":" + q(f.report) + ",\"status\":" + q(f.status.wire)
+                + ",\"ticks\":" + Math.min(Math.max(f.ticks, 0), Integer.MAX_VALUE)
+                + ",\"active_minutes\":" + Math.min(Activity.minutes(Math.min(f.active, f.ticks)), Integer.MAX_VALUE)
+                + ",\"activity\":" + activity + "}";
     }
 
     /** The id the server gave a crash report sent from {@code outbox/<name>}, or null. */
@@ -193,7 +197,7 @@ public final class Reports {
         return sb.append(']').toString();
     }
 
-    private static String modId(String id) {
+    static String modId(String id) {
         if (id == null) {
             return null;
         }

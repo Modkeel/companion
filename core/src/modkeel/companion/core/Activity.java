@@ -1,6 +1,7 @@
 package modkeel.companion.core;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -81,6 +82,34 @@ public final class Activity {
                 mine[k] = k == MACHINES ? Math.max(mine[k], e.getValue()[k]) : mine[k] + e.getValue()[k];
             }
         }
+    }
+
+    /** The same play, only for {@code ids} (active ticks kept). */
+    public Activity only(Collection<String> ids) {
+        Activity out = new Activity();
+        out.activeTicks = activeTicks;
+        for (String id : ids) {
+            long[] c = mods.get(id);
+            if (c != null) {
+                out.mods.put(id, c.clone());
+            }
+        }
+        return out;
+    }
+
+    /** One field without tabs: "mod=n,n,...;mod=..." ("-" for none). */
+    String field() {
+        return mods.isEmpty() ? "-" : String.join(";", lines()).replace('\t', '=');
+    }
+
+    static Activity parseField(String field) {
+        Activity out = new Activity();
+        if (!field.equals("-")) {
+            for (String line : field.split(";")) {
+                out.parseLine(line.replace('=', '\t'));
+            }
+        }
+        return out;
     }
 
     /** Journal lines: "mod\tn,n,...". */

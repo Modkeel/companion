@@ -9,11 +9,11 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
- * Whether each crash fix worked, judged by play rather than by asking: play time on the fixed
+ * Whether each crash fix worked, judged by play rather than by asking: active play on the fixed
  * set, and whether the same crash came back. Stored in {@code modkeel/outcomes.txt}.
  */
 public final class Outcomes {
-    /** Server ticks of play for the first label (1 hour); the second is five times that. */
+    /** Ticks of active play for the first label (1 hour); the second is five times that. */
     public static final long HELD_TICKS = Long.getLong("modkeel.test.held_ticks", 72000L);
     private static final int KEEP = 20;
 
@@ -37,7 +37,16 @@ public final class Outcomes {
         public String title;
         /** The files the fix left disabled: the fix is undone when none of them remain. */
         public List<String> disabled = new ArrayList<>();
+        /** All play on the fixed set, idle included. */
         public long ticks;
+        /** Play with a player active: what the held labels count (see {@link Activity}). */
+        public long active;
+        /** Mod ids of the crash's suspects the fix left enabled. */
+        public List<String> suspects = new ArrayList<>();
+        /** How much those suspects were played since the fix. */
+        public Activity played = new Activity();
+        /** False once some play could not be measured: then {@link #played} says nothing. */
+        public boolean measured = true;
         public Status status = Status.OPEN;
         /** Fingerprint of the mod set the fix left, taken on the next start ("-" until then). */
         public String set = "-";
@@ -51,14 +60,20 @@ public final class Outcomes {
 
         String line() {
             return created + "\t" + signature + "\t" + status + "\t" + ticks + "\t" + set + "\t"
-                    + String.join("|", disabled) + "\t" + report + "\t" + sent + "\t" + title;
+                    + String.join("|", disabled) + "\t" + report + "\t" + sent + "\t" + active + "\t"
+                    + (suspects.isEmpty() ? "-" : String.join("|", suspects)) + "\t" + played.field()
+                    + "\t" + (measured ? 1 : 0) + "\t" + title;
         }
 
         static Fix parse(String line) {
-            String[] p = line.split("\t", 9);
-            if (p.length < 9) { // written before reports: no link
-                p = line.split("\t", 7);
-                p = new String[] {p[0], p[1], p[2], p[3], p[4], p[5], "-", "-", p[6]};
+            String[] p = line.split("\t", 13);
+            if (p.length < 13) { // written before per-mod activity: all play counted, unmeasured
+                p = line.split("\t", 9);
+                if (p.length < 9) { // written before reports: no link
+                    p = line.split("\t", 7);
+                    p = new String[] {p[0], p[1], p[2], p[3], p[4], p[5], "-", "-", p[6]};
+                }
+                p = new String[] {p[0], p[1], p[2], p[3], p[4], p[5], p[6], p[7], p[3], "-", "-", "0", p[8]};
             }
             Fix f = new Fix();
             f.created = Long.parseLong(p[0]);
@@ -71,7 +86,13 @@ public final class Outcomes {
             }
             f.report = p[6];
             f.sent = p[7];
-            f.title = p[8];
+            f.active = Long.parseLong(p[8]);
+            if (!p[9].equals("-")) {
+                f.suspects = new ArrayList<>(Arrays.asList(p[9].split("\\|")));
+            }
+            f.played = Activity.parseField(p[10]);
+            f.measured = p[11].equals("1");
+            f.title = p[12];
             return f;
         }
     }
@@ -116,13 +137,18 @@ public final class Outcomes {
         }
     }
 
-    /** {@code report} is the shared crash's outbox file name, or null when not shared. */
-    public synchronized void add(String signature, String title, List<String> disabled, String report) {
+    /**
+     * {@code suspects}: mod ids of the crash's suspects the fix left enabled. {@code report} is
+     * the shared crash's outbox file name, or null when not shared.
+     */
+    public synchronized void add(String signature, String title, List<String> disabled,
+                                 List<String> suspects, String report) {
         Fix f = new Fix();
         f.created = System.currentTimeMillis();
         f.signature = signature;
         f.title = title;
         f.disabled = new ArrayList<>(disabled);
+        f.suspects = new ArrayList<>(suspects);
         f.report = report == null ? "-" : "q:" + report;
         fixes.add(0, f);
         while (fixes.size() > KEEP) {
@@ -131,16 +157,27 @@ public final class Outcomes {
         save();
     }
 
-    /** Count play on every fix still being watched. */
-    public synchronized void addTicks(long n) {
+    /**
+     * Count play on every fix still being watched: only active play moves it to held, and the
+     * suspects' share of {@code activity} is kept. {@code activity} is null when this play was
+     * not measured (measuring failed): then all of it counts as active.
+     */
+    public synchronized void addPlay(long ticks, Activity activity) {
         boolean changed = false;
         for (Fix f : fixes) {
             if (f.status.done) {
                 continue;
             }
-            f.ticks += n;
-            Status next = f.ticks >= 5 * HELD_TICKS ? Status.HELD_5H
-                    : f.ticks >= HELD_TICKS ? Status.HELD_1H : Status.OPEN;
+            f.ticks += ticks;
+            if (activity == null) {
+                f.active += ticks;
+                f.measured = false;
+            } else {
+                f.active += Math.min(activity.activeTicks, ticks);
+                f.played.add(activity.only(f.suspects));
+            }
+            Status next = f.active >= 5 * HELD_TICKS ? Status.HELD_5H
+                    : f.active >= HELD_TICKS ? Status.HELD_1H : Status.OPEN;
             if (next != f.status) {
                 f.status = next;
                 Log.info("fix \"" + Msg.plain(f.title) + "\": " + next);
@@ -216,7 +253,7 @@ public final class Outcomes {
                     || f.status.name().equals(f.sent)) {
                 continue;
             }
-            if (reports.queue("outcome", reports.outcome(f.report, f.status.wire, f.ticks)) != null) {
+            if (reports.queue("outcome", reports.outcome(f)) != null) {
                 f.sent = f.status.name();
                 changed = true;
                 queued = true;

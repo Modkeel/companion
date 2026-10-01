@@ -108,13 +108,16 @@ public final class Guardian {
      * now count as held, and the session journal grows.
      */
     public void addPlay(long ticks, List<Spikes.Spike> recent) {
-        addPlay(ticks, recent, new Activity());
+        addPlay(ticks, recent, null);
     }
 
-    /** The same, with what that play did with each mod (see {@link Activity}). */
+    /**
+     * The same, with what that play did with each mod (see {@link Activity}); null when it was
+     * not measured.
+     */
     public void addPlay(long ticks, List<Spikes.Spike> recent, Activity activity) {
-        outcomes.addTicks(ticks);
-        sessions.played(ticks, recent, activity);
+        outcomes.addPlay(ticks, activity);
+        sessions.played(ticks, recent, activity == null ? new Activity() : activity);
         reportSteps();
     }
 
@@ -527,12 +530,21 @@ public final class Guardian {
     public void applyCrashFix(Plan plan, Path selfJar) {
         if (crash != null) {
             List<String> disabled = new ArrayList<>();
+            Set<String> gone = new HashSet<>();
             for (Plan.Op op : plan.ops) {
                 if (op.to.getFileName().toString().endsWith(".disabled")) {
                     disabled.add(op.to.getFileName().toString());
+                    gone.add(op.from.getFileName().toString());
                 }
             }
-            outcomes.add(crash.signature, plan.title, disabled, sharedCrash);
+            List<String> suspects = new ArrayList<>();
+            for (Diagnosis.Suspect s : crash.suspects) {
+                String id = Reports.modId(s.id);
+                if (id != null && !gone.contains(s.file) && !suspects.contains(id) && suspects.size() < 10) {
+                    suspects.add(id);
+                }
+            }
+            outcomes.add(crash.signature, plan.title, disabled, suspects, sharedCrash);
         }
         apply(plan, selfJar);
     }

@@ -42,6 +42,7 @@ public final class CoreTest {
         run("plan round trip", CoreTest::planRoundTrip);
         run("crash signature ignores lines, lambdas and mixin hashes", CoreTest::signature);
         run("fix outcomes: held, recurred, undone", CoreTest::outcomes);
+        run("fix outcomes: held counts active play, suspects' share kept", CoreTest::outcomePlay);
         run("reports: payload, outbox, install token", CoreTest::reports);
         run("reports: a shared fix sends its steps", CoreTest::reportSteps);
         run("reports: session summaries, only when always shared", CoreTest::sessions);
@@ -458,13 +459,14 @@ public final class CoreTest {
         Outcomes.Fix f = g.outcomes.fixes.get(0);
         eq(Outcomes.Status.OPEN, f.status, "watched");
         eq(List.of("bad.jar.disabled"), f.disabled, "disabled files");
+        eq(List.of(), f.suspects, "the disabled suspect is not watched");
 
         g = new Guardian(game);
         g.startup();
         eq(Outcomes.Status.OPEN, g.outcomes.fixes.get(0).status, "still in place after a restart");
-        g.outcomes.addTicks(Outcomes.HELD_TICKS);
+        g.outcomes.addPlay(Outcomes.HELD_TICKS, null);
         eq(Outcomes.Status.HELD_1H, Outcomes.load(game.resolve("modkeel")).fixes.get(0).status, "held 1 h");
-        g.outcomes.addTicks(4 * Outcomes.HELD_TICKS);
+        g.outcomes.addPlay(4 * Outcomes.HELD_TICKS, null);
         eq(Outcomes.Status.HELD_5H, g.outcomes.fixes.get(0).status, "held 5 h");
         g.outcomes.onCrash(d.signature, g.current().fingerprint());
         eq(Outcomes.Status.HELD_5H, g.outcomes.fixes.get(0).status, "a final label stays");
@@ -626,6 +628,57 @@ public final class CoreTest {
         }
     }
 
+    static void outcomePlay() throws Exception {
+        Path game = tmp();
+        Path home = game.resolve("modkeel");
+        Outcomes o = Outcomes.load(home);
+        o.add("abc", "swap", List.of("a.jar.disabled"), List.of("create"), null);
+        Outcomes.Fix f = o.fixes.get(0);
+
+        o.addPlay(Outcomes.HELD_TICKS, new Activity());
+        eq(Outcomes.Status.OPEN, f.status, "idle play does not hold");
+        eq(Outcomes.HELD_TICKS, f.ticks, "but is counted");
+
+        Activity busy = new Activity();
+        busy.activeTicks = Outcomes.HELD_TICKS;
+        busy.count("create", Activity.USED, 5);
+        busy.peak("create", Activity.MACHINES, 3);
+        busy.count("minecraft", Activity.MINED, 9);
+        o.addPlay(Outcomes.HELD_TICKS, busy);
+        eq(Outcomes.Status.HELD_1H, f.status, "active play holds");
+        eq(List.of("create"), new ArrayList<>(f.played.mods.keySet()), "only the suspects' play kept");
+
+        Outcomes.Fix back = Outcomes.load(home).fixes.get(0);
+        eq(Outcomes.HELD_TICKS, back.active, "active ticks saved");
+        eq(List.of("create"), back.suspects, "suspects saved");
+        eq(5L, back.played.of("create")[Activity.USED], "suspects' play saved");
+        eq(true, back.measured, "measured saved");
+        eq("swap", back.title, "title saved");
+
+        back.report = "0123456789abcdef01234567";
+        Reports r = new Reports(new Guardian(game), "");
+        eq("{\"v\":1,\"install\":\"\",\"report\":\"0123456789abcdef01234567\",\"status\":\"held-1h\","
+                + "\"ticks\":" + 2 * Outcomes.HELD_TICKS + ",\"active_minutes\":60,\"activity\":{\"create\":"
+                + "{\"mined\":0,\"crafted\":0,\"used\":5,\"killed\":0,\"adv\":0,\"machines\":3,\"here\":0}}}",
+                r.outcome(back), "outcome with the suspects' play");
+
+        o.addPlay(1, null);
+        f.report = back.report;
+        check(r.outcome(f).endsWith("\"activity\":null}"), "unmeasured play: no activity to judge by");
+        o.add("def", "disable", List.of("b.jar.disabled"), List.of(), null);
+        Outcomes.Fix none = o.fixes.get(0);
+        none.report = back.report;
+        none.status = Outcomes.Status.HELD_1H;
+        check(r.outcome(none).endsWith("\"activity\":null}"), "no suspect left: no activity");
+
+        Files.write(home.resolve("outcomes.txt"), List.of(
+                "1\tabc\tHELD_1H\t72000\t-\tx.jar.disabled\t-\t-\told"), StandardCharsets.UTF_8);
+        Outcomes.Fix old = Outcomes.load(home).fixes.get(0);
+        eq(72000L, old.active, "a line from before activity: all play was active");
+        eq(false, old.measured, "and unmeasured");
+        eq("old", old.title, "title kept");
+    }
+
     static boolean waitFor(java.util.function.BooleanSupplier cond) throws InterruptedException {
         for (int i = 0; i < 100 && !cond.getAsBoolean(); i++) {
             Thread.sleep(50);
@@ -669,7 +722,8 @@ public final class CoreTest {
             g.addPlay(Outcomes.HELD_TICKS, List.of());
             check(waitFor(() -> steps.size() == 1), "held 1 h sent");
             eq("{\"v\":1,\"install\":\"" + "ab".repeat(16) + "\",\"report\":\"" + id
-                    + "\",\"status\":\"held-1h\",\"ticks\":" + Outcomes.HELD_TICKS + "}", steps.get(0), "outcome");
+                    + "\",\"status\":\"held-1h\",\"ticks\":" + Outcomes.HELD_TICKS
+                    + ",\"active_minutes\":60,\"activity\":null}", steps.get(0), "outcome");
             g.addPlay(1, List.of());
             check(waitFor(() -> g.reports.pending().isEmpty()), "outbox empty");
             eq(1, steps.size(), "a step is sent once");

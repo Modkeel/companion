@@ -116,7 +116,7 @@ public final class Common {
             });
         }
         if (ticks % PLAY_CHUNK == 0) {
-            Activity[] played = {new Activity()};
+            Activity[] played = {null}; // stays null when measuring is off
             track(() -> played[0] = tracker.sample(server, PLAY_CHUNK));
             background(() -> guardian.addPlay(PLAY_CHUNK, spikes.recent(), played[0]));
         }
