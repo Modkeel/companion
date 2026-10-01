@@ -7,6 +7,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
+import modkeel.companion.core.Guardian;
 import modkeel.companion.core.Log;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.AbstractButton;
@@ -23,13 +24,15 @@ import net.minecraft.network.chat.contents.TranslatableContents;
  * literal label ("Modkeel"); a leading "?" makes a step optional: skipped when this screen has no
  * such button (the welcome screen shows only on some starts). The step "scroll" turns the mouse
  * wheel down over the screen in a few jumps, a frame after each and one once it stops, then
- * goes on with the next step on the same screen. Each time a screen has been up for a moment, the driver logs
+ * goes on with the next step on the same screen. The step "open:NAME" opens a Modkeel screen
+ * directly (welcome, crash, report, health, spike), for a quick look at every screen in one start.
+ * Each time a screen has been up for a moment, the driver logs
  * "tour: shot N", waits until tour.py writes N to FILE.ack (the capture is taken), then presses
  * the next button. A step is removed from FILE before it is pressed, so a fix that closes the
  * game resumes on the next launch with the steps after it.
  */
 final class Tour {
-    private static final long STABLE_MS = 1500;
+    private static final long STABLE_MS = 1000;
     private static final long ACK_MS = 60_000;
     /** Wheel turns per "scroll" step, each this many notches: before, middle, end. */
     private static final int JUMPS = 2;
@@ -94,6 +97,18 @@ final class Tour {
                     return;
                 }
             }
+            if (!steps.isEmpty() && steps.get(0).startsWith("open:")) {
+                String name = steps.remove(0).substring("open:".length());
+                write(file, steps);
+                Screen next = open(name, s);
+                if (next == null) {
+                    Log.info("tour: missing open:" + name + " on " + s.getClass().getSimpleName());
+                    return;
+                }
+                Log.info("tour: press open:" + name + " | " + name);
+                mc.execute(() -> Compat.setScreen(mc, next));
+                continue;
+            }
             AbstractButton b = null;
             String step = null;
             while (b == null && !steps.isEmpty()) {
@@ -116,6 +131,20 @@ final class Tour {
             AbstractButton button = b;
             mc.execute(() -> Compat.press(button));
         }
+    }
+
+    /** A Modkeel screen by name, going back to {@code back}; null when there is nothing to show. */
+    private static Screen open(String name, Screen back) {
+        Guardian g = Common.guardian;
+        return switch (name) {
+            case "welcome" -> new WelcomeScreen(back);
+            case "crash" -> g.crash == null ? null : new CrashScreen(back, g);
+            case "report" -> g.crash == null ? null
+                    : new ReportScreen(back, g.reports.readable(g.reports.crash(g.crash, null)));
+            case "health" -> new HealthScreen(back, g);
+            case "spike" -> new SpikeScreen(back);
+            default -> null;
+        };
     }
 
     /** Frames while scrolling down, then while still; returns the last shot, or -1. */
