@@ -125,9 +125,9 @@ LANG_ALIASES = {
 }
 
 
-def write_jar(out: Path, metadata: dict[str, str], class_dirs: list[Path],
+def write_jar(out: Path, metadata: dict[str, str | bytes], class_dirs: list[Path],
               resources: list[Path]) -> None:
-    """`metadata`: loader metadata files (path in the jar -> text), written first."""
+    """`metadata`: loader metadata files (path in the jar -> content), written first."""
     out.parent.mkdir(parents=True, exist_ok=True)
     with zipfile.ZipFile(out, "w", zipfile.ZIP_DEFLATED) as z:
         for name, text in metadata.items():
@@ -184,6 +184,20 @@ def class_sections(mc: str, out: Path) -> Path:
     return out
 
 
+def early(mc: str, out: Path, meta: dict[str, str | bytes], inner: Path, tmp: Path) -> None:
+    """Forge: the published jar is forge-early's service, run before Forge looks for mods, with
+    the mod inside it. Its metadata stays outside too, for the sites that read it; Forge skips
+    a jar with services when it looks for mods, so only the inner mod loads."""
+    cp, _ = remap.forge_classpath(mc)
+    classes = tmp / "classes"
+    javac(remap.java_release(mc), cp, sorted((HERE / "forge-early" / "src").rglob("*.java")),
+          classes)
+    manifest = "Manifest-Version: 1.0\nAutomatic-Module-Name: modkeel.companion.early\n"
+    write_jar(out, {"META-INF/MANIFEST.MF": manifest, **meta,
+                    "META-INF/modkeel/companion.jar": inner.read_bytes()},
+              [classes], [HERE / "forge-early" / "resources"])
+
+
 def build(mc: str, loader: str = "fabric", run_tests: bool = True) -> dict[str, Path]:
     v = variant(mc)
     with tempfile.TemporaryDirectory() as t:
@@ -222,8 +236,13 @@ def build(mc: str, loader: str = "fabric", run_tests: bool = True) -> dict[str, 
                 encoding="utf-8").replace("${version}", VERSION).replace(
                 "${updates}", UPDATES_URL).replace("${minecraft}", game_range).replace(
                 "${" + loader + "}", loader_range)
-            write_jar(mod, loader_metadata(loader, v, toml, "Modkeel Companion"), [core, classes],
-                      resources)
+            meta = loader_metadata(loader, v, toml, "Modkeel Companion")
+            if loader == "forge":
+                inner = tmp / "inner.jar"
+                write_jar(inner, meta, [core, classes], resources)
+                early(mc, mod, meta, inner, tmp / "early")
+            else:
+                write_jar(mod, meta, [core, classes], resources)
             for (test_mod, name), jar in zip((("mfcrash", "Crash Test Mod"),
                                               ("mfidle", "Mouse Release Test Mod")),
                                              test_jars(mc, loader)):

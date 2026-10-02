@@ -42,7 +42,10 @@ public final class HealthScreen extends Page {
         footer.addChild(new KeelButton(150, CommonComponents.GUI_DONE, b -> onClose()));
     }
 
-    /** Red when the last launch crashed, amber when a change did not finish, green otherwise. */
+    /**
+     * Red when the last launch crashed, amber when a mod was turned off to let this one start
+     * or a change did not finish, green otherwise.
+     */
     private void status(Stack body, int w) {
         String action = g.state.get("lastAction", "");
         boolean failed = !action.isEmpty()
@@ -56,6 +59,11 @@ public final class HealthScreen extends Page {
             c.row(s == null ? Component.translatable("modkeel.crash.unclear")
                     : Component.translatable("modkeel.home.likely", CrashScreen.likely(g.crash), s.name),
                     Keel.SOFT, open);
+        } else if (!g.turnedOff.isEmpty()) {
+            Card c = body.addChild(new Card(w, Keel.EDGE_WARN));
+            c.add(new Heading(Component.translatable("modkeel.health.last_action", CrashScreen.msg(action)),
+                    c.inner()));
+            c.add(Text.in(Component.translatable("modkeel.health.turned_off"), c.inner(), Keel.SOFT));
         } else if (failed) {
             Card c = body.addChild(new Card(w, Keel.EDGE_WARN));
             c.add(new Heading(Component.translatable("modkeel.health.last_action", CrashScreen.msg(action)),

@@ -40,6 +40,12 @@ public final class Guardian {
     private ModSet current;
     private Owners owners;
 
+    /**
+     * Mods turned off at this start before any mod ran, because they would have stopped it
+     * (Forge: an access transformer it cannot read); their names.
+     */
+    public final List<String> turnedOff = new ArrayList<>();
+
     /** The crash found at startup, if any, and its report file. */
     public Diagnosis crash;
     public Path crashFile;
@@ -89,6 +95,7 @@ public final class Guardian {
     public Diagnosis startup() {
         Log.info("rules bundle: " + rules.size + " lab facts; Minecraft " + mcVersion);
         takeLastResult();
+        takeTurnedOff();
         if (outcomes.watching()) {
             outcomes.checkUndone(modsDir);
             outcomes.bindSet(current().fingerprint());
@@ -717,6 +724,52 @@ public final class Guardian {
             Log.warn("cannot start the helper", e);
         }
         Log.info("applied: " + Msg.plain(plan.title));
+    }
+
+    /**
+     * The note the early check (forge-early's AccessCheck) left at this start: one
+     * "jar<TAB>disabled jar" line per jar it turned off. They become Modkeel's last change, and
+     * stay listed with the jars Modkeel disabled, so the player can turn them back on.
+     */
+    private void takeTurnedOff() {
+        Path f = home.resolve("early.txt");
+        if (!Files.exists(f)) {
+            return;
+        }
+        List<String> disabled = state.getList("disabled");
+        List<String> result = new ArrayList<>();
+        try {
+            for (String line : Files.readAllLines(f, StandardCharsets.UTF_8)) {
+                String[] p = line.split("\t");
+                if (p.length != 2) {
+                    continue;
+                }
+                turnedOff.add(displayName(modsDir.resolve(p[1]), p[0]));
+                if (!disabled.contains(p[1])) {
+                    disabled.add(p[1]);
+                }
+                result.add("ok move " + p[0] + " -> " + p[1]);
+            }
+            Files.delete(f);
+        } catch (IOException e) {
+            Log.warn("cannot read " + f, e);
+        }
+        if (turnedOff.isEmpty()) {
+            return;
+        }
+        state.setList("disabled", disabled);
+        state.set("lastAction", Msg.of("modkeel.action.turned_off", String.join(", ", turnedOff)));
+        state.setList("lastResult", result);
+        state.save();
+        Log.info("turned off before the start: " + String.join(", ", turnedOff));
+    }
+
+    private static String displayName(Path jar, String fallback) {
+        try {
+            return JarInfo.read(jar).get(0).displayName();
+        } catch (IOException | RuntimeException e) {
+            return fallback;
+        }
     }
 
     /**

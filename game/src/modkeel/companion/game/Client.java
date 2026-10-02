@@ -144,7 +144,7 @@ public final class Client {
                     }
                 };
             }
-        } else if ("health".equals(test) && !crashHandled) {
+        } else if (("health".equals(test) || !g.turnedOff.isEmpty()) && !crashHandled) {
             crashHandled = true;
             whenLoaded = () -> {
                 Log.info("showing the health screen");

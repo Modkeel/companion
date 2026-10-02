@@ -61,6 +61,7 @@ Forge, through their official installers) into `~/.modkeel` (`MODKEEL_HOME`).
 | `core/` | Loader-agnostic logic: mod sets, world backups, crash diagnosis, fixes. Plain Java 17, with its own tests |
 | `game/` | What only needs Minecraft: screens, backup and tick hooks, translations |
 | `fabric/`, `neoforge/`, `forge/` | Thin entrypoints per loader |
+| `forge-early/` | Forge only: a service that runs before Forge reads the mods, turns off a jar whose access transformer would close the game, and carries the mod inside |
 | `*/versions/<v>/` | What changed between Minecraft versions |
 | `testmods/` | Mods that crash on demand, for end-to-end tests |
 | `build.py`, `remap.py`, `toolchain.py` | The build |

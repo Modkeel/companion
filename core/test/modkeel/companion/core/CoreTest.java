@@ -38,6 +38,7 @@ public final class CoreTest {
         run("guardian: backup only when mods change", CoreTest::guardianBackup);
         run("guardian: last good set and revert", CoreTest::guardianRevert);
         run("guardian: disable, dependents, enable", CoreTest::guardianDisable);
+        run("guardian: jars the early check turned off", CoreTest::guardianTurnedOff);
         run("guardian: crash found once", CoreTest::guardianCrash);
         run("guardian: crash that stopped the start", CoreTest::guardianStartingCrash);
         run("crash only the log kept", CoreTest::logCrash);
@@ -360,6 +361,24 @@ public final class CoreTest {
         g.apply(g.enablePlan("lib.jar.disabled"), self);
         check(Files.exists(mods.resolve("lib.jar")), "enabled again");
         eq(List.of(), g.disabledByUs(), "no longer tracked");
+    }
+
+    static void guardianTurnedOff() throws Exception {
+        Path game = tmp();
+        Path mods = game.resolve("mods");
+        jar(mods, "physics.jar.disabled", "physics", null, "physics/P.class");
+        Path note = game.resolve("modkeel").resolve("early.txt");
+        Files.createDirectories(note.getParent());
+        Files.writeString(note, "physics.jar\tphysics.jar.disabled\n");
+        Guardian g = new Guardian(game);
+        g.startup();
+        eq(List.of("PHYSICS Mod"), g.turnedOff, "turned off, by name");
+        eq(List.of("physics.jar.disabled"), g.disabledByUs(), "can be turned back on");
+        check(g.state.get("lastAction", "").startsWith("modkeel.action.turned_off"), "last action");
+        check(!Files.exists(note), "note read once");
+        g = new Guardian(game);
+        g.startup();
+        eq(List.of(), g.turnedOff, "nothing on the next start");
     }
 
     static void guardianCrash() throws Exception {
