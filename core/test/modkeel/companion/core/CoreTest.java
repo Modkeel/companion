@@ -11,6 +11,7 @@ import java.nio.file.Paths;
 import java.nio.file.attribute.FileTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -41,6 +42,8 @@ public final class CoreTest {
         run("guardian: crash that stopped the start", CoreTest::guardianStartingCrash);
         run("crash only the log kept", CoreTest::logCrash);
         run("guardian: crash in the last start's log", CoreTest::guardianLogCrash);
+        run("crash that hung the game before its report", CoreTest::hungCrash);
+        run("crash watch: report and close a game stuck after its crash", CoreTest::crashWatch);
         run("guardian: the world open at a crash", CoreTest::guardianWorldAtCrash);
         run("plan round trip", CoreTest::planRoundTrip);
         run("crash signature ignores lines, lambdas and mixin hashes", CoreTest::signature);
@@ -448,6 +451,84 @@ public final class CoreTest {
         eq(null, g.worldAtCrash, "no world open");
         Files.setLastModifiedTime(gz, FileTime.fromMillis(System.currentTimeMillis() - 1000));
         eq(null, new Guardian(game).checkCrashes(), "read once");
+    }
+
+    static void hungCrash() throws Exception {
+        // Forge 1.20.1: a crash in a world, then Xaero's World Map deadlocked the server's stop
+        String log = new String(Files.readAllBytes(fixtures.resolve("forge-log-hung-crash.log")),
+                                StandardCharsets.UTF_8);
+        CrashReport r = CrashReport.fromLog(log);
+        check(r != null, "the crash Minecraft logged, though the log goes on after it");
+        check(r.whilePlaying, "the game was running");
+        eq("16:00:07", r.logTime, "when");
+        eq("mfcrash: deliberate test crash", r.root().message, "root cause");
+
+        Path game = tmp();
+        jar(game.resolve("mods"), "mfcrash-forge-1.20.1.jar", "mfcrash", null,
+            "modkeel/testmods/crash/MfCrashForge.class");
+        Path logs = game.resolve("logs");
+        Files.createDirectories(logs);
+        Path gz = logs.resolve("2026-10-02-1.log.gz");
+        try (java.io.OutputStream out = new java.util.zip.GZIPOutputStream(Files.newOutputStream(gz))) {
+            Files.copy(fixtures.resolve("forge-log-hung-crash.log"), out);
+        }
+        Files.setLastModifiedTime(gz, FileTime.fromMillis(System.currentTimeMillis() + 1000));
+        Guardian g = new Guardian(game);
+        g.mcVersion = "1.20.1";
+        Diagnosis d = g.startup();
+        check(d != null && d.top() != null && d.top().id.equals("mfcrash"), "mfcrash blamed");
+        check(g.crashFromLog && g.crashWhilePlaying, "read from the log, while playing");
+        check(!g.crashedStarting, "not a crash while starting: the crash screen, not the dialog");
+        check(g.crashFile.getFileName().toString().equals("last-crash.log")
+              && Files.exists(g.crashFile), "a plain log to open, not the .gz");
+    }
+
+    static void crashWatch() throws Exception {
+        Path game = tmp();
+        Path mods = game.resolve("mods");
+        jar(mods, "mfcrash-forge-1.20.1.jar", "mfcrash", null,
+            "modkeel/testmods/crash/MfCrashForge.class");
+        jar(mods, "xaeroworldmap.jar", "xaeroworldmap", null,
+            "xaero/map/file/worldsave/WorldDataHandler.class");
+        Guardian g = new Guardian(game);
+        check(CrashWatch.isFatal("Unreported exception thrown!"), "the line Minecraft logs");
+        check(!CrashWatch.isFatal("Exception thrown while loading chunk"), "not any exception");
+
+        IllegalStateException error = new IllegalStateException("mfcrash: deliberate test crash");
+        error.setStackTrace(new StackTraceElement[] {
+            new StackTraceElement("modkeel.testmods.crash.MfCrashForge", "tick", null, 30)});
+        Map<Thread, StackTraceElement[]> stuck = new java.util.LinkedHashMap<>();
+        stuck.put(new Thread("Render thread"), new StackTraceElement[] {
+            new StackTraceElement("java.lang.Thread", "join", null, 1313),
+            new StackTraceElement("net.minecraft.server.MinecraftServer", "m_7570_", null, 624)});
+        stuck.put(new Thread("Server thread"), new StackTraceElement[] {
+            new StackTraceElement("xaero.map.file.worldsave.WorldDataHandler",
+                                  "onServerWorldUnload", null, 106),
+            new StackTraceElement("net.minecraft.server.MinecraftServer", "m_7041_", null, 589)});
+        stuck.put(new Thread("Netty Client IO #1"), new StackTraceElement[] {
+            new StackTraceElement("xaero.map.Other", "idle", null, 1)});
+        java.util.concurrent.CountDownLatch halted = new java.util.concurrent.CountDownLatch(1);
+        CrashWatch w = new CrashWatch(game, g::owners);
+        w.quietMs = 300;
+        w.checkMs = 20;
+        w.stacks = () -> stuck;
+        w.halt = halted::countDown;
+        w.crashed(error, "Render thread");
+        check(halted.await(10, java.util.concurrent.TimeUnit.SECONDS), "closed once stuck");
+
+        Path report;
+        try (java.util.stream.Stream<Path> s = Files.list(game.resolve("crash-reports"))) {
+            report = s.findFirst().orElse(null);
+        }
+        check(report != null, "report written");
+        String text = new String(Files.readAllBytes(report), StandardCharsets.UTF_8);
+        check(text.contains("Stuck in mods: xaeroworldmap\n"), "the mod it hung in");
+        check(text.contains("\"Server thread\""), "the stuck threads");
+        check(!text.contains("Netty"), "only the threads that close the game");
+        Files.setLastModifiedTime(report, FileTime.fromMillis(System.currentTimeMillis() + 1000));
+        Diagnosis d = new Guardian(game).checkCrashes();
+        check(d != null && d.top() != null && d.top().id.equals("mfcrash"),
+              "next start blames the crash, not the hang");
     }
 
     static void guardianWorldAtCrash() throws Exception {

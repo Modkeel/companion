@@ -69,6 +69,10 @@ public final class CrashReport {
     public final Set<String> fromMod = new LinkedHashSet<>();
     public final Set<String> mixinConfigs = new LinkedHashSet<>();
     public final Set<String> loadingIssues = new LinkedHashSet<>();
+    /** Read from a log where Minecraft reported the crash: the game was running, not starting. */
+    public boolean whilePlaying;
+    /** ...and when, as the log wrote it: "16:00:07". */
+    public String logTime = "";
 
     public Cause root() {
         return causes.isEmpty() ? null : causes.get(causes.size() - 1);
@@ -80,21 +84,28 @@ public final class CrashReport {
 
     /** A log line from the game's logger: "[12:00:00] [main/INFO]: ...". */
     private static final Pattern LOG_LINE = Pattern.compile("^\\[[\\d:.]+\\] \\[");
+    private static final Pattern LOG_TIME = Pattern.compile("^\\[(\\d\\d:\\d\\d:\\d\\d)");
     /** Lines a stack trace is made of, after its first. */
     private static final Pattern TRACE_LINE = Pattern.compile(
             "^(\\s+at |\\s*\\.\\.\\. \\d+ more|Caused by: |\\s+Suppressed: |\\s+Caused by: |\\s*$)");
     /** Log lines a crash may still write after its stack trace. */
     private static final int TAIL_LINES = 5;
+    /** Minecraft logs this right before the trace of a crash, then writes the report. */
+    static final Pattern FATAL =Pattern.compile("(Unreported|Reported) exception thrown!$");
 
     /**
      * Some crashes stop the game before Minecraft can write a report (a mixin that fails while
      * the first game classes load): only the log keeps them, as a stack trace at its very end.
+     * Others hang the game while it stops, before the report (a mod deadlocked on the way out):
+     * Minecraft logged the crash, and its trace sits anywhere in the log.
      * The trace is read as a report; null when the log ends any other way (the game closed).
      */
     public static CrashReport fromLog(String text) {
         String[] lines = text.split("\\r?\\n");
         int start = -1;
         int end = -1;
+        int fatalStart = -1;
+        int fatalEnd = -1;
         for (int i = 0; i < lines.length; i++) {
             if (!lines[i].startsWith("Caused by: ") && EXCEPTION.matcher(lines[i]).matches()) {
                 start = i;
@@ -102,15 +113,25 @@ public final class CrashReport {
                 while (end < lines.length && TRACE_LINE.matcher(lines[end]).find()) {
                     end++;
                 }
+                if (i > 0 && FATAL.matcher(lines[i - 1]).find()) {
+                    fatalStart = start;
+                    fatalEnd = end;
+                }
                 i = end - 1;
             }
         }
         if (start < 0) {
             return null;
         }
+        boolean running = fatalStart >= 0;
+        if (running) {
+            // the crash Minecraft logged, not what mods logged while the game stopped
+            start = fatalStart;
+            end = fatalEnd;
+        }
         int tail = 0;
         for (int i = end; i < lines.length; i++) {
-            if (lines[i].contains("Stopping!") || ++tail > TAIL_LINES) {
+            if (lines[i].contains("Stopping!") || (!running && ++tail > TAIL_LINES)) {
                 return null;
             }
         }
@@ -118,7 +139,13 @@ public final class CrashReport {
         for (int i = start; i < end; i++) {
             trace.append(lines[i]).append('\n');
         }
-        return parse(trace.toString());
+        CrashReport r = parse(trace.toString());
+        r.whilePlaying = running;
+        if (running) {
+            Matcher m = LOG_TIME.matcher(lines[start - 1]);
+            r.logTime = m.find() ? m.group(1) : "";
+        }
+        return r;
     }
 
     public static CrashReport parse(String text) {

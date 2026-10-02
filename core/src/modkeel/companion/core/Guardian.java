@@ -95,8 +95,9 @@ public final class Guardian {
         }
         boolean lastStartUnfinished = state.get("starting", "false").equals("true");
         Diagnosis d = checkCrashes();
-        // a crash only the log kept stopped the game before Minecraft could even report it
-        crashedStarting = d != null && (lastStartUnfinished || crashFromLog
+        // a crash only the log kept, unless Minecraft reported it there, stopped the game
+        // before it could even report it
+        crashedStarting = d != null && (lastStartUnfinished || crashFromLog && !crashWhilePlaying
                                         || STARTING_CRASH.equals(d.description));
         state.set("starting", true);
         state.save();
@@ -357,16 +358,26 @@ public final class Guardian {
             }
         }
         CrashReport report;
+        Path plain = null;
         try {
             if (newest != null) {
                 report = CrashReport.read(newest);
             } else {
                 newest = lastLog(since);
-                report = newest == null ? null : CrashReport.fromLog(readLog(newest));
+                String text = newest == null ? null : readLog(newest);
+                report = text == null ? null : CrashReport.fromLog(text);
                 if (report == null) {
                     return null;
                 }
+                // the player opens this one, not a .gz no program on their system may read
+                plain = home.resolve("last-crash.log");
+                Files.createDirectories(home);
+                Files.write(plain, text.getBytes(java.nio.charset.StandardCharsets.UTF_8));
                 crashFromLog = true;
+                crashWhilePlaying = report.whilePlaying;
+                if (crashWhilePlaying) {
+                    newestTime = logTime(newest, report.logTime, newestTime);
+                }
             }
         } catch (IOException e) {
             Log.warn("cannot read " + newest, e);
@@ -376,9 +387,9 @@ public final class Guardian {
         // a suspect the player already removed is no longer a fix to offer
         d.suspects.removeIf(s -> s.file != null && !Files.exists(modsDir.resolve(s.file)));
         crash = d;
-        crashFile = newest;
+        crashFile = plain != null ? plain : newest;
         // a start that never got to a world: none was open
-        worldAtCrash = crashFromLog ? null : worldAt(newestTime);
+        worldAtCrash = crashFromLog && !crashWhilePlaying ? null : worldAt(newestTime);
         if (outcomes.watching()) {
             outcomes.onCrash(d.signature, current().fingerprint());
         }
@@ -390,6 +401,8 @@ public final class Guardian {
 
     /** The crash found at startup is only in the last start's log: it had no report. */
     public boolean crashFromLog;
+    /** ...and the game was running: it hung on the way out before writing the report. */
+    public boolean crashWhilePlaying;
 
     /**
      * The last start's log, rotated by Minecraft when this one began (logs/*.log.gz, newest
@@ -413,6 +426,18 @@ public final class Guardian {
             }
         }
         return newest;
+    }
+
+    /** "2026-10-02-1.log.gz" and "16:00:07" as a time; {@code fallback} when they do not parse. */
+    static long logTime(Path log, String time, long fallback) {
+        try {
+            java.time.LocalDate day =
+                    java.time.LocalDate.parse(log.getFileName().toString().substring(0, 10));
+            return day.atTime(java.time.LocalTime.parse(time))
+                    .atZone(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli();
+        } catch (RuntimeException e) {
+            return fallback;
+        }
     }
 
     private static String readLog(Path p) throws IOException {

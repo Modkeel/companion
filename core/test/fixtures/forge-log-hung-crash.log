@@ -1,0 +1,132 @@
+[16:00:05] [modkeel-spikes/INFO]: [modkeel] lag spike: frame 3245 ms, gc 4%, embeddium 55%, entity_texture_features 14%, oculus 11%; gpu 52%, disk 2%, wait 0%
+[16:00:05] [Render thread/WARN]: Mod(s) [oculus] are modifying Embeddium class me.jellysquid.mods.sodium.client.render.chunk.region.RenderRegion$DeviceResources, which may cause instability.
+[16:00:07] [Render thread/WARN]: Time from main menu to in-game was 21.820822 seconds
+[16:00:07] [Render thread/WARN]: Total time to load game and open world was 157.72482 seconds
+[16:00:07] [Render thread/ERROR]: Exception caught during firing event: mfcrash: deliberate test crash
+	Index: 4
+	Listeners:
+		0: HIGH
+		1: ASM: class dev.architectury.event.forge.EventHandlerImplClient event(Lnet/minecraftforge/event/TickEvent$ClientTickEvent;)V
+		2: net.minecraftforge.eventbus.EventBus$$Lambda$2996/0x00000008009cda48@6ce86b34
+		3: NORMAL
+		4: net.minecraftforge.eventbus.EventBus$$Lambda$2996/0x00000008009cda48@78d7d8fc
+		5: ASM: org.embeddedt.modernfix.forge.init.ModernFixClientForge@3f9d45df onConfigKey(Lnet/minecraftforge/event/TickEvent$ClientTickEvent;)V
+		6: ASM: net.minecraftforge.common.ForgeInternalHandler@5c35f837 checkSettings(Lnet/minecraftforge/event/TickEvent$ClientTickEvent;)V
+		7: ASM: class dev.uncandango.alltheleaks.events.client.GameBusEvent onClientTick(Lnet/minecraftforge/event/TickEvent$ClientTickEvent;)V
+		8: net.minecraftforge.eventbus.EventBus$$Lambda$2996/0x00000008009cda48@7c0f293d
+		9: net.minecraftforge.eventbus.EventBus$$Lambda$2996/0x00000008009cda48@5f1010b
+		10: net.minecraftforge.eventbus.EventBus$$Lambda$2996/0x00000008009cda48@2aef7b4a
+		11: net.minecraftforge.eventbus.EventBus$$Lambda$2996/0x00000008009cda48@6cb946d3
+		12: ASM: xaero.common.events.ClientEventsForge@25243cb8 handleClientTickEvent(Lnet/minecraftforge/event/TickEvent$ClientTickEvent;)V
+		13: net.minecraftforge.eventbus.EventBus$$Lambda$2996/0x00000008009cda48@697adcb8
+		14: net.minecraftforge.eventbus.EventBus$$Lambda$2996/0x00000008009cda48@640e71c5
+		15: ASM: xaero.map.events.ClientEventsForge@327325f5 clientTick(Lnet/minecraftforge/event/TickEvent$ClientTickEvent;)V
+		16: ASM: de.keksuccino.konkrete.gui.content.handling.AdvancedWidgetsHandler@2436389d onClientTick(Lnet/minecraftforge/event/TickEvent$ClientTickEvent;)V
+		17: ASM: de.keksuccino.konkrete.input.MouseInput@ed2ffbe onTick(Lnet/minecraftforge/event/TickEvent$ClientTickEvent;)V
+		18: net.minecraftforge.eventbus.EventBus$$Lambda$2996/0x00000008009cda48@35ea7325
+		19: net.minecraftforge.eventbus.EventBus$$Lambda$2996/0x00000008009cda48@13432495
+		20: net.minecraftforge.eventbus.EventBus$$Lambda$2996/0x00000008009cda48@2c63a559
+		21: ASM: org.violetmoon.zetaimplforge.mod.ZetaModClientProxy@6dc9f918 clientTick(Lnet/minecraftforge/event/TickEvent$ClientTickEvent;)V
+		22: ASM: class shcm.shsupercm.forge.citresewn.CITEvents clientTick(Lnet/minecraftforge/event/TickEvent$ClientTickEvent;)V
+		23: ASM: org.anti_ad.mc.ipnext.forge.ForgeEventHandler@465bcb13 clientClick(Lnet/minecraftforge/event/TickEvent$ClientTickEvent;)V
+		24: ASM: com.corosus.coroutil.loader.forge.EventHandlerForge@5912dbd8 onGameTick(Lnet/minecraftforge/event/TickEvent$ClientTickEvent;)V
+		25: ASM: class eu.ha3.presencefootsteps.events.ForgeEventSubscriber onClientTick(Lnet/minecraftforge/event/TickEvent$ClientTickEvent;)V
+		26: ASM: org.anti_ad.mc.libipn.forge.ForgePostponedInit@7f30026f clientClick(Lnet/minecraftforge/event/TickEvent$ClientTickEvent;)V
+		27: ASM: class com.tacz.guns.client.input.ShootKey autoShoot(Lnet/minecraftforge/event/TickEvent$ClientTickEvent;)V
+		28: ASM: class com.tacz.guns.client.input.AimKey onAimHoldingPreInput(Lnet/minecraftforge/event/TickEvent$ClientTickEvent;)V
+		29: ASM: class com.tacz.guns.client.input.AimKey cancelAim(Lnet/minecraftforge/event/TickEvent$ClientTickEvent;)V
+		30: ASM: class com.tacz.guns.client.event.TickAnimationEvent tickAnimation(Lnet/minecraftforge/event/TickEvent$ClientTickEvent;)V
+		31: ASM: class com.tacz.guns.client.event.RefreshClonePlayerDataEvent onClientTick(Lnet/minecraftforge/event/TickEvent$ClientTickEvent;)V
+		32: ASM: class com.tacz.guns.client.event.InventoryEvent onPlayerChangeSelect(Lnet/minecraftforge/event/TickEvent$ClientTickEvent;)V
+		33: net.minecraftforge.eventbus.EventBus$$Lambda$2996/0x00000008009cda48@3b746949
+		34: net.minecraftforge.eventbus.EventBus$$Lambda$2996/0x00000008009cda48@5d614659
+		35: net.minecraftforge.eventbus.EventBus$$Lambda$2996/0x00000008009cda48@570ca6ec
+		36: net.minecraftforge.eventbus.EventBus$$Lambda$2996/0x00000008009cda48@66f48839
+		37: net.minecraftforge.eventbus.EventBus$$Lambda$2996/0x00000008009cda48@7e528b8f
+		38: ASM: class oreexcavation.handlers.EventHandler onClientTick(Lnet/minecraftforge/event/TickEvent$ClientTickEvent;)V
+		39: ASM: xaero.pac.client.event.ClientEventsForge@58f449de onClientTick(Lnet/minecraftforge/event/TickEvent$ClientTickEvent;)V
+		40: ASM: top.theillusivec4.curios.client.ClientEventHandler@40d375b4 onClientTick(Lnet/minecraftforge/event/TickEvent$ClientTickEvent;)V
+		41: ASM: squeek.appleskin.client.HUDOverlayHandler@3d472927 onClientTick(Lnet/minecraftforge/event/TickEvent$ClientTickEvent;)V
+		42: net.minecraftforge.eventbus.EventBus$$Lambda$2996/0x00000008009cda48@29565992
+		43: net.minecraftforge.eventbus.EventBus$$Lambda$2996/0x00000008009cda48@1b5fa192
+		44: net.minecraftforge.eventbus.EventBus$$Lambda$2996/0x00000008009cda48@59a85780
+		45: ASM: dev.shadowsoffire.toastcontrol.ToastControl@2f4a319f clientTick(Lnet/minecraftforge/event/TickEvent$ClientTickEvent;)V
+		46: ASM: class team.creative.creativecore.client.CreativeCoreClient clientTick(Lnet/minecraftforge/event/TickEvent$ClientTickEvent;)V
+		47: net.minecraftforge.eventbus.EventBus$$Lambda$2996/0x00000008009cda48@334ca1c9
+		48: ASM: com.mrcrayfish.framework.client.ClientForgeEvents@2bce2043 onRenderTick(Lnet/minecraftforge/event/TickEvent$ClientTickEvent;)V
+		49: ASM: class com.natamus.difficultylock.forge.events.ForgeDifficultyLockClientEvent onClientTick(Lnet/minecraftforge/event/TickEvent$ClientTickEvent;)V
+		50: ASM: class com.natamus.collective.forge.events.RegisterCollectiveForgeClientEvents onClientTick(Lnet/minecraftforge/event/TickEvent$ClientTickEvent;)V
+java.lang.IllegalStateException: mfcrash: deliberate test crash
+	at TRANSFORMER/mfcrash@1.0/modkeel.testmods.crash.MfCrashForge.explode(MfCrashForge.java:53)
+	at TRANSFORMER/mfcrash@1.0/modkeel.testmods.crash.MfCrashForge.lambda$new$0(MfCrashForge.java:43)
+	at MC-BOOTSTRAP/net.minecraftforge.eventbus/net.minecraftforge.eventbus.EventBus.doCastFilter(EventBus.java:260)
+	at MC-BOOTSTRAP/net.minecraftforge.eventbus/net.minecraftforge.eventbus.EventBus.lambda$addListener$11(EventBus.java:252)
+	at MC-BOOTSTRAP/net.minecraftforge.eventbus/net.minecraftforge.eventbus.EventBus.post(EventBus.java:315)
+	at MC-BOOTSTRAP/net.minecraftforge.eventbus/net.minecraftforge.eventbus.EventBus.post(EventBus.java:296)
+	at TRANSFORMER/forge@47.4.10/net.minecraftforge.event.ForgeEventFactory.onPostClientTick(ForgeEventFactory.java:965)
+	at TRANSFORMER/minecraft@1.20.1/net.minecraft.client.Minecraft.m_91398_(Minecraft.java:1875)
+	at TRANSFORMER/minecraft@1.20.1/net.minecraft.client.Minecraft.m_91383_(Minecraft.java:1112)
+	at TRANSFORMER/minecraft@1.20.1/net.minecraft.client.Minecraft.m_91374_(Minecraft.java:718)
+	at TRANSFORMER/minecraft@1.20.1/net.minecraft.client.main.Main.main(Main.java:218)
+	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:77)
+	at java.base/jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:569)
+	at MC-BOOTSTRAP/fmlloader@1.20.1-47.4.10/net.minecraftforge.fml.loading.targets.CommonLaunchHandler.runTarget(CommonLaunchHandler.java:111)
+	at MC-BOOTSTRAP/fmlloader@1.20.1-47.4.10/net.minecraftforge.fml.loading.targets.CommonLaunchHandler.clientService(CommonLaunchHandler.java:99)
+	at MC-BOOTSTRAP/fmlloader@1.20.1-47.4.10/net.minecraftforge.fml.loading.targets.CommonClientLaunchHandler.lambda$makeService$0(CommonClientLaunchHandler.java:25)
+	at MC-BOOTSTRAP/cpw.mods.modlauncher@10.0.9/cpw.mods.modlauncher.LaunchServiceHandlerDecorator.launch(LaunchServiceHandlerDecorator.java:30)
+	at MC-BOOTSTRAP/cpw.mods.modlauncher@10.0.9/cpw.mods.modlauncher.LaunchServiceHandler.launch(LaunchServiceHandler.java:53)
+	at MC-BOOTSTRAP/cpw.mods.modlauncher@10.0.9/cpw.mods.modlauncher.LaunchServiceHandler.launch(LaunchServiceHandler.java:71)
+	at MC-BOOTSTRAP/cpw.mods.modlauncher@10.0.9/cpw.mods.modlauncher.Launcher.run(Launcher.java:108)
+	at MC-BOOTSTRAP/cpw.mods.modlauncher@10.0.9/cpw.mods.modlauncher.Launcher.main(Launcher.java:78)
+	at MC-BOOTSTRAP/cpw.mods.modlauncher@10.0.9/cpw.mods.modlauncher.BootstrapLaunchConsumer.accept(BootstrapLaunchConsumer.java:26)
+	at MC-BOOTSTRAP/cpw.mods.modlauncher@10.0.9/cpw.mods.modlauncher.BootstrapLaunchConsumer.accept(BootstrapLaunchConsumer.java:23)
+	at cpw.mods.bootstraplauncher@1.1.2/cpw.mods.bootstraplauncher.BootstrapLauncher.main(BootstrapLauncher.java:141)
+
+[16:00:07] [Render thread/ERROR]: Unreported exception thrown!
+java.lang.IllegalStateException: mfcrash: deliberate test crash
+	at modkeel.testmods.crash.MfCrashForge.explode(MfCrashForge.java:53) ~[mfcrash-forge-1.20.1.jar%23401!/:?]
+	at modkeel.testmods.crash.MfCrashForge.lambda$new$0(MfCrashForge.java:43) ~[mfcrash-forge-1.20.1.jar%23401!/:?]
+	at net.minecraftforge.eventbus.EventBus.doCastFilter(EventBus.java:260) ~[eventbus-6.0.5.jar%2387!/:?]
+	at net.minecraftforge.eventbus.EventBus.lambda$addListener$11(EventBus.java:252) ~[eventbus-6.0.5.jar%2387!/:?]
+	at net.minecraftforge.eventbus.EventBus.post(EventBus.java:315) ~[eventbus-6.0.5.jar%2387!/:?]
+	at net.minecraftforge.eventbus.EventBus.post(EventBus.java:296) ~[eventbus-6.0.5.jar%2387!/:?]
+	at net.minecraftforge.event.ForgeEventFactory.onPostClientTick(ForgeEventFactory.java:965) ~[forge-1.20.1-47.4.10-universal.jar%23457!/:?]
+	at net.minecraft.client.Minecraft.m_91398_(Minecraft.java:1875) ~[client-1.20.1-20230612.114412-srg.jar%23452!/:?]
+	at net.minecraft.client.Minecraft.m_91383_(Minecraft.java:1112) ~[client-1.20.1-20230612.114412-srg.jar%23452!/:?]
+	at net.minecraft.client.Minecraft.m_91374_(Minecraft.java:718) ~[client-1.20.1-20230612.114412-srg.jar%23452!/:?]
+	at net.minecraft.client.main.Main.main(Main.java:218) ~[1.20.1-forge-47.4.10.jar:?]
+	at jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method) ~[?:?]
+	at jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:77) ~[?:?]
+	at jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43) ~[?:?]
+	at java.lang.reflect.Method.invoke(Method.java:569) ~[?:?]
+	at net.minecraftforge.fml.loading.targets.CommonLaunchHandler.runTarget(CommonLaunchHandler.java:111) ~[fmlloader-1.20.1-47.4.10.jar:?]
+	at net.minecraftforge.fml.loading.targets.CommonLaunchHandler.clientService(CommonLaunchHandler.java:99) ~[fmlloader-1.20.1-47.4.10.jar:?]
+	at net.minecraftforge.fml.loading.targets.CommonClientLaunchHandler.lambda$makeService$0(CommonClientLaunchHandler.java:25) ~[fmlloader-1.20.1-47.4.10.jar:?]
+	at cpw.mods.modlauncher.LaunchServiceHandlerDecorator.launch(LaunchServiceHandlerDecorator.java:30) ~[modlauncher-10.0.9.jar:?]
+	at cpw.mods.modlauncher.LaunchServiceHandler.launch(LaunchServiceHandler.java:53) ~[modlauncher-10.0.9.jar:?]
+	at cpw.mods.modlauncher.LaunchServiceHandler.launch(LaunchServiceHandler.java:71) ~[modlauncher-10.0.9.jar:?]
+	at cpw.mods.modlauncher.Launcher.run(Launcher.java:108) ~[modlauncher-10.0.9.jar:?]
+	at cpw.mods.modlauncher.Launcher.main(Launcher.java:78) ~[modlauncher-10.0.9.jar:?]
+	at cpw.mods.modlauncher.BootstrapLaunchConsumer.accept(BootstrapLaunchConsumer.java:26) ~[modlauncher-10.0.9.jar:?]
+	at cpw.mods.modlauncher.BootstrapLaunchConsumer.accept(BootstrapLaunchConsumer.java:23) ~[modlauncher-10.0.9.jar:?]
+	at cpw.mods.bootstraplauncher.BootstrapLauncher.main(BootstrapLauncher.java:141) ~[bootstraplauncher-1.1.2.jar:?]
+[16:00:07] [Server thread/INFO]: Stopping server
+[16:00:07] [Server thread/INFO]: Saving players
+[16:00:07] [modkeel-spikes/INFO]: [modkeel] lag spike: world 1988 ms, gc 1%, xaeroworldmap 94%; gpu 0%, disk 0%, wait 0%
+[16:00:07] [modkeel-spikes/INFO]: [modkeel] lag spike entities: [68 entity.minecraft.zombie]
+[16:00:07] [Server thread/INFO]: Modkeel lost connection: Disconnected
+[16:00:07] [Server thread/INFO]: Modkeel left the game
+[16:00:07] [Server thread/INFO]: Updating all forceload tickets for 3dc57992-8888-5bc8-b99a-126a0d51851a
+[16:00:07] [Server thread/INFO]: Stopping singleplayer server as player logged out
+[16:00:07] [Server thread/INFO]: Saving worlds
+[16:00:08] [Server thread/INFO]: Saving chunks for level 'ServerLevel[world]'/minecraft:overworld
+[16:00:08] [Server thread/INFO]: Saving chunks for level 'ServerLevel[world]'/lostcities:lostcity
+[16:00:08] [Server thread/INFO]: Saving chunks for level 'ServerLevel[world]'/minecraft:the_nether
+[16:00:08] [Server thread/INFO]: Saving chunks for level 'ServerLevel[world]'/minecraft:the_end
+[16:00:08] [Server thread/INFO]: ThreadedAnvilChunkStorage (My World): All chunks are saved
+[16:00:08] [Server thread/INFO]: ThreadedAnvilChunkStorage (lostcity): All chunks are saved
+[16:00:08] [Server thread/INFO]: ThreadedAnvilChunkStorage (DIM-1): All chunks are saved
+[16:00:08] [Server thread/INFO]: ThreadedAnvilChunkStorage (DIM1): All chunks are saved
+[16:00:08] [Server thread/INFO]: ThreadedAnvilChunkStorage: All dimensions are saved

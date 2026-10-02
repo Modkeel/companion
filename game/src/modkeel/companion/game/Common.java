@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.function.Supplier;
 
 import modkeel.companion.core.Activity;
+import modkeel.companion.core.CrashWatch;
 import modkeel.companion.core.Diagnosis;
 import modkeel.companion.core.Guardian;
 import modkeel.companion.core.Log;
@@ -61,6 +62,7 @@ public final class Common {
         // read every jar now, off the game threads, so the first spike is named without delay
         background(guardian::owners);
         spikes.start();
+        CrashLog.install(new CrashWatch(gameDir, guardian::owners));
     }
 
     public static Path selfJar() {
