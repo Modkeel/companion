@@ -182,5 +182,7 @@
   "modkeel.copy.added": "在使用新模组游玩之前（%s）",
   "modkeel.copy.removed": "在去掉部分模组游玩之前（%s）",
   "modkeel.copy.changed": "在使用更改过的模组游玩之前（%s）",
-  "modkeel.health.app": "Modkeel 网站"
+  "modkeel.health.app": "Modkeel 网站",
+  "modkeel.starting.title": "Modkeel：Minecraft 无法启动",
+  "modkeel.starting.text": "%s 导致 Minecraft 上次无法启动，这次很可能也会。\n\n禁用它并关闭游戏？之后请重新启动。\n之后可在 Modkeel 中重新启用。"
 }

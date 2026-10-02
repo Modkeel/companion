@@ -182,5 +182,7 @@
   "modkeel.copy.added": "Перед игрой с новыми модами (%s)",
   "modkeel.copy.removed": "Перед игрой без некоторых модов (%s)",
   "modkeel.copy.changed": "Перед игрой с изменёнными модами (%s)",
-  "modkeel.health.app": "Сайт Modkeel"
+  "modkeel.health.app": "Сайт Modkeel",
+  "modkeel.starting.title": "Modkeel: Minecraft не запустился",
+  "modkeel.starting.text": "%s помешал запуску Minecraft в прошлый раз и, скорее всего, помешает снова.\n\nОтключить его и закрыть игру? Потом запустите её снова.\nВключить обратно можно в Modkeel."
 }

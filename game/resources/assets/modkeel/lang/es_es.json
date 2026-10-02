@@ -182,5 +182,7 @@
   "modkeel.copy.added": "Antes de jugar con mods nuevos (%s)",
   "modkeel.copy.removed": "Antes de jugar sin algunos mods (%s)",
   "modkeel.copy.changed": "Antes de jugar con mods cambiados (%s)",
-  "modkeel.health.app": "Sitio de Modkeel"
+  "modkeel.health.app": "Sitio de Modkeel",
+  "modkeel.starting.title": "Modkeel: Minecraft no pudo arrancar",
+  "modkeel.starting.text": "%s impidió que Minecraft arrancara la última vez, y seguramente vuelva a pasar.\n\n¿Desactivarlo y cerrar el juego? Después ábrelo de nuevo.\nPuedes volver a activarlo desde Modkeel."
 }

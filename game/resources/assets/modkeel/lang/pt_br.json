@@ -182,5 +182,7 @@
   "modkeel.copy.added": "Antes de jogar com mods novos (%s)",
   "modkeel.copy.removed": "Antes de jogar sem alguns mods (%s)",
   "modkeel.copy.changed": "Antes de jogar com mods alterados (%s)",
-  "modkeel.health.app": "Site do Modkeel"
+  "modkeel.health.app": "Site do Modkeel",
+  "modkeel.starting.title": "Modkeel: o Minecraft não conseguiu iniciar",
+  "modkeel.starting.text": "%s impediu o Minecraft de iniciar da última vez, e provavelmente vai impedir de novo.\n\nDesativar e fechar o jogo? Depois abra de novo.\nVocê pode reativá-lo pelo Modkeel."
 }

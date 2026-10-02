@@ -38,6 +38,7 @@ public final class CoreTest {
         run("guardian: last good set and revert", CoreTest::guardianRevert);
         run("guardian: disable, dependents, enable", CoreTest::guardianDisable);
         run("guardian: crash found once", CoreTest::guardianCrash);
+        run("guardian: crash that stopped the start", CoreTest::guardianStartingCrash);
         run("guardian: the world open at a crash", CoreTest::guardianWorldAtCrash);
         run("plan round trip", CoreTest::planRoundTrip);
         run("crash signature ignores lines, lambdas and mixin hashes", CoreTest::signature);
@@ -374,6 +375,43 @@ public final class CoreTest {
         eq(fresh, g.crashFile, "report file");
         Files.setLastModifiedTime(fresh, FileTime.fromMillis(System.currentTimeMillis() - 1000));
         eq(null, new Guardian(game).checkCrashes(), "shown once");
+    }
+
+    static void guardianStartingCrash() throws Exception {
+        Path game = tmp();
+        jar(game.resolve("mods"), "fabrishot.jar", "fabrishot", null, "me/ramidzkh/fabrishot/F.class");
+        Path reports = game.resolve("crash-reports");
+        Files.createDirectories(reports);
+        long now = System.currentTimeMillis();
+        Guardian g = new Guardian(game);
+        g.startup();
+        check(!g.crashedStarting, "no crash");
+
+        // the start never finished: any crash found next counts as stopping it
+        Path first = reports.resolve("crash-a-client.txt");
+        Files.copy(fixtures.resolve("neoforge-loading-athena.txt"), first);
+        Files.setLastModifiedTime(first, FileTime.fromMillis(now + 1000));
+        g = new Guardian(game);
+        g.startup();
+        check(g.crashedStarting, "unfinished start, then a crash");
+
+        // the game loaded, then crashed with another description: a crash while playing
+        g.loaded();
+        Path second = reports.resolve("crash-b-client.txt");
+        Files.copy(fixtures.resolve("neoforge-loading-athena.txt"), second);
+        Files.setLastModifiedTime(second, FileTime.fromMillis(now + 60_000));
+        g = new Guardian(game);
+        g.startup();
+        check(!g.crashedStarting, "loaded first: not a starting crash");
+
+        // Minecraft says so itself, even when Modkeel did not get to mark the start
+        g.loaded();
+        Path third = reports.resolve("crash-c-client.txt");
+        Files.copy(fixtures.resolve("fabric-mixin-fabrishot.txt"), third);
+        Files.setLastModifiedTime(third, FileTime.fromMillis(now + 120_000));
+        g = new Guardian(game);
+        g.startup();
+        check(g.crashedStarting, "Initializing game");
     }
 
     static void guardianWorldAtCrash() throws Exception {

@@ -138,6 +138,7 @@ public final class Common {
     /** No screen on a dedicated server: the diagnosis goes to the log. */
     public static void dedicatedServerStartup() {
         Diagnosis d = guardian.startup();
+        guardian.loaded();
         if (d != null && d.top() != null && d.top().file != null) {
             Log.info("to disable the suspect, rename mods/" + d.top().file + " to "
                      + d.top().file + ".disabled");

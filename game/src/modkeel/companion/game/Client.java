@@ -30,6 +30,7 @@ public final class Client {
     /** What the title screen opens, held until resources load: 1.20.1 shows the title screen
      *  mid-load, and a screen built then keeps raw translation keys. */
     private static Runnable whenLoaded;
+    private static boolean loaded;
     private static Spikes.Watch frames;
     private static volatile long inWorldSince;
     private static long lastToast;
@@ -39,12 +40,17 @@ public final class Client {
 
     public static void init() {
         Common.guardian.startup();
+        StartingCrash.offer();
         Common.spikes.listener = Client::onSpike;
         Tour.start();
     }
 
     /** Called by the loader at the end of every client tick, on the render thread. */
     public static void clientTick(Minecraft mc) {
+        if (!loaded && !Compat.loading(mc)) {
+            loaded = true;
+            Common.guardian.loaded();
+        }
         if (whenLoaded != null && !Compat.loading(mc)) {
             Runnable r = whenLoaded;
             whenLoaded = null;

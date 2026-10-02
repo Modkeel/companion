@@ -93,7 +93,12 @@ public final class Guardian {
             outcomes.checkUndone(modsDir);
             outcomes.bindSet(current().fingerprint());
         }
+        boolean lastStartUnfinished = state.get("starting", "false").equals("true");
         Diagnosis d = checkCrashes();
+        crashedStarting = d != null
+                && (lastStartUnfinished || STARTING_CRASH.equals(d.description));
+        state.set("starting", true);
+        state.save();
         if (Boolean.getBoolean("modkeel.test.share_sessions")) {
             setShareSessions(true);
         }
@@ -101,6 +106,23 @@ public final class Guardian {
         reportSteps();
         reports.sendLater(); // what a closed game left in the outbox
         return d;
+    }
+
+    /** Minecraft's description of a crash before the game finished starting. */
+    static final String STARTING_CRASH = "Initializing game";
+
+    /**
+     * The crash found at startup stopped the last start before the game finished loading. It
+     * may do so again before any screen shows, so the fix is offered right away.
+     */
+    public boolean crashedStarting;
+
+    /** The game finished starting (resources loaded, or a server running). */
+    public void loaded() {
+        if (state.get("starting", "false").equals("true")) {
+            state.set("starting", null);
+            state.save();
+        }
     }
 
     /**
