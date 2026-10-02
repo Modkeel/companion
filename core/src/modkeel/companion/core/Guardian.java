@@ -95,8 +95,9 @@ public final class Guardian {
         }
         boolean lastStartUnfinished = state.get("starting", "false").equals("true");
         Diagnosis d = checkCrashes();
-        crashedStarting = d != null
-                && (lastStartUnfinished || STARTING_CRASH.equals(d.description));
+        // a crash only the log kept stopped the game before Minecraft could even report it
+        crashedStarting = d != null && (lastStartUnfinished || crashFromLog
+                                        || STARTING_CRASH.equals(d.description));
         state.set("starting", true);
         state.save();
         if (Boolean.getBoolean("modkeel.test.share_sessions")) {
@@ -355,26 +356,68 @@ public final class Guardian {
                 Log.warn("cannot list " + dir, e);
             }
         }
-        if (newest == null) {
-            return null;
-        }
+        CrashReport report;
         try {
-            Diagnosis d = Diagnosis.of(CrashReport.read(newest), owners(), hints());
-            // a suspect the player already removed is no longer a fix to offer
-            d.suspects.removeIf(s -> s.file != null && !Files.exists(modsDir.resolve(s.file)));
-            crash = d;
-            crashFile = newest;
-            worldAtCrash = worldAt(newestTime);
-            if (outcomes.watching()) {
-                outcomes.onCrash(d.signature, current().fingerprint());
+            if (newest != null) {
+                report = CrashReport.read(newest);
+            } else {
+                newest = lastLog(since);
+                report = newest == null ? null : CrashReport.fromLog(readLog(newest));
+                if (report == null) {
+                    return null;
+                }
+                crashFromLog = true;
             }
-            Log.info("crash " + newest.getFileName() + ": " + d.kind + ", " + d.error
-                     + (d.top() == null ? ", no suspect" : ", suspect " + d.top().id + " ("
-                        + d.confidence + ", " + Msg.plain(String.join("; ", d.top().reasons)) + ")"));
-            return d;
         } catch (IOException e) {
             Log.warn("cannot read " + newest, e);
             return null;
+        }
+        Diagnosis d = Diagnosis.of(report, owners(), hints());
+        // a suspect the player already removed is no longer a fix to offer
+        d.suspects.removeIf(s -> s.file != null && !Files.exists(modsDir.resolve(s.file)));
+        crash = d;
+        crashFile = newest;
+        // a start that never got to a world: none was open
+        worldAtCrash = crashFromLog ? null : worldAt(newestTime);
+        if (outcomes.watching()) {
+            outcomes.onCrash(d.signature, current().fingerprint());
+        }
+        Log.info("crash " + newest.getFileName() + ": " + d.kind + ", " + d.error
+                 + (d.top() == null ? ", no suspect" : ", suspect " + d.top().id + " ("
+                    + d.confidence + ", " + Msg.plain(String.join("; ", d.top().reasons)) + ")"));
+        return d;
+    }
+
+    /** The crash found at startup is only in the last start's log: it had no report. */
+    public boolean crashFromLog;
+
+    /**
+     * The last start's log, rotated by Minecraft when this one began (logs/*.log.gz, newest
+     * after {@code since}); null when there is none.
+     */
+    private Path lastLog(long since) {
+        Path dir = gameDir.resolve("logs");
+        Path newest = null;
+        long newestTime = since;
+        if (Files.isDirectory(dir)) {
+            try (DirectoryStream<Path> ds = Files.newDirectoryStream(dir, "*.log.gz")) {
+                for (Path p : ds) {
+                    long t = Files.getLastModifiedTime(p).toMillis();
+                    if (!p.getFileName().toString().startsWith("debug") && t > newestTime) {
+                        newest = p;
+                        newestTime = t;
+                    }
+                }
+            } catch (IOException e) {
+                Log.warn("cannot list " + dir, e);
+            }
+        }
+        return newest;
+    }
+
+    private static String readLog(Path p) throws IOException {
+        try (java.io.InputStream in = new java.util.zip.GZIPInputStream(Files.newInputStream(p))) {
+            return new String(in.readAllBytes(), StandardCharsets.UTF_8);
         }
     }
 

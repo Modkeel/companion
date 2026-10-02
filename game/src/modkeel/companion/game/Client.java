@@ -39,8 +39,10 @@ public final class Client {
     }
 
     public static void init() {
-        Common.guardian.startup();
-        StartingCrash.offer();
+        if (StartingCrash.early == null) {
+            Common.guardian.startup();
+            StartingCrash.offer(Common.guardian, Common::selfJar);
+        }
         Common.spikes.listener = Client::onSpike;
         Tour.start();
     }

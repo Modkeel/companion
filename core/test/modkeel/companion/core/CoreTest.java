@@ -39,6 +39,8 @@ public final class CoreTest {
         run("guardian: disable, dependents, enable", CoreTest::guardianDisable);
         run("guardian: crash found once", CoreTest::guardianCrash);
         run("guardian: crash that stopped the start", CoreTest::guardianStartingCrash);
+        run("crash only the log kept", CoreTest::logCrash);
+        run("guardian: crash in the last start's log", CoreTest::guardianLogCrash);
         run("guardian: the world open at a crash", CoreTest::guardianWorldAtCrash);
         run("plan round trip", CoreTest::planRoundTrip);
         run("crash signature ignores lines, lambdas and mixin hashes", CoreTest::signature);
@@ -412,6 +414,40 @@ public final class CoreTest {
         g = new Guardian(game);
         g.startup();
         check(g.crashedStarting, "Initializing game");
+    }
+
+    static void logCrash() throws Exception {
+        String log = new String(Files.readAllBytes(fixtures.resolve("fabric-log-mixin-cobblemon.log")),
+                                StandardCharsets.UTF_8);
+        CrashReport r = CrashReport.fromLog(log);
+        check(r != null, "a log ending in a stack trace is a crash");
+        eq("InvalidInjectionException", r.root().simpleType(), "root cause");
+        check(r.fromMod.contains("cobblemon"), "mixin of cobblemon named");
+        eq(null, CrashReport.fromLog(log + "[17:02:00] [Render thread/INFO]: Stopping!\n"),
+           "the game closed after the error");
+        eq(null, CrashReport.fromLog("[17:00:00] [main/INFO]: Loading 3 mods\n"), "no trace");
+    }
+
+    static void guardianLogCrash() throws Exception {
+        Path game = tmp();
+        jar(game.resolve("mods"), "Cobblemon-fabric-1.6.1+1.20.1.jar", "cobblemon", null,
+            "com/cobblemon/mod/common/Cobblemon.class");
+        Path logs = game.resolve("logs");
+        Files.createDirectories(logs);
+        Path gz = logs.resolve("2026-10-02-1.log.gz");
+        try (java.io.OutputStream out = new java.util.zip.GZIPOutputStream(Files.newOutputStream(gz))) {
+            Files.copy(fixtures.resolve("fabric-log-mixin-cobblemon.log"), out);
+        }
+        Files.setLastModifiedTime(gz, FileTime.fromMillis(System.currentTimeMillis() + 1000));
+        Guardian g = new Guardian(game);
+        g.mcVersion = "1.21.1";
+        Diagnosis d = g.startup();
+        check(d != null && d.top() != null && d.top().id.equals("cobblemon"), "cobblemon blamed");
+        eq(Diagnosis.Confidence.HIGH, d.confidence, "confidence");
+        check(g.crashFromLog && g.crashedStarting, "a crash before Minecraft could report it");
+        eq(null, g.worldAtCrash, "no world open");
+        Files.setLastModifiedTime(gz, FileTime.fromMillis(System.currentTimeMillis() - 1000));
+        eq(null, new Guardian(game).checkCrashes(), "read once");
     }
 
     static void guardianWorldAtCrash() throws Exception {

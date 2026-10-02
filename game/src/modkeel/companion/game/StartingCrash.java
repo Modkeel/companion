@@ -6,6 +6,7 @@ import java.lang.reflect.Method;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.function.Supplier;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
@@ -13,18 +14,38 @@ import modkeel.companion.core.Diagnosis;
 import modkeel.companion.core.Guardian;
 import modkeel.companion.core.Log;
 import org.lwjgl.util.tinyfd.TinyFileDialogs;
+import org.slf4j.LoggerFactory;
 
 /**
  * A crash that stopped the last start before the game finished loading will likely stop this
  * one too, before any screen can show. So the fix is offered at once, in a native dialog
  * (LWJGL's tinyfd, shipped with every Minecraft version), while the game is still starting.
  */
-final class StartingCrash {
+public final class StartingCrash {
+    /** The startup already ran before Minecraft loaded (Fabric's preLaunch), or null. */
+    static Guardian early;
+
     private StartingCrash() {
     }
 
-    static void offer() {
-        Guardian g = Common.guardian;
+    /**
+     * Before any Minecraft class loads: a mod whose mixins break those classes stops the game
+     * before mods start, and before Minecraft can write a crash report. Nothing here may touch
+     * Minecraft classes, or the broken ones would load first.
+     */
+    public static void preLaunch(Path gameDir, String mcVersion, String loader, String loaderVersion,
+                                 Supplier<Path> selfJar) {
+        Log.sink = LoggerFactory.getLogger("modkeel")::info;
+        Guardian g = new Guardian(gameDir);
+        g.mcVersion = mcVersion;
+        g.loader = loader;
+        g.loaderVersion = loaderVersion;
+        g.startup();
+        early = g;
+        offer(g, selfJar);
+    }
+
+    static void offer(Guardian g, Supplier<Path> selfJar) {
         Diagnosis d = g.crash;
         if (!g.crashedStarting || d == null || d.top() == null || d.top().file == null
                 || d.confidence == Diagnosis.Confidence.LOW
@@ -54,7 +75,7 @@ final class StartingCrash {
         if (!yes) {
             return;
         }
-        g.applyCrashFix(g.disablePlan(s), Common.selfJar());
+        g.applyCrashFix(g.disablePlan(s), selfJar.get());
         Log.info("closing the game so the change takes effect on the next start");
         System.exit(0);
     }

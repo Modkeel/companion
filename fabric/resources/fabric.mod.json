@@ -11,6 +11,7 @@
   "icon": "assets/modkeel/icon.png",
   "environment": "*",
   "entrypoints": {
+    "preLaunch": ["modkeel.companion.fabric.CompanionPreLaunch"],
     "main": ["modkeel.companion.fabric.CompanionMod"],
     "client": ["modkeel.companion.fabric.CompanionClient"]
   },

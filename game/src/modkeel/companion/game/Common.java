@@ -51,7 +51,7 @@ public final class Common {
     public static void init(Path gameDir, String mcVersion, String loader, String loaderVersion,
                             Supplier<Path> selfJar) {
         Log.sink = LoggerFactory.getLogger("modkeel")::info;
-        guardian = new Guardian(gameDir);
+        guardian = StartingCrash.early != null ? StartingCrash.early : new Guardian(gameDir);
         guardian.mcVersion = mcVersion;
         guardian.loader = loader;
         guardian.loaderVersion = loaderVersion;
