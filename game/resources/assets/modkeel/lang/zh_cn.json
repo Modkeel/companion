@@ -52,7 +52,7 @@
   "modkeel.welcome.backup": "在世界以不同的模组加载之前备份它。",
   "modkeel.welcome.crash": "崩溃后，显示是哪个模组导致的，并一键修复。每个修复都可以撤销。",
   "modkeel.welcome.good": "记住上次正常运行的模组组合，让你随时可以回去。",
-  "modkeel.welcome.privacy": "任何数据都不会离开你的电脑。",
+  "modkeel.welcome.privacy": "除非你选择\"帮助其他玩家\"，否则不会发送任何数据。",
   "modkeel.welcome.later": "这些都在标题界面的 Modkeel 按钮里。",
   "modkeel.welcome.ok": "知道了",
   "modkeel.health.fixes": "崩溃修复",

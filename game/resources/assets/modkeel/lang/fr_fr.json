@@ -52,7 +52,7 @@
   "modkeel.welcome.backup": "Sauvegarde vos mondes avant qu'ils se chargent avec d'autres mods.",
   "modkeel.welcome.crash": "Après un crash, montre quel mod l'a causé et le corrige en un clic. Chaque correctif peut être annulé.",
   "modkeel.welcome.good": "Retient le dernier ensemble de mods qui a fonctionné, pour pouvoir toujours y revenir.",
-  "modkeel.welcome.privacy": "Rien ne quitte votre ordinateur.",
+  "modkeel.welcome.privacy": "Rien n'est envoyé, sauf si vous choisissez \"Aider d'autres joueurs\".",
   "modkeel.welcome.later": "Tout ceci se trouve sous le bouton Modkeel de l'écran titre.",
   "modkeel.welcome.ok": "Compris",
   "modkeel.health.fixes": "Correctifs de crash",

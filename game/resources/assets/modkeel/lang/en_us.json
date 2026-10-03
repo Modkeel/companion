@@ -52,7 +52,7 @@
   "modkeel.welcome.backup": "Backs up your worlds before they load with different mods.",
   "modkeel.welcome.crash": "After a crash, shows which mod caused it and fixes it in one click. Every fix can be undone.",
   "modkeel.welcome.good": "Remembers the last set of mods that worked, so you can always go back.",
-  "modkeel.welcome.privacy": "Nothing leaves your computer.",
+  "modkeel.welcome.privacy": "Nothing is sent unless you choose \"Help other players\".",
   "modkeel.welcome.later": "All of this is under the Modkeel button on the title screen.",
   "modkeel.welcome.ok": "Got it",
   "modkeel.health.fixes": "Crash fixes",

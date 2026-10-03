@@ -52,7 +52,7 @@
   "modkeel.welcome.backup": "Faz backup dos seus mundos antes que carreguem com outros mods.",
   "modkeel.welcome.crash": "Depois de um crash, mostra qual mod o causou e corrige com um clique. Toda correção pode ser desfeita.",
   "modkeel.welcome.good": "Lembra o último conjunto de mods que funcionou, para você sempre poder voltar.",
-  "modkeel.welcome.privacy": "Nada sai do seu computador.",
+  "modkeel.welcome.privacy": "Nada é enviado, a menos que você escolha \"Ajudar outros jogadores\".",
   "modkeel.welcome.later": "Tudo isso fica no botão Modkeel da tela inicial.",
   "modkeel.welcome.ok": "Entendi",
   "modkeel.health.fixes": "Correções de crash",

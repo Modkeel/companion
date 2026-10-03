@@ -52,7 +52,7 @@
   "modkeel.welcome.backup": "Sichert deine Welten, bevor sie mit anderen Mods laden.",
   "modkeel.welcome.crash": "Nach einem Absturz zeigt es, welcher Mod ihn verursacht hat, und behebt ihn mit einem Klick. Jede Korrektur lässt sich rückgängig machen.",
   "modkeel.welcome.good": "Merkt sich das letzte Mod-Set, das funktioniert hat, damit du immer zurück kannst.",
-  "modkeel.welcome.privacy": "Nichts verlässt deinen Computer.",
+  "modkeel.welcome.privacy": "Nichts wird gesendet, außer du wählst \"Anderen Spielern helfen\".",
   "modkeel.welcome.later": "All das findest du unter dem Modkeel-Knopf im Titelbildschirm.",
   "modkeel.welcome.ok": "Verstanden",
   "modkeel.health.fixes": "Absturz-Korrekturen",
