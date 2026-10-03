@@ -1,5 +1,45 @@
-# Modkeel rules bundle, built 2026-09-28 from lab data
+# Modkeel rules bundle, built 2026-10-03 from lab data
 # Modkeel lab data (modkeel.com), CC BY 4.0: see LICENSE-DATA
+jar	ffeeafb265d7f0914e9b96ab70a1181d3642773a	c2me	1.20.1	server	release_check; release made for 1.20.1 ran on a server
+jar	fd43e8a962d7026fa5342c260fd3b3f98809913c	entityculling	1.20.1	server	release_check; release made for 1.20.1 ran on a server
+jar	8fa3b84fc5860dbc30fdf8cced02af68dffcf3fa	ferritecore	1.20.1	server	release_check; release made for 1.20.1 ran on a server
+jar	9f0110b60dc752ca093f2fc10a72d221b6dc8ac3	immediatelyfast	1.20.1	client	release_check; release made for 1.20.1 ran on a client
+jar	880c0b9ce38bb4997645793407c1801df83f4233	iris	1.20.1	client	release_check; release made for 1.20.1 ran on a client
+jar	4d499819effd8afe811e5d93952fcc46765a00df	krypton	1.20.1	server	release_check; release made for 1.20.1 ran on a server
+jar	eb50a56760e7b8ccbee5479cf31b55375434ae76	lambdynlights	1.20.1	client	release_check; release made for 1.20.1 ran on a client
+jar	048227ed60a3005cf9fa55880dfe0cf20b0ba680	lithium	1.20.1	server	release_check; release made for 1.20.1 ran on a server
+jar	be03b9eb570c1e9df7593e68623f0fecbd039460	modernfix	1.20.1	server	release_check; release made for 1.20.1 ran on a server
+jar	099c68feeb74887cbbbd8ce9a27c6123804a2c5a	modmenu	1.20.1	client	release_check; release made for 1.20.1 ran on a client
+jar	c99e1ede1b0a6b90467078a8abdd6259c83d77f4	moreculling	1.20.1	client	release_check; release made for 1.20.1 ran on a client
+jar	bcdbf37d9494e405cba210d7a80ed58e756297b5	sodium	1.20.1	client	release_check; release made for 1.20.1 ran on a client
+jar	0f97ec3f395b223848a63573b1a46cbecf97f19f	sodium-extra	1.20.1	client	release_check; release made for 1.20.1 ran on a client
+jar	46e896cabf7813275413c97e6dd2f48ef534057d	vmp	1.20.1	server	release_check; release made for 1.20.1 ran on a server
+jar	c400f3fb5f8668f99cdb52b5d4f92d11b4e3edf1	entityculling	1.21.1	server	release_check; release made for 1.21.1 ran on a server
+jar	a8a6a34fcda177da2828cedef44e0e538cf78aad	ferritecore	1.21.1	server	release_check; release made for 1.21.1 ran on a server
+jar	023805be7d701b9769e987449d217c557de5f848	immediatelyfast	1.21.1	client	release_check; release made for 1.21.1 ran on a client
+jar	6776c0340845887477bfa463acc736ce7fcb6de5	iris	1.21.1	client	release_check; release made for 1.21.1 ran on a client
+jar	73e792eb5f120787becda4b87b6ff18b26caea50	krypton	1.21.1	server	release_check; release made for 1.21.1 ran on a server
+jar	7b5afc75a094b4e8a7118f9856eec959b10f2422	lambdynlights	1.21.1	client	release_check; release made for 1.21.1 ran on a client
+jar	7d82a004403b7780d4443d8e40361a55cfd0ae63	lithium	1.21.1	server	release_check; release made for 1.21.1 ran on a server
+jar	4ab39e9c736e7204146792c545ec5b29fc0a3872	modernfix	1.21.1	server	release_check; release made for 1.21.1 ran on a server
+jar	2321d890a25b5985eba576d7cd8fe9a9c136e33d	modmenu	1.21.1	client	release_check; release made for 1.21.1 ran on a client
+jar	d425f77706d8f6499aae64eb804b3802dad111d4	moreculling	1.21.1	client	release_check; release made for 1.21.1 ran on a client
+jar	ff6baa9ab1f2aecf0eba5b72595085551adddc7a	scalablelux	1.21.1	server	release_check; release made for 1.21.1 ran on a server
+jar	003c114c85ca88ef3362e018deb6aca0c682d6a1	sodium	1.21.1	client	release_check; release made for 1.21.1 ran on a client
+jar	628487b330c9589d26cada5c4a51ac457af80a1f	sodium-extra	1.21.1	client	release_check; release made for 1.21.1 ran on a client
+jar	267975777ba52a23d4423a60e9288f9ce288344e	vmp	1.21.1	server	release_check; release made for 1.21.1 ran on a server
+jar	95055aca69fedd76967f75957fc93762fbe73874	entityculling	1.21.11	server	release_check; release made for 1.21.11 ran on a server
+jar	c2e2f5e008f5bc9f401dfad8ca94909917006b65	ferritecore	1.21.11	server	release_check; release made for 1.21.11 ran on a server
+jar	43e451464f979bdf9ff4ac288b358a2f91b79ed8	immediatelyfast	1.21.11	client	release_check; release made for 1.21.11 ran on a client
+jar	acfbe6d065b6c35d85c14da04d35e073363f3acf	iris	1.21.11	client	release_check; release made for 1.21.11 ran on a client
+jar	94ddaeeae6ca7fecc79e54a0aa02a5438a775a99	krypton	1.21.11	server	release_check; release made for 1.21.11 ran on a server
+jar	f22487846158f62b3485a5a0723ba048326ac00f	lambdynlights	1.21.11	client	release_check; release made for 1.21.11 ran on a client
+jar	203bdcb26e97b3217b045e1182651a7d7b6462ec	lithium	1.21.11	server	release_check; release made for 1.21.11 ran on a server
+jar	d5612d70bda58e0179b177ca9990e57471e67d19	modmenu	1.21.11	client	release_check; release made for 1.21.11 ran on a client
+jar	11a929de62650cc536244d4c2ba889fa84c1c0f2	moreculling	1.21.11	client	release_check; release made for 1.21.11 ran on a client
+jar	5469cef6f5dddd72a1216d9a15393c90d8eb5f33	sodium	1.21.11	client	release_check; release made for 1.21.11 ran on a client
+jar	5ee4535324b48628424866eca29a4dceb364d27a	sodium-extra	1.21.11	client	release_check; release made for 1.21.11 ran on a client
+jar	6d665e488ea4f301d639cdf9fd4abf3ffdb44e0d	vmp	1.21.11	server	release_check; release made for 1.21.11 ran on a server
 jar	16f2fe0c762370775257a450983ec6e8a1c70b75	entityculling	26.1.2	client	client_bench; ran in a benchmark on a client
 jar	d107b02081262e243e80559192a2de86007155d6	sodium	26.1.2	client	client_bench; ran in a benchmark on a client
 jar	bb4908a9e8874234f36e977b6a1dc79b3d338a6e	vulkanmod	26.1.2	client	client_bench; ran in a benchmark on a client
@@ -101,6 +141,121 @@ jar	a345fbd2b2d1e378452763e2864f1056b212ac98	voxy	26.3	crashes	official_runtime;
 jar	1193b8dca4d92d5f07a834cf90f357e71440893d	voxy	26.3	server	runtime_test; ported build ran on a server
 jar	215feafd6a59e35dd32e0e3e19d22ea888d2952e	walksylib	26.3	crashes	official_runtime; crashed
 jar	23c5f0fb9c36f447cd0264d07a05d395e121a98e	walksylib	26.3	client	client_test; ported build ran on a client
+pair	c2me	entityculling	1.20.1	server	release_check; ran together on a server
+pair	c2me	ferritecore	1.20.1	server	release_check; ran together on a server
+pair	c2me	krypton	1.20.1	server	release_check; ran together on a server
+pair	c2me	lithium	1.20.1	server	release_check; ran together on a server
+pair	c2me	modernfix	1.20.1	server	release_check; ran together on a server
+pair	c2me	vmp	1.20.1	server	release_check; ran together on a server
+pair	entityculling	ferritecore	1.20.1	server	release_check; ran together on a server
+pair	entityculling	krypton	1.20.1	server	release_check; ran together on a server
+pair	entityculling	lithium	1.20.1	server	release_check; ran together on a server
+pair	entityculling	modernfix	1.20.1	server	release_check; ran together on a server
+pair	entityculling	vmp	1.20.1	server	release_check; ran together on a server
+pair	ferritecore	krypton	1.20.1	server	release_check; ran together on a server
+pair	ferritecore	lithium	1.20.1	server	release_check; ran together on a server
+pair	ferritecore	modernfix	1.20.1	server	release_check; ran together on a server
+pair	ferritecore	vmp	1.20.1	server	release_check; ran together on a server
+pair	immediatelyfast	iris	1.20.1	client	release_check; ran together on a client
+pair	immediatelyfast	lambdynlights	1.20.1	client	release_check; ran together on a client
+pair	immediatelyfast	modmenu	1.20.1	client	release_check; ran together on a client
+pair	immediatelyfast	moreculling	1.20.1	client	release_check; ran together on a client
+pair	immediatelyfast	sodium	1.20.1	client	release_check; ran together on a client
+pair	immediatelyfast	sodium-extra	1.20.1	client	release_check; ran together on a client
+pair	iris	lambdynlights	1.20.1	client	release_check; ran together on a client
+pair	iris	modmenu	1.20.1	client	release_check; ran together on a client
+pair	iris	moreculling	1.20.1	client	release_check; ran together on a client
+pair	iris	sodium	1.20.1	client	release_check; ran together on a client
+pair	iris	sodium-extra	1.20.1	client	release_check; ran together on a client
+pair	krypton	lithium	1.20.1	server	release_check; ran together on a server
+pair	krypton	modernfix	1.20.1	server	release_check; ran together on a server
+pair	krypton	vmp	1.20.1	server	release_check; ran together on a server
+pair	lambdynlights	modmenu	1.20.1	client	release_check; ran together on a client
+pair	lambdynlights	moreculling	1.20.1	client	release_check; ran together on a client
+pair	lambdynlights	sodium	1.20.1	client	release_check; ran together on a client
+pair	lambdynlights	sodium-extra	1.20.1	client	release_check; ran together on a client
+pair	lithium	modernfix	1.20.1	server	release_check; ran together on a server
+pair	lithium	vmp	1.20.1	server	release_check; ran together on a server
+pair	modernfix	vmp	1.20.1	server	release_check; ran together on a server
+pair	modmenu	moreculling	1.20.1	client	release_check; ran together on a client
+pair	modmenu	sodium	1.20.1	client	release_check; ran together on a client
+pair	modmenu	sodium-extra	1.20.1	client	release_check; ran together on a client
+pair	moreculling	sodium	1.20.1	client	release_check; ran together on a client
+pair	moreculling	sodium-extra	1.20.1	client	release_check; ran together on a client
+pair	sodium	sodium-extra	1.20.1	client	release_check; ran together on a client
+pair	entityculling	ferritecore	1.21.1	server	release_check; ran together on a server
+pair	entityculling	krypton	1.21.1	server	release_check; ran together on a server
+pair	entityculling	lithium	1.21.1	server	release_check; ran together on a server
+pair	entityculling	modernfix	1.21.1	server	release_check; ran together on a server
+pair	entityculling	scalablelux	1.21.1	server	release_check; ran together on a server
+pair	entityculling	vmp	1.21.1	server	release_check; ran together on a server
+pair	ferritecore	krypton	1.21.1	server	release_check; ran together on a server
+pair	ferritecore	lithium	1.21.1	server	release_check; ran together on a server
+pair	ferritecore	modernfix	1.21.1	server	release_check; ran together on a server
+pair	ferritecore	scalablelux	1.21.1	server	release_check; ran together on a server
+pair	ferritecore	vmp	1.21.1	server	release_check; ran together on a server
+pair	immediatelyfast	iris	1.21.1	client	release_check; ran together on a client
+pair	immediatelyfast	lambdynlights	1.21.1	client	release_check; ran together on a client
+pair	immediatelyfast	modmenu	1.21.1	client	release_check; ran together on a client
+pair	immediatelyfast	moreculling	1.21.1	client	release_check; ran together on a client
+pair	immediatelyfast	sodium	1.21.1	client	release_check; ran together on a client
+pair	immediatelyfast	sodium-extra	1.21.1	client	release_check; ran together on a client
+pair	iris	lambdynlights	1.21.1	client	release_check; ran together on a client
+pair	iris	modmenu	1.21.1	client	release_check; ran together on a client
+pair	iris	moreculling	1.21.1	client	release_check; ran together on a client
+pair	iris	sodium	1.21.1	client	release_check; ran together on a client
+pair	iris	sodium-extra	1.21.1	client	release_check; ran together on a client
+pair	krypton	lithium	1.21.1	server	release_check; ran together on a server
+pair	krypton	modernfix	1.21.1	server	release_check; ran together on a server
+pair	krypton	scalablelux	1.21.1	server	release_check; ran together on a server
+pair	krypton	vmp	1.21.1	server	release_check; ran together on a server
+pair	lambdynlights	modmenu	1.21.1	client	release_check; ran together on a client
+pair	lambdynlights	moreculling	1.21.1	client	release_check; ran together on a client
+pair	lambdynlights	sodium	1.21.1	client	release_check; ran together on a client
+pair	lambdynlights	sodium-extra	1.21.1	client	release_check; ran together on a client
+pair	lithium	modernfix	1.21.1	server	release_check; ran together on a server
+pair	lithium	scalablelux	1.21.1	server	release_check; ran together on a server
+pair	lithium	vmp	1.21.1	server	release_check; ran together on a server
+pair	modernfix	scalablelux	1.21.1	server	release_check; ran together on a server
+pair	modernfix	vmp	1.21.1	server	release_check; ran together on a server
+pair	modmenu	moreculling	1.21.1	client	release_check; ran together on a client
+pair	modmenu	sodium	1.21.1	client	release_check; ran together on a client
+pair	modmenu	sodium-extra	1.21.1	client	release_check; ran together on a client
+pair	moreculling	sodium	1.21.1	client	release_check; ran together on a client
+pair	moreculling	sodium-extra	1.21.1	client	release_check; ran together on a client
+pair	scalablelux	vmp	1.21.1	server	release_check; ran together on a server
+pair	sodium	sodium-extra	1.21.1	client	release_check; ran together on a client
+pair	entityculling	ferritecore	1.21.11	server	release_check; ran together on a server
+pair	entityculling	krypton	1.21.11	server	release_check; ran together on a server
+pair	entityculling	lithium	1.21.11	server	release_check; ran together on a server
+pair	entityculling	vmp	1.21.11	server	release_check; ran together on a server
+pair	ferritecore	krypton	1.21.11	server	release_check; ran together on a server
+pair	ferritecore	lithium	1.21.11	server	release_check; ran together on a server
+pair	ferritecore	vmp	1.21.11	server	release_check; ran together on a server
+pair	immediatelyfast	iris	1.21.11	client	release_check; ran together on a client
+pair	immediatelyfast	lambdynlights	1.21.11	client	release_check; ran together on a client
+pair	immediatelyfast	modmenu	1.21.11	client	release_check; ran together on a client
+pair	immediatelyfast	moreculling	1.21.11	client	release_check; ran together on a client
+pair	immediatelyfast	sodium	1.21.11	client	release_check; ran together on a client
+pair	immediatelyfast	sodium-extra	1.21.11	client	release_check; ran together on a client
+pair	iris	lambdynlights	1.21.11	client	release_check; ran together on a client
+pair	iris	modmenu	1.21.11	client	release_check; ran together on a client
+pair	iris	moreculling	1.21.11	client	release_check; ran together on a client
+pair	iris	sodium	1.21.11	client	release_check; ran together on a client
+pair	iris	sodium-extra	1.21.11	client	release_check; ran together on a client
+pair	krypton	lithium	1.21.11	server	release_check; ran together on a server
+pair	krypton	vmp	1.21.11	server	release_check; ran together on a server
+pair	lambdynlights	modmenu	1.21.11	client	release_check; ran together on a client
+pair	lambdynlights	moreculling	1.21.11	client	release_check; ran together on a client
+pair	lambdynlights	sodium	1.21.11	client	release_check; ran together on a client
+pair	lambdynlights	sodium-extra	1.21.11	client	release_check; ran together on a client
+pair	lithium	vmp	1.21.11	server	release_check; ran together on a server
+pair	modmenu	moreculling	1.21.11	client	release_check; ran together on a client
+pair	modmenu	sodium	1.21.11	client	release_check; ran together on a client
+pair	modmenu	sodium-extra	1.21.11	client	release_check; ran together on a client
+pair	moreculling	sodium	1.21.11	client	release_check; ran together on a client
+pair	moreculling	sodium-extra	1.21.11	client	release_check; ran together on a client
+pair	sodium	sodium-extra	1.21.11	client	release_check; ran together on a client
 pair	c2me	ferritecore	26.2	server	perf_bench; ran together on a server
 pair	c2me	lithium	26.2	server	perf_bench; ran together on a server
 pair	c2me	scalablelux	26.2	server	perf_bench; ran together on a server
