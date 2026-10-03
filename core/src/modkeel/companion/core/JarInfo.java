@@ -102,7 +102,9 @@ public final class JarInfo {
             } else if (n.endsWith(".jar") && depth < 2) {
                 byte[] nested = zip.readAllBytes();
                 int at = out.size();
-                read(new ByteArrayInputStream(nested), n.substring(n.lastIndexOf('/') + 1),
+                // only the file name: an entry like "a\..\..\x.jar" must not lead out of mods/
+                String name = n.substring(Math.max(n.lastIndexOf('/'), n.lastIndexOf('\\')) + 1);
+                read(new ByteArrayInputStream(nested), name,
                      bundledIn != null ? bundledIn : file, out, depth + 1);
                 out.get(at).sha1 = ModSet.sha1(nested);
             } else if (!e.isDirectory()) {
