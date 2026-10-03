@@ -1,58 +1,45 @@
 # Modkeel Companion
 
-A safety net for modded Minecraft. It works on its own, with nothing to set up.
+A safety net for modded Minecraft. Drop it in your mods folder; there is nothing to set up.
 
-### 1. You drop it in your mods folder
+![The same crash without Modkeel (a crash report to dig through) and with it (the likely mod and a one-click fix)](images/0-before-after.png)
 
-That is all. The first start says what it does, and everything else lives under the Modkeel
-button on the title screen.
+When the game crashes, the next start says which mod most likely did it, how sure Modkeel is and
+why. One button disables that mod.
+
+<table>
+<tr>
+<td width="33%" valign="top"><img src="images/6-world-copies.png" alt="A world's copies, each one restorable"><br>
+<b>Your world is safe.</b> Before a world loads with different mods, Modkeel copies it. Going
+back deletes nothing.</td>
+<td width="33%" valign="top"><img src="images/3-more-options.png" alt="More options: go back to the mods that worked, or open the technical report"><br>
+<b>Every fix can be undone.</b> Or go back to the last set of mods that worked, and see whether
+the fix held.</td>
+<td width="33%" valign="top"><img src="images/4-what-is-sent.png" alt="What is sent: every field, before anything leaves"><br>
+<b>Sharing is your choice.</b> Nothing is sent unless you tick "Help other players", and you
+see every field first.</td>
+</tr>
+</table>
+
+<details>
+<summary><b>More screens</b>: first start, the whole pack at a glance, lag spikes</summary>
 
 ![Welcome screen: what Modkeel does](images/1-welcome.png)
 
-### 2. Before a world loads with different mods, Modkeel backs it up
-
-Added a mod, updated one, removed one? The world gets a copy first. Modkeel keeps the 3 most
-recent copies of each world, and going back keeps the current world in `modkeel/replaced`:
-nothing is deleted.
-
-![A world's copies, each one restorable](images/6-world-copies.png)
-
-### 3. The game crashes. The next start tells you why
-
-Instead of a stack trace: your world is safe, which mod most likely did it, how sure Modkeel is
-and the reason (its mixin failed, its code is in the error, it calls code that does not exist in
-this game...). One button disables that mod.
-
-![Crash screen: the likely cause and a one-click fix](images/2-crash.png)
-
-### 4. Every fix can be undone
-
-Not the mod you expected? Go back to the last set of mods that played without problems, or open
-Minecraft's own crash report to send to the mod's author. Modkeel then watches the fix and tells
-you whether it held or the same crash came back.
-
-![More options: go back to the mods that worked, or open the technical report](images/3-more-options.png)
-
-### 5. Sharing is yours to choose, and you see exactly what goes
-
-Nothing is sent unless you tick "Help other players". The screen lists every field before it
-leaves, and "Show exact data" shows the report itself: no names, file paths or logs.
-
-![What is sent: every field, before anything leaves](images/4-what-is-sent.png)
-
-### 6. One place for the whole pack
-
-The last crash, world copies, your mods and what Modkeel knows about them on this Minecraft
-version, and what it changed (each change reversible).
+The first start says what Modkeel does; everything else is under the Modkeel button on the
+title screen.
 
 ![Modkeel's screen: last crash, worlds, mods, lag spikes](images/5-health.png)
 
-### 7. And it notices freezes
+One place for the whole pack: the last crash, world copies, your mods and what Modkeel knows
+about them on this Minecraft version, and what it changed.
+
+![Lag spikes: which code ran during each freeze](images/7-lag-spikes.png)
 
 Freezes longer than 0.3 s, with whose code was running during each one, so a laggy mod has a
 name.
 
-![Lag spikes: which code ran during each freeze](images/7-lag-spikes.png)
+</details>
 
 **No mixins.** Modkeel does not patch the game, so it cannot be the reason a pack breaks.
 
