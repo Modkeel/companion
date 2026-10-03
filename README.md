@@ -76,6 +76,10 @@ Every jar on the releases page is built by GitHub Actions from the tagged source
    Before a release goes public, the maintainer does exactly this and compares it with the
    GitHub build; if a single byte differs, the release is not published.
 
+Each release's notes also link every jar's [VirusTotal](https://www.virustotal.com) report,
+whatever it says. Java mods sometimes get a flag from one engine that is a false positive; the
+report shows which engine and why, so you can judge for yourself.
+
 ## Layout
 
 | Path | What |
