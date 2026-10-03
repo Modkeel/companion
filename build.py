@@ -28,7 +28,7 @@ import toolchain as tc
 
 HERE = Path(__file__).resolve().parent
 
-VERSION = "0.1.0"
+VERSION = "0.2.0"
 # what a release ships: one jar per loader and variant, each built against this game version
 TARGETS = [("26.2", "fabric"), ("1.21.11", "fabric"), ("1.21.1", "fabric"),
            ("1.21.1", "neoforge"), ("1.20.1", "fabric"), ("1.20.1", "forge")]
