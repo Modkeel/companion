@@ -5,6 +5,8 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -206,13 +208,17 @@ public final class CrashReport {
         return r;
     }
 
+    private static final Set<String> LOADER_LAYERS =
+            new HashSet<>(Arrays.asList("MC-BOOTSTRAP", "BOOT", "SERVICE", "PLUGIN"));
+
     /** "knot//a.b.C.m", "TRANSFORMER/id@1.0/a.b.C.m", "java.base/a.b.C.m" or "a.b.C.m". */
     static Frame frame(String token) {
-        String module = null;
         String[] parts = token.split("/");
+        // the loader's own layers: classes there are the platform, never a mod to blame
+        String module = LOADER_LAYERS.contains(parts[0]) ? "fml" : null;
         for (int i = 0; i < parts.length - 1; i++) {
             int at = parts[i].indexOf('@');
-            if (at > 0) {
+            if (at > 0 && module == null) {
                 module = parts[i].substring(0, at);
             }
         }

@@ -144,6 +144,10 @@ public final class CoreTest {
         eq("net.minecraft.client.Minecraft", f.className, "knot class");
         f = CrashReport.frame("java.base/java.lang.Thread.run");
         eq(null, f.module, "java.base is not a mod");
+        f = CrashReport.frame("MC-BOOTSTRAP/cpw.mods.modlauncher@11.0.5/cpw.mods.modlauncher.Launcher.run");
+        eq("fml", f.module, "loader layer is the platform");
+        f = CrashReport.frame("MC-BOOTSTRAP/fml_loader@4.0.44/net.neoforged.fml.loading.targets.CommonLaunchHandler.runTarget");
+        eq("fml", f.module, "fml_loader is the platform");
         f = CrashReport.frame("knot//net.minecraft.server.level.ServerLevel.handler$zfk000$lithium$onTick");
         eq("lithium", f.mixinHandlerMod(), "handler mod id");
     }
