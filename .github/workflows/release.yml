@@ -63,7 +63,7 @@ jobs:
           TAG: ${{ github.ref_name }}
         run: |
           git fetch --force origin "+refs/tags/$TAG:refs/tags/$TAG"
-          git tag -l --format='%(contents:body)' "$TAG" > notes.md
+          git tag -l --format='%(contents:body)' "$TAG" | sed '/^-----BEGIN SSH SIGNATURE-----$/,$d' > notes.md
           gh release create "$TAG" --draft --verify-tag -R "$GITHUB_REPOSITORY" \
             --title "Modkeel Companion ${TAG#v}" --notes-file notes.md \
             build/release/*.jar build/release/SHA256SUMS
