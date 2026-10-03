@@ -1,0 +1,13 @@
+Modkeel lab data
+
+game/resources/modkeel/rules.tsv holds results from the Modkeel lab: which exact mod files
+(by SHA-1) ran or crashed on which Minecraft version, and which mods ran together or clash.
+The Companion jars ship it to explain their diagnoses offline.
+
+This data is licensed under the Creative Commons Attribution 4.0 International License
+(CC BY 4.0): https://creativecommons.org/licenses/by/4.0/
+
+You may share and adapt it, also commercially, as long as you credit "Modkeel lab data
+(modkeel.com)" and link to this license.
+
+The code in this repository is under the MIT License (LICENSE).

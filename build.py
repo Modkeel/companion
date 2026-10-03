@@ -125,26 +125,51 @@ LANG_ALIASES = {
 }
 
 
+# Reproducible jars: the same sources give the same bytes on any machine, so anyone can rebuild
+# a release and compare its SHA-256. No file dates, one entry order, Unix line endings in text
+# (a Windows checkout has CRLF) and the same zip header fields everywhere.
+JAR_DATE = (1980, 2, 1, 0, 0, 0)
+TEXT = {".json", ".toml", ".mcmeta", ".tsv", ".txt", ".md", ".cfg", ".properties", ""}
+
+
+def _entry(z: zipfile.ZipFile, name: str, data: str | bytes) -> None:
+    info = zipfile.ZipInfo(name, JAR_DATE)
+    info.compress_type = zipfile.ZIP_STORED
+    info.create_system = 3
+    info.external_attr = 0o100644 << 16
+    z.writestr(info, data)
+
+
+def _text(f: Path) -> bytes:
+    data = f.read_bytes()
+    text = f.suffix in TEXT or f.parent.name == "services"  # META-INF/services/<interface>
+    return data.replace(b"\r\n", b"\n") if text else data
+
+
+def _files(root: Path, pattern: str) -> list[tuple[str, Path]]:
+    """Files under `root` by their path in the jar, sorted the same on every OS."""
+    return sorted((f.relative_to(root).as_posix(), f) for f in root.rglob(pattern) if f.is_file())
+
+
 def write_jar(out: Path, metadata: dict[str, str | bytes], class_dirs: list[Path],
               resources: list[Path]) -> None:
     """`metadata`: loader metadata files (path in the jar -> content), written first."""
     out.parent.mkdir(parents=True, exist_ok=True)
-    with zipfile.ZipFile(out, "w", zipfile.ZIP_DEFLATED) as z:
+    with zipfile.ZipFile(out, "w") as z:
         for name, text in metadata.items():
-            z.writestr(name, text)
+            _entry(z, name, text)
         for d in class_dirs:
-            for f in sorted(d.rglob("*.class")):
-                z.write(f, f.relative_to(d).as_posix())
+            for name, f in _files(d, "*.class"):
+                _entry(z, name, f.read_bytes())
         for root in resources:
-            for f in sorted(root.rglob("*")):
-                name = f.relative_to(root).as_posix()
-                if f.is_file() and name not in metadata:
-                    z.write(f, name)
+            for name, f in _files(root, "*"):
+                if name not in metadata:
+                    _entry(z, name, _text(f))
                     for alias in LANG_ALIASES.get(f.name, []):
-                        z.write(f, name[: -len(f.name)] + alias)
+                        _entry(z, name[: -len(f.name)] + alias, _text(f))
         license_file = HERE / "LICENSE"
         if license_file.exists():
-            z.write(license_file, "LICENSE_modkeel")
+            _entry(z, "LICENSE_modkeel", _text(license_file))
 
 
 def test_mod_toml(mod_id: str, name: str, mc: str, loader: str) -> str:

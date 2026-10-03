@@ -1,0 +1,75 @@
+# Builds the release jars from this repo's source, on GitHub's machines, so anyone can check that
+# a jar on the Releases page came from the tagged code:
+#
+#   gh attestation verify modkeel-companion-<version>-<loader>-<mc>.jar -R Modkeel/companion
+#
+# A tag v<version> builds every target, writes SHA256SUMS, attests each jar (build provenance)
+# and opens a draft release with the tag's message as notes. The maintainer's script compares
+# these jars byte for byte with a build on their own machine before publishing the draft.
+# Run it by hand (Actions > Release > Run workflow) for a build without a release.
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write       # create the draft release
+      id-token: write       # sign the attestation
+      attestations: write   # store it
+    env:
+      # the same JDK the jars are compared against: javac output may change between builds
+      JDK: jdk-25.0.4.1+1
+      JDK_URL: https://github.com/adoptium/temurin25-binaries/releases/download/jdk-25.0.4.1%2B1/OpenJDK25U-jdk_x64_linux_hotspot_25.0.4.1_1.tar.gz
+      JDK_SHA256: dbb698396d478e7fa2b1e50f4103324b2a99b90569ee27c33f2261f9215cf41e
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97  # v7.0.0
+        with:
+          python-version: "3.14"
+
+      - name: JDK
+        run: |
+          curl -fsSL -o jdk.tar.gz "$JDK_URL"
+          echo "$JDK_SHA256  jdk.tar.gz" | sha256sum -c -
+          mkdir -p "$RUNNER_TEMP/jdk" && tar -xzf jdk.tar.gz -C "$RUNNER_TEMP/jdk" && rm jdk.tar.gz
+          echo "MODKEEL_JDK=$RUNNER_TEMP/jdk/$JDK" >> "$GITHUB_ENV"
+
+      - name: Build every target (core tests included)
+        run: python build.py --all
+
+      - name: SHA256SUMS
+        working-directory: build/release
+        run: sha256sum *.jar | tee SHA256SUMS
+
+      - uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8  # v4.2.2
+        if: github.event_name == 'push'
+        with:
+          subject-path: build/release/*.jar
+
+      - name: Draft release
+        if: github.event_name == 'push'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          git fetch --force origin "+refs/tags/$TAG:refs/tags/$TAG"
+          git tag -l --format='%(contents:body)' "$TAG" > notes.md
+          gh release create "$TAG" --draft --verify-tag -R "$GITHUB_REPOSITORY" \
+            --title "Modkeel Companion ${TAG#v}" --notes-file notes.md \
+            build/release/*.jar build/release/SHA256SUMS
+
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a  # v7.0.1
+        if: github.event_name == 'workflow_dispatch'
+        with:
+          name: jars
+          path: build/release/

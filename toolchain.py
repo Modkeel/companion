@@ -73,12 +73,15 @@ def fetch_json(url: str):
         return json.load(r)
 
 
-def modrinth_jar(project: str, mc: str, loader: str) -> Path:
-    """The newest `project` file for this game version and loader."""
+def modrinth_jar(project: str, mc: str, loader: str, version: str | None = None) -> Path:
+    """The `project` file for this game version and loader: `version` (its version number),
+    else the newest."""
     q = urllib.parse.urlencode({"game_versions": json.dumps([mc]), "loaders": json.dumps([loader])})
     versions = fetch_json(f"https://api.modrinth.com/v2/project/{project}/version?{q}")
+    if version:
+        versions = [v for v in versions if v["version_number"] == version]
     if not versions:
-        sys.exit(f"{project} has no {loader} build for Minecraft {mc} on Modrinth")
+        sys.exit(f"{project} {version or ''} has no {loader} build for Minecraft {mc} on Modrinth")
     f = next((f for f in versions[0]["files"] if f["primary"]), versions[0]["files"][0])
     return fetch(f["url"], MODS / f["filename"])
 

@@ -27,6 +27,13 @@ TOOLS = tc.TOOLS
 MANIFEST = "https://piston-meta.mojang.com/mc/game/version_manifest_v2.json"
 FABRIC_MAVEN = "https://maven.fabricmc.net/net/fabricmc"
 TINY_REMAPPER = "0.14.1"
+# What the jars compile against, fixed so a release can be rebuilt byte for byte later (newest
+# versions would change over time). Raise them on purpose, then rebuild and re-run the tests.
+FABRIC_LOADER = "0.19.5"
+FABRIC_API = {"1.20.1": "0.92.12+1.20.1", "1.21.1": "0.116.17+1.21.1",
+              "1.21.11": "0.141.6+1.21.11", "26.2": "0.161.0+26.2"}
+FORGE = {"1.20.1": "47.4.10"}
+NEOFORGE = {"1.21.1": "21.1.252"}
 
 
 def obfuscated(mc: str) -> bool:
@@ -190,11 +197,10 @@ FABRIC_META = "https://meta.fabricmc.net/v2/versions/loader"
 
 
 def fabric_loader_libraries(mc: str) -> list[Path]:
-    """Fabric Loader (the newest stable one) and its libraries."""
-    dest = TOOLS / mc / "fabric-profile.json"
+    """Fabric Loader (FABRIC_LOADER) and its libraries."""
+    dest = TOOLS / mc / f"fabric-profile-{FABRIC_LOADER}.json"
     if not dest.exists():
-        stable = next(v for v in tc.fetch_json(f"{FABRIC_META}/{mc}") if v["loader"]["stable"])
-        fetch(f"{FABRIC_META}/{mc}/{stable['loader']['version']}/profile/json", dest)
+        fetch(f"{FABRIC_META}/{mc}/{FABRIC_LOADER}/profile/json", dest)
     return tc.libraries(json.loads(dest.read_text(encoding="utf-8")))
 
 
@@ -202,7 +208,7 @@ def fabric_classpath(mc: str, modules: str, tmp: Path) -> list[Path]:
     """Client, Fabric Loader, its libraries and the Fabric API modules matching `modules`, all
     with Mojang names."""
     client = named_client(mc) if obfuscated(mc) else official_client(mc)
-    api = tc.modrinth_jar("fabric-api", mc, "fabric")
+    api = tc.modrinth_jar("fabric-api", mc, "fabric", FABRIC_API[mc])
     tmp.mkdir(parents=True, exist_ok=True)
     mods = []
     with zipfile.ZipFile(api) as z:
@@ -220,17 +226,10 @@ NEOFORGE_MAVEN = "https://maven.neoforged.net/releases/net/neoforged/neoforge"
 
 
 def neoforge_version(mc: str) -> str:
-    """The NeoForge release for `mc` installed in the lab client dir, installing the latest one
-    with NeoForge's own installer if there is none."""
-    prefix = ".".join(mc.split(".")[1:]) + "."  # 1.21.1 -> 21.1.
-    installed = sorted((d.name.removeprefix("neoforge-") for d in (tc.CLIENT / "versions").glob(
-        f"neoforge-{prefix}*") if (d / f"{d.name}.json").exists()),
-        key=lambda v: [int(x) for x in re.findall(r"\d+", v)])
-    if installed:
-        return installed[-1]
-    url = ("https://maven.neoforged.net/api/maven/latest/version/releases/"
-           f"net%2Fneoforged%2Fneoforge?filter={prefix}")
-    version = tc.fetch_json(url)["version"]
+    """NEOFORGE[mc], installed in the client dir with NeoForge's own installer if missing."""
+    version = NEOFORGE[mc]
+    if (tc.CLIENT / "versions" / f"neoforge-{version}" / f"neoforge-{version}.json").exists():
+        return version
     installer = fetch(f"{NEOFORGE_MAVEN}/{version}/neoforge-{version}-installer.jar",
                       TOOLS / mc / f"neoforge-{version}-installer.jar")
     profiles = tc.CLIENT / "launcher_profiles.json"  # the installer refuses a dir without one
@@ -244,19 +243,14 @@ def neoforge_version(mc: str) -> str:
 
 
 FORGE_MAVEN = "https://maven.minecraftforge.net/net/minecraftforge/forge"
-FORGE_PROMOS = "https://files.minecraftforge.net/net/minecraftforge/forge/promotions_slim.json"
 
 
 def forge_version(mc: str) -> str:
-    """The Forge release for `mc` installed in the lab client dir (e.g. 47.4.10), installing the
-    recommended one with Forge's own installer if there is none."""
-    installed = sorted((d.name.removeprefix(f"{mc}-forge-") for d in (tc.CLIENT / "versions").glob(
-        f"{mc}-forge-*") if (d / f"{d.name}.json").exists()),
-        key=lambda v: [int(x) for x in re.findall(r"\d+", v)])
-    if installed:
-        return installed[-1]
-    promos = tc.fetch_json(FORGE_PROMOS)["promos"]
-    version = promos.get(f"{mc}-recommended") or promos[f"{mc}-latest"]
+    """FORGE[mc] (e.g. 47.4.10), installed in the client dir with Forge's own installer if
+    missing."""
+    version = FORGE[mc]
+    if (tc.CLIENT / "versions" / f"{mc}-forge-{version}" / f"{mc}-forge-{version}.json").exists():
+        return version
     full = f"{mc}-{version}"
     installer = fetch(f"{FORGE_MAVEN}/{full}/forge-{full}-installer.jar",
                       TOOLS / mc / f"forge-{full}-installer.jar")

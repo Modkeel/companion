@@ -1,0 +1,118 @@
+# Modkeel rules bundle, built 2026-09-28 from lab data
+# Modkeel lab data (modkeel.com), CC BY 4.0: see LICENSE-DATA
+jar	16f2fe0c762370775257a450983ec6e8a1c70b75	entityculling	26.1.2	client	client_bench; ran in a benchmark on a client
+jar	d107b02081262e243e80559192a2de86007155d6	sodium	26.1.2	client	client_bench; ran in a benchmark on a client
+jar	bb4908a9e8874234f36e977b6a1dc79b3d338a6e	vulkanmod	26.1.2	client	client_bench; ran in a benchmark on a client
+jar	f065e4422cf1d4d846c8e2b71a49ff748b5c9b2d	alternate-current	26.2	server	perf_bench; ran in a benchmark on a server
+jar	ba258f6d9dd779a7231f52c5a36d792a8b932d63	async	26.2	server	perf_bench; ran in a benchmark on a server
+jar	4bcbdf388bd5e387beca7c627224aac33584b55b	athena	26.2	crashes	official_runtime; crashed
+jar	2f4f2f83f0692be60cdc702c9532f2d96a472f4d	athena	26.2	server	runtime_test; ported build ran on a server
+jar	428ef2c95b334c145b26767f5c1a81d7951e5935	betterdeserttemples	26.2	crashes	official_runtime; crashed
+jar	74f47b54b7ecbadef24e2b628d4504139fb8fd45	betterdeserttemples	26.2	server	runtime_test; ported build ran on a server
+jar	0f3161628ce5df552ad728aaa7b39aaa785546ac	betterdungeons	26.2	crashes	official_runtime; crashed
+jar	d298a63387676e4cc02006657dd53b991e0b9f7d	betterendisland	26.2	server	official_runtime; started and ran on a server
+jar	bbdf143659adb749588c2ab8fbe95de59774bdbe	betterendisland	26.2	server	runtime_test; ported build ran on a server
+jar	0e71f1e1fe51b52c6b8a45a4669294f2d591f004	betterfortresses	26.2	crashes	official_runtime; crashed
+jar	691ecc688222d9986410833cab07284860a873a9	betterfortresses	26.2	server	runtime_test; ported build ran on a server
+jar	d336cf71b466692ada74e7776e9bec124467c5b5	betterjungletemples	26.2	crashes	official_runtime; crashed
+jar	13171b9ff8bb9b720b787a005b0ff5fe6acdf4fc	betterjungletemples	26.2	server	runtime_test; ported build ran on a server
+jar	5109b66048dd81cd79872743e842bcda484546cb	bettermineshafts	26.2	crashes	official_runtime; crashed
+jar	1a6723a91e0ee37d4b8b7a9f71272ee2e89ebdc3	bettermineshafts	26.2	server	runtime_test; ported build ran on a server
+jar	c9fdf25e920f522eab18eb38a7354d32657d21aa	betteroceanmonuments	26.2	crashes	official_runtime; crashed
+jar	621e01993be91b215b8adf3b74c9e97a41d6ff5e	betteroceanmonuments	26.2	server	runtime_test; ported build ran on a server
+jar	0370595b9913e10362dc04c27ee655a480f9467c	betterstrongholds	26.2	crashes	official_runtime; crashed
+jar	335f4bd10bfcf132f86ea0e53519bcce5f78e27f	betterstrongholds	26.2	server	runtime_test; ported build ran on a server
+jar	ed29eda040c36e5f54ff4df1b31a9b78a379b8c9	betterwitchhuts	26.2	crashes	official_runtime; crashed
+jar	7e21595c5e4929d0dba59373ebe3cb95f0071b0c	betterwitchhuts	26.2	server	runtime_test; ported build ran on a server
+jar	994dcf809cbbf075a33b3f28c71331c845b415a2	c2me	26.2	client	client_bench; ran in a benchmark on a client
+jar	2c7c9cc8f0f94895ad1c0ba88bb238e2692d997e	dynamictrees	26.2	crashes	official_runtime; crashed
+jar	f1824ea0872b60a72b5022fd5f0cbc017a8ab30d	dynamictrees	26.2	server	runtime_test; ported build ran on a server
+jar	d3fca102a9f5aeb108d5118665b86ead1dd30988	endrem	26.2	crashes	official_runtime; crashed
+jar	fca724ff6732c217d36b82d399b3876a10c4f984	endrem	26.2	server	runtime_test; ported build ran on a server
+jar	8a379bf40ab7125756afe7bbdf9501324bc37216	entityculling	26.2	client	client_bench; ran in a benchmark on a client
+jar	1a2c41d2efbe1c60159b90a165557e7c06d03a5c	fabric_api	26.2	crashes	official_runtime; crashed
+jar	9a8eb8db2a25f1f56777c119e98301fc0d7daca3	fabric_api	26.2	server	runtime_test; ported build ran on a server
+jar	cabc7f77ce10fd58cf33cbfd04eeda3ef33167c8	fabrishot	26.2	crashes	official_runtime; crashed
+jar	edc41a941fe9f3999c05c86152a5cae06e4c59fa	fabrishot	26.2	client	client_test; ported build ran on a client
+jar	eac76ff0f3753422c61b2c44487d0d195d88d4bc	ferritecore	26.2	server	perf_bench; ran in a benchmark on a server
+jar	49b54e6e86738f537ef2792404376fcd7cdc8c9b	healthindicators	26.2	client	official_runtime; started and ran on a client
+jar	83db699d0f695328a6a0be5932ddb2a99e4d04e9	healthindicators	26.2	client	client_test; ported build ran on a client
+jar	0286260261591fe77ba0d332d5d5a2d2e868c2c6	immediatelyfast	26.2	client	client_bench; ran in a benchmark on a client
+jar	c83ed92c0f9f8523d7e6096151e74222fea91e96	krypton	26.2	server	perf_bench; ran in a benchmark on a server
+jar	026b789a30de912a40911443c37c2fc92579629e	ksyxis	26.2	server	perf_bench; ran in a benchmark on a server
+jar	621deba178aa7bb2d60c642a1c5d88987f0c296c	lazy_ai_pixelindiedev	26.2	server	perf_bench; ran in a benchmark on a server
+jar	435ad0289209bb72195e7a423756a03f5dfa5a9a	lithium	26.2	client	client_bench; ran in a benchmark on a client
+jar	4fb8b3865ce18705ec29b508e385e49870d5fd40	modernfix	26.2	server	runtime_test; ported build ran on a server
+jar	a14d2ba0fd0d56d12d48bb9f1c44fd3d345bf5e2	modernfix	26.2	server	perf_bench; ran in a benchmark on a server
+jar	5c3988988f4bc41fe5458b2e5bde7469726d028b	modernui	26.2	server	official_runtime; started and ran on a server
+jar	5779c4e9576298d73bc0214d8e31ed4e969e2baa	modernui	26.2	server	runtime_test; ported build ran on a server
+jar	d31338bc63c5dd571d209315a15446d95765c0d8	moonrise	26.2	server	perf_bench; ran in a benchmark on a server
+jar	189d90ef598883df8197ea18b510dba21e69bac4	moreculling	26.2	client	client_bench; ran in a benchmark on a client
+jar	bdf972d940be22045aba6b6fe566808e195dd852	netmusic	26.2	server	runtime_test; ported build ran on a server
+jar	d90a5ad32d3d504b15fc57e5eb59b706c12b75e2	patchouli	26.2	crashes	official_runtime; crashed
+jar	b6127f4444958696b008d1b7688249669aeac43d	patchouli	26.2	server	runtime_test; ported build ran on a server
+jar	d3637cc2fe15761ca66070e5916f17c80f03ba51	scalablelux	26.2	server	perf_bench; ran in a benchmark on a server
+jar	43eda9e44e32e0e736ada0ff125f83cb87cbd59a	servercore	26.2	server	perf_bench; ran in a benchmark on a server
+jar	62a70961a5b3e06938e06ab5f2dc4c5a51cf3323	sodium	26.2	client	client_bench; ran in a benchmark on a client
+jar	4a0fc84879fe358bdfd395af9238e14950dca748	structure_layout_optimizer	26.2	server	perf_bench; ran in a benchmark on a server
+jar	45750276e3da25b592d363d9a70dc3531af86ac7	travelerstitles	26.2	crashes	official_runtime; crashed
+jar	6ee6c271fac0e0b5b1879cd0d6921108be2bd5c5	travelerstitles	26.2	client	client_test; ported build ran on a client
+jar	dcf1295db267f7b519ecdd7d1c9499910c7e6fc0	vmp	26.2	server	perf_bench; ran in a benchmark on a server
+jar	a810b96e42e775b3ae02102dd3742a34f2b2fa6b	yungsapi	26.2	server	runtime_test; ported build ran on a server
+jar	2f539192db79f1d13a4370f2fc766f0e5f3a3b8c	yungsbridges	26.2	server	official_runtime; started and ran on a server
+jar	9d40998dab25cc01d61790fd534b8d86ce4812d4	yungsbridges	26.2	server	runtime_test; ported build ran on a server
+jar	8cb5e5f083fe65747e70cb7b0d8369305ba63047	yungsextras	26.2	crashes	official_runtime; crashed
+jar	2c24ceb1b8fbb18ce7842ee1d7eae39e7839a65e	yungsextras	26.2	server	runtime_test; ported build ran on a server
+jar	1c8e66ef04647320697c77fc99bb7d75e7400b7c	zfastnoise	26.2	server	perf_bench; ran in a benchmark on a server
+jar	ac1d18bbae472bf95c8d3a28e2c11d9714e64d30	ali	26.3	server	runtime_test; ported build ran on a server
+jar	f86040d5010c7aad1c677c7a7fefe52d3b386abd	bettermounthud	26.3	client	official_runtime; started and ran on a client
+jar	139a769d95d6415a8ed80c13bdda43a09a9cb477	bettermounthud	26.3	client	client_test; ported build ran on a client
+jar	7acb26634632894b95ef09c06503c7cc8f04b90b	bobby	26.3	crashes	official_runtime; crashed
+jar	cf0528b3ae4253d396e258db5101db031ee96968	bobby	26.3	client	client_test; ported build ran on a client
+jar	3dbc5f73ccbaec35dbca4c07b731998938a5b09c	carryon	26.3	server	official_runtime; started and ran on a server
+jar	563b4aa9f1c0934653db40855e5f747c8354e59e	carryon	26.3	server	runtime_test; ported build ran on a server
+jar	7d2539a4f4fd5bd4a19798cc73b1431511de1431	chatpatches	26.3	crashes	official_runtime; a mixin target is missing
+jar	f9f94addf9fc6554ba40817a36adf765d8d9567a	chatpatches	26.3	client	client_test; ported build ran on a client
+jar	ab8dd841cafc3b4ecbf0250d3f5aee8a1fdb506a	customskinloader-bootstrap	26.3	crashes	official_runtime; crashed
+jar	3581266215d6314f9b8d895e292b36e307754e42	customskinloader-bootstrap	26.3	client	client_test; ported build ran on a client
+jar	600cedc72ebd662a565151b0c8ea223a724da747	extended_drawers	26.3	crashes	official_runtime; crashed
+jar	609982ec56575702f98cbd30c57508ab8ab7896b	extended_drawers	26.3	server	runtime_test; ported build ran on a server
+jar	4c764496466216aa6722ef4b44b563e773bb4772	immersive_paintings	26.3	server	runtime_test; ported build ran on a server
+jar	c83ed92c0f9f8523d7e6096151e74222fea91e96	krypton	26.3	server	official_runtime; started and ran on a server
+jar	de1bcb87b7086889d13c49deabfbba0902a07ac9	krypton	26.3	server	runtime_test; ported build ran on a server
+jar	261027cef3c476d4fafdf59362179eb8da9019d2	languagereload	26.3	crashes	official_runtime; crashed
+jar	aa11763f38ed55172cf38378afc0d789f576bc49	languagereload	26.3	client	client_test; ported build ran on a client
+jar	6cf05afb36d68db3cabfc10512335770cd693864	macos_input_fixes	26.3	client	client_test; ported build ran on a client
+jar	4fd220c4371a29cee98ecbad86a06441019d0979	mca	26.3	crashes	official_runtime; crashed
+jar	b5acd733c0ad9a87e69c5f280fe3f521f3b72792	mca	26.3	server	runtime_test; ported build ran on a server
+jar	1a0feff2a71be42406136fa5852c5fa8896601d0	nochatrestrictions	26.3	server	official_runtime; started and ran on a server
+jar	62c5fc549ae2a0d21624b04b5ec3c02a0c473303	nochatrestrictions	26.3	server	runtime_test; ported build ran on a server
+jar	18cdf7a4a325f943113c84a2ae37f743b6db3445	notenoughcrashes	26.3	server	official_runtime; started and ran on a server
+jar	cd0922e73a7b9d6218a68350fa29e75e406ded3d	notenoughcrashes	26.3	server	runtime_test; ported build ran on a server
+jar	3111139453af67f14cb32e572bde7ae93126477b	owo	26.3	crashes	official_runtime; crashed
+jar	3320cdbddf28ddff9a00af38db4d5c770f144fa8	owo	26.3	server	runtime_test; ported build ran on a server
+jar	6c3fbc458fe9d4969443f49f718f713245b30a8d	promenade	26.3	crashes	official_runtime; crashed
+jar	f42ff41676fd1c091e6dbac6eb7a60f6c5c17a56	rsls	26.3	crashes	official_runtime; crashed
+jar	3ad40e1b661f8eac2b5fd047eebc674a2a52d0bf	rsls	26.3	client	client_test; ported build ran on a client
+jar	7446bd898403a77ac64e9f3e4e2bb20bfa8002ee	subtle_effects	26.3	crashes	official_runtime; crashed
+jar	44484aaae7d05eee0333848cd31a9934774b9a0a	subtle_effects	26.3	server	runtime_test; ported build ran on a server
+jar	9dc04ea204844373ac064e276fd44764e1871daa	vivecraft	26.3	crashes	official_runtime; crashed
+jar	a345fbd2b2d1e378452763e2864f1056b212ac98	voxy	26.3	crashes	official_runtime; a mixin target is missing
+jar	1193b8dca4d92d5f07a834cf90f357e71440893d	voxy	26.3	server	runtime_test; ported build ran on a server
+jar	215feafd6a59e35dd32e0e3e19d22ea888d2952e	walksylib	26.3	crashes	official_runtime; crashed
+jar	23c5f0fb9c36f447cd0264d07a05d395e121a98e	walksylib	26.3	client	client_test; ported build ran on a client
+pair	c2me	ferritecore	26.2	server	perf_bench; ran together on a server
+pair	c2me	lithium	26.2	server	perf_bench; ran together on a server
+pair	c2me	scalablelux	26.2	server	perf_bench; ran together on a server
+pair	c2me	vmp	26.2	server	perf_bench; ran together on a server
+pair	entityculling	immediatelyfast	26.2	client	client_bench; ran together on a client
+pair	entityculling	sodium	26.2	client	client_bench; ran together on a client
+pair	ferritecore	lithium	26.2	server	perf_bench; ran together on a server
+pair	ferritecore	moonrise	26.2	server	compat_check; clean
+pair	ferritecore	scalablelux	26.2	server	perf_bench; ran together on a server
+pair	ferritecore	vmp	26.2	server	perf_bench; ran together on a server
+pair	immediatelyfast	sodium	26.2	client	client_bench; ran together on a client
+pair	lithium	moonrise	26.2	server	compat_check; clean
+pair	lithium	scalablelux	26.2	server	perf_bench; ran together on a server
+pair	lithium	vmp	26.2	server	perf_bench; ran together on a server
+pair	scalablelux	vmp	26.2	server	perf_bench; ran together on a server

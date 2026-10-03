@@ -54,6 +54,28 @@ Modrinth.
 The first build of a version downloads the game, its mappings and the loader (for NeoForge and
 Forge, through their official installers) into `~/.modkeel` (`MODKEEL_HOME`).
 
+## Verify a release
+
+Every jar on the releases page is built by GitHub Actions from the tagged source
+([release.yml](.github/workflows/release.yml)), not on someone's computer. Three ways to check one:
+
+1. **Checksum.** Each release lists `SHA256SUMS`: compare with `sha256sum <jar>`
+   (Windows: `certutil -hashfile <jar> SHA256`).
+2. **Provenance.** GitHub signs a record of which workflow, commit and tag built each jar:
+   ```bash
+   gh attestation verify modkeel-companion-0.2.0-fabric-26.jar -R Modkeel/companion
+   ```
+3. **Rebuild it yourself.** The build is reproducible: no file dates, one entry order, Unix
+   line endings and pinned versions of the loaders, Fabric API and tools. With the JDK the
+   workflow uses (Temurin 25.0.4.1+1) you get the same bytes:
+   ```bash
+   git checkout v0.2.0
+   python build.py --all
+   sha256sum build/release/*.jar     # same as SHA256SUMS
+   ```
+   Before a release goes public, the maintainer does exactly this and compares it with the
+   GitHub build; if a single byte differs, the release is not published.
+
 ## Layout
 
 | Path | What |
@@ -71,4 +93,8 @@ or SRG (Forge) names at build time.
 
 ## License
 
-MIT. See [LICENSE](LICENSE). More at [modkeel.com](https://modkeel.com).
+Code: MIT. See [LICENSE](LICENSE). More at [modkeel.com](https://modkeel.com).
+
+Data: `game/resources/modkeel/rules.tsv`, the known problems Modkeel warns about (which mod
+versions crash with which, found by running them in real games in our lab), is
+[CC BY 4.0](LICENSE-DATA). Use it anywhere, credit "Modkeel lab data (modkeel.com)".
