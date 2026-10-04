@@ -29,6 +29,7 @@ public final class HealthScreen extends Page {
     @Override
     protected void body(Stack body, int w) {
         status(body, w);
+        Graphics.card(this, body, w, g);
         tiles(body, w);
         if (g.crash == null && CrashScreen.stuck(g)) {
             body.addChild(Text.loose(Component.translatable("modkeel.cta"), w, Keel.AQUA));

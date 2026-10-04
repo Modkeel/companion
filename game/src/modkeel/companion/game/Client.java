@@ -52,6 +52,7 @@ public final class Client {
         if (!loaded && !Compat.loading(mc)) {
             loaded = true;
             Common.guardian.loaded();
+            Graphics.detect(mc, Common.guardian);
         }
         if (whenLoaded != null && !Compat.loading(mc)) {
             Runnable r = whenLoaded;

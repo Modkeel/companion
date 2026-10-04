@@ -160,7 +160,27 @@ public final class Reports {
                 + ",\"loader_version\":" + q(text(g.loaderVersion))
                 + ",\"companion\":" + q(companion.matches("[0-9a-z.\\-+]{1,32}") ? companion : "0")
                 + ",\"java\":" + Runtime.version().feature() + ",\"os\":" + q(os())
-                + ",\"ram_mb\":" + ram + "}";
+                + ",\"ram_mb\":" + ram + hardware() + "}";
+    }
+
+    /**
+     * The graphics card's maker and kind, as the last start found them, and the computer's
+     * memory rounded to a common size: enough to tell an NVIDIA-only crash or a game stuck on
+     * the integrated graphics, never the card's model or driver.
+     */
+    String hardware() {
+        String vendor = g.state.get("gpuVendor", "");
+        String kind = g.state.get("gpuKind", "");
+        StringBuilder sb = new StringBuilder();
+        if (vendor.matches("nvidia|amd|intel|apple|software|other")
+                && kind.matches("integrated|dedicated|software")) {
+            sb.append(",\"gpu\":").append(q(vendor)).append(",\"gpu_kind\":").append(q(kind));
+        }
+        int gb = Gpu.ramGb();
+        if (gb > 0) {
+            sb.append(",\"ram_gb\":").append(gb);
+        }
+        return sb.toString();
     }
 
     /**

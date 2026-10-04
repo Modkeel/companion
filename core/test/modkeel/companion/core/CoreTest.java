@@ -12,6 +12,7 @@ import java.nio.file.attribute.FileTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -60,6 +61,7 @@ public final class CoreTest {
         run("lag spike: busy stall named, idle stall ignored", CoreTest::spikeLive);
         run("lag spike: blocked on worker threads, and the crowds after it", CoreTest::spikeWait);
         run("lag spike: part of Minecraft and resource of a stack", CoreTest::spikeSections);
+        run("graphics card: maker, kind and a faster card left unused", CoreTest::graphics);
         System.out.println(passed + " passed, " + failed + " failed");
         if (failed > 0) {
             System.exit(1);
@@ -92,6 +94,51 @@ public final class CoreTest {
         if (expected == null ? actual != null : !expected.equals(actual)) {
             throw new AssertionError(what + ": expected <" + expected + "> but was <" + actual + ">");
         }
+    }
+
+    static void graphics() throws Exception {
+        Set<String> none = Set.of();
+        Set<String> nvidia = Set.of("nvidia");
+        String[][] cases = {
+            {"NVIDIA GeForce GTX 1650/PCIe/SSE2", "nvidia", "dedicated"},
+            {"Intel(R) UHD Graphics 630", "intel", "integrated"},
+            {"Intel(R) Arc(TM) Graphics", "intel", "integrated"},
+            {"Intel(R) Arc(TM) A770 Graphics", "intel", "dedicated"},
+            {"AMD Radeon(TM) Graphics", "amd", "integrated"},
+            {"AMD Radeon(TM) Vega 8 Graphics", "amd", "integrated"},
+            {"AMD Radeon 780M", "amd", "integrated"},
+            {"AMD Radeon Graphics (radeonsi, renoir, LLVM 15.0.7, DRM 3.49)", "amd", "integrated"},
+            {"AMD Radeon RX 6600M", "amd", "dedicated"},
+            {"Mesa Intel(R) UHD Graphics 620 (KBL GT2)", "intel", "integrated"},
+            {"llvmpipe (LLVM 15.0.7, 256 bits)", "software", "software"},
+            {"GDI Generic", "software", "software"},
+            {"Apple M2", "apple", "integrated"},
+        };
+        for (String[] c : cases) {
+            Gpu gpu = new Gpu(c[0], none);
+            eq(c[1], gpu.vendor, "maker of " + c[0]);
+            eq(c[2], gpu.kind, "kind of " + c[0]);
+        }
+        eq("nvidia", new Gpu("Intel(R) UHD Graphics 630", nvidia).unused, "NVIDIA card left unused");
+        eq(null, new Gpu("NVIDIA GeForce GTX 1650/PCIe/SSE2", Set.of("nvidia", "intel")).unused,
+                "already on the fast card");
+        eq(null, new Gpu("AMD Radeon(TM) Graphics", Set.of("amd")).unused, "only its own driver");
+        eq("amd", new Gpu("Intel(R) UHD Graphics 620", Set.of("amd", "intel")).unused, "AMD card left unused");
+
+        Path sys = tmp();
+        Path drm = tmp();
+        Files.createFile(sys.resolve("nvapi64.dll"));
+        for (String[] card : new String[][] {{"card0", "0x8086"}, {"card1", "0x1002"}}) {
+            Files.createDirectories(drm.resolve(card[0]).resolve("device"));
+            Files.writeString(drm.resolve(card[0]).resolve("device").resolve("vendor"), card[1] + "\n");
+        }
+        eq(Set.of("nvidia", "intel", "amd"), Gpu.installed(sys, drm), "drivers and DRM cards");
+        eq(Set.of(), Gpu.installed(sys.resolve("none"), drm.resolve("none")), "nothing found");
+
+        eq(16, Gpu.roundRam(15.8), "16 GB less what the integrated graphics reserve");
+        eq(8, Gpu.roundRam(7.4), "8 GB");
+        eq(128, Gpu.roundRam(512), "capped");
+        eq(0, Gpu.roundRam(0), "unknown");
     }
 
     // ---- helpers -------------------------------------------------------------------------

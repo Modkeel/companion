@@ -41,6 +41,12 @@ public final class Sent {
             out.add(new Line("setup", str(env.get("mc")), loader(str(env.get("loader"))),
                     str(env.get("loader_version")), str(env.get("java")), os(str(env.get("os"))),
                     gigabytes(env.get("ram_mb"))));
+            if (env.get("gpu") instanceof String && env.get("gpu_kind") instanceof String) {
+                out.add(new Line("gpu_" + env.get("gpu_kind"), maker(str(env.get("gpu")))));
+            }
+            if (env.get("ram_gb") instanceof Double) {
+                out.add(new Line("ram", str(env.get("ram_gb"))));
+            }
         }
         if (p.get("mods") instanceof List) {
             // the mods folder holds the top ones; the rest ship inside them (Fabric API's modules)
@@ -119,6 +125,16 @@ public final class Sent {
             case "windows": return "Windows";
             case "macos": return "macOS";
             case "linux": return "Linux";
+            default: return id;
+        }
+    }
+
+    private static String maker(String id) {
+        switch (id) {
+            case "nvidia": return "NVIDIA";
+            case "amd": return "AMD";
+            case "intel": return "Intel";
+            case "apple": return "Apple";
             default: return id;
         }
     }
