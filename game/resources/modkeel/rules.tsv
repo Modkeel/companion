@@ -1,4 +1,4 @@
-# Modkeel rules bundle, built 2026-10-03 from lab data
+# Modkeel rules bundle, built 2026-10-04 from lab data
 # Modkeel lab data (modkeel.com), CC BY 4.0: see LICENSE-DATA
 jar	ffeeafb265d7f0914e9b96ab70a1181d3642773a	c2me	1.20.1	server	release_check; release made for 1.20.1 ran on a server
 jar	fd43e8a962d7026fa5342c260fd3b3f98809913c	entityculling	1.20.1	server	release_check; release made for 1.20.1 ran on a server
@@ -78,6 +78,7 @@ jar	eac76ff0f3753422c61b2c44487d0d195d88d4bc	ferritecore	26.2	server	perf_bench;
 jar	49b54e6e86738f537ef2792404376fcd7cdc8c9b	healthindicators	26.2	client	official_runtime; started and ran on a client
 jar	83db699d0f695328a6a0be5932ddb2a99e4d04e9	healthindicators	26.2	client	client_test; ported build ran on a client
 jar	0286260261591fe77ba0d332d5d5a2d2e868c2c6	immediatelyfast	26.2	client	client_bench; ran in a benchmark on a client
+jar	bd0b24731a94b8fe164531e6345718d30ab08ed2	iris	26.2	client	client_bench; ran in a benchmark on a client
 jar	c83ed92c0f9f8523d7e6096151e74222fea91e96	krypton	26.2	server	perf_bench; ran in a benchmark on a server
 jar	026b789a30de912a40911443c37c2fc92579629e	ksyxis	26.2	server	perf_bench; ran in a benchmark on a server
 jar	621deba178aa7bb2d60c642a1c5d88987f0c296c	lazy_ai_pixelindiedev	26.2	server	perf_bench; ran in a benchmark on a server
@@ -118,6 +119,7 @@ jar	3581266215d6314f9b8d895e292b36e307754e42	customskinloader-bootstrap	26.3	cli
 jar	600cedc72ebd662a565151b0c8ea223a724da747	extended_drawers	26.3	crashes	official_runtime; crashed
 jar	609982ec56575702f98cbd30c57508ab8ab7896b	extended_drawers	26.3	server	runtime_test; ported build ran on a server
 jar	4c764496466216aa6722ef4b44b563e773bb4772	immersive_paintings	26.3	server	runtime_test; ported build ran on a server
+jar	fa03640ba1e4ef2f7ae3619c6373a06e46d0ba2c	iris	26.3	client	client_bench; ran in a benchmark on a client
 jar	c83ed92c0f9f8523d7e6096151e74222fea91e96	krypton	26.3	server	official_runtime; started and ran on a server
 jar	de1bcb87b7086889d13c49deabfbba0902a07ac9	krypton	26.3	server	runtime_test; ported build ran on a server
 jar	261027cef3c476d4fafdf59362179eb8da9019d2	languagereload	26.3	crashes	official_runtime; crashed
@@ -134,6 +136,7 @@ jar	3320cdbddf28ddff9a00af38db4d5c770f144fa8	owo	26.3	server	runtime_test; porte
 jar	6c3fbc458fe9d4969443f49f718f713245b30a8d	promenade	26.3	crashes	official_runtime; crashed
 jar	f42ff41676fd1c091e6dbac6eb7a60f6c5c17a56	rsls	26.3	crashes	official_runtime; crashed
 jar	3ad40e1b661f8eac2b5fd047eebc674a2a52d0bf	rsls	26.3	client	client_test; ported build ran on a client
+jar	5d88caf6f3e182cd39d0fb0d2e7200c5e613f287	sodium	26.3	client	client_bench; ran in a benchmark on a client
 jar	7446bd898403a77ac64e9f3e4e2bb20bfa8002ee	subtle_effects	26.3	crashes	official_runtime; crashed
 jar	44484aaae7d05eee0333848cd31a9934774b9a0a	subtle_effects	26.3	server	runtime_test; ported build ran on a server
 jar	9dc04ea204844373ac064e276fd44764e1871daa	vivecraft	26.3	crashes	official_runtime; crashed
@@ -267,7 +270,9 @@ pair	ferritecore	moonrise	26.2	server	compat_check; clean
 pair	ferritecore	scalablelux	26.2	server	perf_bench; ran together on a server
 pair	ferritecore	vmp	26.2	server	perf_bench; ran together on a server
 pair	immediatelyfast	sodium	26.2	client	client_bench; ran together on a client
+pair	iris	sodium	26.2	client	client_bench; ran together on a client
 pair	lithium	moonrise	26.2	server	compat_check; clean
 pair	lithium	scalablelux	26.2	server	perf_bench; ran together on a server
 pair	lithium	vmp	26.2	server	perf_bench; ran together on a server
 pair	scalablelux	vmp	26.2	server	perf_bench; ran together on a server
+pair	iris	sodium	26.3	client	client_bench; ran together on a client
