@@ -59,6 +59,13 @@ name.
 
 Fabric needs [Fabric API](https://modrinth.com/mod/fabric-api).
 
+## Guides
+
+- [Find which mod crashed Minecraft](https://modkeel.com/crashes/which-mod-crashed)
+- [Update a modpack to a new Minecraft version without losing your world](https://modkeel.com/guides/update-modpack)
+- [Paste a crash report](https://modkeel.com/crashes/diagnose) and see which mod caused it
+- [Mods tested by Minecraft version](https://modkeel.com/minecraft/): lab data on which releases ran
+
 ## Languages
 
 English, Spanish, Brazilian Portuguese, German, French, Russian and Simplified Chinese, with
