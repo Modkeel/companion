@@ -220,5 +220,16 @@
   "modkeel.gpu.switch_failed": "Règle-le à la main : Paramètres > Système > Écran > Graphiques, ajoute %s et choisis Hautes performances.",
   "modkeel.gpu.linux_nvidia": "Pour l'utiliser, lance Minecraft avec __NV_PRIME_RENDER_OFFLOAD=1 __GLX_VENDOR_LIBRARY_NAME=nvidia (variables d'environnement, dans les réglages de ton launcher).",
   "modkeel.gpu.linux_amd": "Pour l'utiliser, lance Minecraft avec DRI_PRIME=1 (une variable d'environnement, dans les réglages de ton launcher).",
-  "modkeel.gpu.hide": "Ne plus afficher"
+  "modkeel.gpu.hide": "Ne plus afficher",
+  "modkeel.mem.low_title": "Minecraft a peu de mémoire pour ce pack",
+  "modkeel.mem.low_text": "Java peut utiliser %s Go. Avec %s mods, %s Go évitent les saccades et le manque de mémoire.",
+  "modkeel.mem.high_title": "Minecraft prend presque toute la mémoire de l'ordinateur",
+  "modkeel.mem.high_text": "Java peut utiliser %s Go sur les %s Go de l'ordinateur : le système se met à utiliser le disque et tout saccade. %s Go suffisent pour ce pack.",
+  "modkeel.mem.bits32_title": "Minecraft tourne sur un Java 32 bits",
+  "modkeel.mem.bits32_text": "Un Java 32 bits ne peut pas utiliser plus d'environ 1,5 Go, trop peu pour des mods. Installez Java 64 bits ou laissez votre launcher utiliser le sien.",
+  "modkeel.mem.how_prism": "Dans Prism : Modifier l'instance > Paramètres > Java > Allocation mémoire maximale : %s Mio. Puis redémarrez Minecraft.",
+  "modkeel.mem.how_curseforge": "Dans CurseForge : Paramètres > Minecraft > Java Settings > Mémoire allouée : %s Mo. Puis redémarrez Minecraft.",
+  "modkeel.mem.how_modrinth": "Dans l'app Modrinth : Paramètres de l'instance > Java et mémoire > Mémoire allouée : %s Mo. Puis redémarrez Minecraft.",
+  "modkeel.mem.how_vanilla": "Dans le Launcher Minecraft : Configurations > Modifier > Plus d'options > Arguments JVM : remplacez -Xmx… par -Xmx%sG. Puis redémarrez Minecraft.",
+  "modkeel.mem.how_other": "Dans les paramètres de votre launcher pour ce jeu, réglez la mémoire maximale sur %s Go. Puis redémarrez Minecraft."
 }

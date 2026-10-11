@@ -220,5 +220,16 @@
   "modkeel.gpu.switch_failed": "Hazlo a mano: Configuración > Sistema > Pantalla > Gráficos, agrega %s y elige Alto rendimiento.",
   "modkeel.gpu.linux_nvidia": "Para usarla, inicia Minecraft con __NV_PRIME_RENDER_OFFLOAD=1 __GLX_VENDOR_LIBRARY_NAME=nvidia (variables de entorno, en la configuración de tu launcher).",
   "modkeel.gpu.linux_amd": "Para usarla, inicia Minecraft con DRI_PRIME=1 (una variable de entorno, en la configuración de tu launcher).",
-  "modkeel.gpu.hide": "No mostrar más"
+  "modkeel.gpu.hide": "No mostrar más",
+  "modkeel.mem.low_title": "Minecraft tiene poca memoria para este pack",
+  "modkeel.mem.low_text": "Java puede usar %s GB. Con %s mods, %s GB evitan tirones y que el juego se quede sin memoria.",
+  "modkeel.mem.high_title": "Minecraft se lleva casi toda la memoria del equipo",
+  "modkeel.mem.high_text": "Java puede usar %s GB de los %s GB del equipo, así que el sistema empieza a usar el disco y todo va a tirones. Para este pack bastan %s GB.",
+  "modkeel.mem.bits32_title": "Minecraft funciona con Java de 32 bits",
+  "modkeel.mem.bits32_text": "Java de 32 bits no puede usar más de unos 1,5 GB, muy poco para mods. Instala Java de 64 bits o deja que tu launcher use el suyo.",
+  "modkeel.mem.how_prism": "En Prism: Editar la instancia > Ajustes > Java > Memoria máxima: %s MiB. Luego reinicia Minecraft.",
+  "modkeel.mem.how_curseforge": "En CurseForge: Ajustes > Minecraft > Java Settings > Memoria asignada: %s MB. Luego reinicia Minecraft.",
+  "modkeel.mem.how_modrinth": "En la app de Modrinth: Ajustes de la instancia > Java y memoria > Memoria asignada: %s MB. Luego reinicia Minecraft.",
+  "modkeel.mem.how_vanilla": "En el Launcher de Minecraft: Instalaciones > Editar > Más opciones > Argumentos JVM: cambia -Xmx… por -Xmx%sG. Luego reinicia Minecraft.",
+  "modkeel.mem.how_other": "En los ajustes de tu launcher para este juego, pon la memoria máxima en %s GB. Luego reinicia Minecraft."
 }

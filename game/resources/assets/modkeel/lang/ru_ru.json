@@ -220,5 +220,16 @@
   "modkeel.gpu.switch_failed": "Сделайте вручную: Параметры > Система > Дисплей > Графика, добавьте %s и выберите «Высокая производительность».",
   "modkeel.gpu.linux_nvidia": "Чтобы использовать её, запускайте Minecraft с __NV_PRIME_RENDER_OFFLOAD=1 __GLX_VENDOR_LIBRARY_NAME=nvidia (переменные окружения, в настройках лаунчера).",
   "modkeel.gpu.linux_amd": "Чтобы использовать её, запускайте Minecraft с DRI_PRIME=1 (переменная окружения, в настройках лаунчера).",
-  "modkeel.gpu.hide": "Больше не показывать"
+  "modkeel.gpu.hide": "Больше не показывать",
+  "modkeel.mem.low_title": "Minecraft мало памяти для этой сборки",
+  "modkeel.mem.low_text": "Java может использовать %s ГБ. Для %s модов нужно %s ГБ, чтобы игра не тормозила и не падала из-за нехватки памяти.",
+  "modkeel.mem.high_title": "Minecraft забирает почти всю память компьютера",
+  "modkeel.mem.high_text": "Java может использовать %s ГБ из %s ГБ компьютера, и система начинает работать с диском, а всё тормозит. Для этой сборки хватит %s ГБ.",
+  "modkeel.mem.bits32_title": "Minecraft работает на 32-битной Java",
+  "modkeel.mem.bits32_text": "32-битная Java может использовать не больше ~1,5 ГБ, этого мало для модов. Установите 64-битную Java или дайте лаунчеру использовать свою.",
+  "modkeel.mem.how_prism": "В Prism: Изменить сборку > Настройки > Java > Максимальное выделение памяти: %s МиБ. Затем перезапустите Minecraft.",
+  "modkeel.mem.how_curseforge": "В CurseForge: Настройки > Minecraft > Java Settings > Выделенная память: %s МБ. Затем перезапустите Minecraft.",
+  "modkeel.mem.how_modrinth": "В приложении Modrinth: Настройки сборки > Java и память > Выделенная память: %s МБ. Затем перезапустите Minecraft.",
+  "modkeel.mem.how_vanilla": "В лаунчере Minecraft: Установки > Изменить > Дополнительно > Аргументы JVM: замените -Xmx… на -Xmx%sG. Затем перезапустите Minecraft.",
+  "modkeel.mem.how_other": "В настройках вашего лаунчера для этой игры укажите максимальную память %s ГБ. Затем перезапустите Minecraft."
 }

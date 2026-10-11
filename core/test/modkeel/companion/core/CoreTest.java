@@ -63,6 +63,7 @@ public final class CoreTest {
         run("lag spike: blocked on worker threads, and the crowds after it", CoreTest::spikeWait);
         run("lag spike: part of Minecraft and resource of a stack", CoreTest::spikeSections);
         run("graphics card: maker, kind and a faster card left unused", CoreTest::graphics);
+        run("memory: too little for the pack, too much for the computer", CoreTest::memory);
         System.out.println(passed + " passed, " + failed + " failed");
         if (failed > 0) {
             System.exit(1);
@@ -95,6 +96,30 @@ public final class CoreTest {
         if (expected == null ? actual != null : !expected.equals(actual)) {
             throw new AssertionError(what + ": expected <" + expected + "> but was <" + actual + ">");
         }
+    }
+
+    static void memory() {
+        Memory low = new Memory(2048, 16, 150, false, "prism");
+        eq("low", low.verdict, "2 GB for 150 mods");
+        eq(6, low.adviseGb, "advice for 150 mods");
+        eq("fine", new Memory(4000, 16, 60, false, "other").verdict, "-Xmx4G reads under 4096");
+        eq(0, new Memory(4000, 16, 60, false, "other").adviseGb, "no advice when fine");
+        eq("fine", new Memory(2048, 4, 60, false, "other").verdict, "a 4 GB computer has no more to give");
+        Memory small = new Memory(2048, 8, 200, false, "other");
+        eq("low", small.verdict, "8 GB computer, 200 mods");
+        eq(5, small.adviseGb, "the system keeps its share");
+        Memory high = new Memory(14336, 16, 80, false, "other");
+        eq("high", high.verdict, "14 of 16 GB");
+        eq(4, high.adviseGb, "advice when given too much");
+        eq("low", new Memory(1024, 0, 0, false, "other").verdict, "unknown computer: judged on the pack");
+        eq("bits32", new Memory(1024, 16, 10, true, "other").verdict, "32-bit Java");
+        eq("1.5", new Memory(1536, 16, 10, false, "other").givenGb(), "GB shown with one decimal");
+        eq("4", new Memory(4096, 16, 10, false, "other").givenGb(), "whole GB shown plain");
+        eq("prism", Memory.launcher(Path.of("/home/a/.local/share/PrismLauncher/instances/x/minecraft")), "Prism");
+        eq("curseforge", Memory.launcher(Path.of("C:/Users/a/curseforge/minecraft/Instances/x")), "CurseForge");
+        eq("modrinth", Memory.launcher(Path.of("/home/a/.local/share/ModrinthApp/profiles/x")), "Modrinth App");
+        eq("vanilla", Memory.launcher(Path.of("/home/a/.minecraft")), "Minecraft Launcher");
+        eq("other", Memory.launcher(Path.of("/srv/game")), "unknown launcher");
     }
 
     static void graphics() throws Exception {

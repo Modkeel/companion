@@ -220,5 +220,16 @@
   "modkeel.gpu.switch_failed": "Stelle es von Hand ein: Einstellungen > System > Bildschirm > Grafik, füge %s hinzu und wähle Hohe Leistung.",
   "modkeel.gpu.linux_nvidia": "Um sie zu nutzen, starte Minecraft mit __NV_PRIME_RENDER_OFFLOAD=1 __GLX_VENDOR_LIBRARY_NAME=nvidia (Umgebungsvariablen, in den Einstellungen deines Launchers).",
   "modkeel.gpu.linux_amd": "Um sie zu nutzen, starte Minecraft mit DRI_PRIME=1 (eine Umgebungsvariable, in den Einstellungen deines Launchers).",
-  "modkeel.gpu.hide": "Nicht mehr anzeigen"
+  "modkeel.gpu.hide": "Nicht mehr anzeigen",
+  "modkeel.mem.low_title": "Minecraft hat wenig Speicher für dieses Pack",
+  "modkeel.mem.low_text": "Java darf %s GB nutzen. Bei %s Mods verhindern %s GB Ruckler und Speichermangel.",
+  "modkeel.mem.high_title": "Minecraft belegt fast den ganzen Arbeitsspeicher",
+  "modkeel.mem.high_text": "Java darf %s GB der %s GB des Computers nutzen, also lagert das System auf die Festplatte aus und alles ruckelt. Für dieses Pack reichen %s GB.",
+  "modkeel.mem.bits32_title": "Minecraft läuft mit 32-Bit-Java",
+  "modkeel.mem.bits32_text": "32-Bit-Java kann höchstens etwa 1,5 GB nutzen, zu wenig für Mods. Installiere 64-Bit-Java oder lass deinen Launcher sein eigenes nutzen.",
+  "modkeel.mem.how_prism": "In Prism: Instanz bearbeiten > Einstellungen > Java > Maximale Speicherzuweisung: %s MiB. Dann Minecraft neu starten.",
+  "modkeel.mem.how_curseforge": "In CurseForge: Einstellungen > Minecraft > Java Settings > Zugewiesener Speicher: %s MB. Dann Minecraft neu starten.",
+  "modkeel.mem.how_modrinth": "In der Modrinth App: Einstellungen der Instanz > Java und Speicher > Zugewiesener Speicher: %s MB. Dann Minecraft neu starten.",
+  "modkeel.mem.how_vanilla": "Im Minecraft Launcher: Installationen > Bearbeiten > Weitere Optionen > JVM-Argumente: -Xmx… durch -Xmx%sG ersetzen. Dann Minecraft neu starten.",
+  "modkeel.mem.how_other": "Stell in den Einstellungen deines Launchers für dieses Spiel den maximalen Speicher auf %s GB. Dann Minecraft neu starten."
 }

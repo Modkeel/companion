@@ -8,6 +8,7 @@ import java.util.function.Consumer;
 import modkeel.companion.core.Backups;
 import modkeel.companion.core.Diagnosis;
 import modkeel.companion.core.Guardian;
+import modkeel.companion.core.Memory;
 import modkeel.companion.core.Spikes;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.Tooltip;
@@ -26,6 +27,8 @@ public final class HealthScreen extends Page {
     private boolean details;
     /** The warning shown in full when they do not all fit; the others fold to one line. */
     private int open;
+    /** The player opened a warning: it stays open even if the screen must scroll for it. */
+    private boolean chose;
 
     public HealthScreen(Screen back, Guardian g) {
         super(Component.translatable("modkeel.health.title"), back);
@@ -36,8 +39,9 @@ public final class HealthScreen extends Page {
     protected void body(Stack body, int w) {
         List<Warning> warnings = warnings(w);
         open = Math.min(open, Math.max(0, warnings.size() - 1));
+        Fit last = chose ? Fit.TIGHT : Fit.LINES;
         Fit fit = Fit.FULL;
-        while (fit != Fit.TIGHT && tooTall(warnings, w, fit)) {
+        while (fit != last && tooTall(warnings, w, fit)) {
             fit = Fit.values()[fit.ordinal() + 1];
         }
         fill(body, w, warnings, fit);
@@ -46,9 +50,10 @@ public final class HealthScreen extends Page {
     /**
      * How much the screen gives up to fit without scrolling, tried in order: everything; one
      * warning open and the others on one line each; that, and the three doors as plain buttons
-     * whose text moves to a tooltip (a small window).
+     * whose text moves to a tooltip (a small window); every warning on one line. Past that
+     * (a tiny window) the screen scrolls.
      */
-    private enum Fit { FULL, FOLDED, TIGHT }
+    private enum Fit { FULL, FOLDED, TIGHT, LINES }
 
     /**
      * Something the player should know, as a card: its colored edge, its one-line title (what
@@ -67,7 +72,7 @@ public final class HealthScreen extends Page {
         }
         for (int i = 0; i < warnings.size(); i++) {
             Warning warning = warnings.get(i);
-            if (fit == Fit.FULL || i == open) {
+            if (fit == Fit.FULL || i == open && fit != Fit.LINES) {
                 warning.full.accept(body);
             } else {
                 int index = i;
@@ -75,11 +80,12 @@ public final class HealthScreen extends Page {
                 c.row(warning.title, Keel.TEXT, new KeelButton(60,
                         Component.translatable("modkeel.health.show"), b -> {
                     open = index;
+                    chose = true;
                     rebuildWidgets();
                 }));
             }
         }
-        tiles(body, w, fit == Fit.TIGHT);
+        tiles(body, w, fit.compareTo(Fit.TIGHT) >= 0);
         if (g.crash == null && CrashScreen.stuck(g)) {
             body.addChild(Text.loose(Component.translatable("modkeel.cta"), w, Keel.AQUA));
         }
@@ -117,7 +123,8 @@ public final class HealthScreen extends Page {
 
     /**
      * Red when the last launch crashed; amber when a mod was turned off to let this one start,
-     * a change did not finish, or the game draws on a slow (or no) graphics driver.
+     * a change did not finish, Java has too little (or too much) memory, or the game draws on a
+     * slow (or no) graphics driver.
      */
     private List<Warning> warnings(int w) {
         List<Warning> warnings = new ArrayList<>();
@@ -146,6 +153,11 @@ public final class HealthScreen extends Page {
                 c.add(new Heading(last, c.inner()));
                 c.add(Text.in(text, c.inner(), Keel.SOFT));
             }));
+        }
+        Memory memory = MemoryCard.read(g);
+        if (MemoryCard.shown(g, memory)) {
+            warnings.add(new Warning(Keel.EDGE_WARN, MemoryCard.title(memory),
+                    body -> MemoryCard.card(this, body, w, g, memory)));
         }
         if (Graphics.shown(g)) {
             warnings.add(new Warning(Keel.EDGE_WARN, Graphics.title(), body -> Graphics.card(this, body, w, g)));

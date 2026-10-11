@@ -220,5 +220,16 @@
   "modkeel.gpu.switch_failed": "请手动设置：设置 > 系统 > 屏幕 > 显示卡，添加 %s 并选择“高性能”。",
   "modkeel.gpu.linux_nvidia": "要使用它，请用 __NV_PRIME_RENDER_OFFLOAD=1 __GLX_VENDOR_LIBRARY_NAME=nvidia 启动 Minecraft（环境变量，在启动器设置中）。",
   "modkeel.gpu.linux_amd": "要使用它，请用 DRI_PRIME=1 启动 Minecraft（环境变量，在启动器设置中）。",
-  "modkeel.gpu.hide": "不再显示"
+  "modkeel.gpu.hide": "不再显示",
+  "modkeel.mem.low_title": "Minecraft 的内存对这个整合包来说太少",
+  "modkeel.mem.low_text": "Java 可用 %s GB。有 %s 个模组时，%s GB 可避免卡顿和内存不足。",
+  "modkeel.mem.high_title": "Minecraft 占用了电脑几乎全部内存",
+  "modkeel.mem.high_text": "Java 可用电脑 %2$s GB 中的 %1$s GB，系统会开始使用硬盘，所有程序都会卡顿。这个整合包 %3$s GB 就够了。",
+  "modkeel.mem.bits32_title": "Minecraft 正在 32 位 Java 上运行",
+  "modkeel.mem.bits32_text": "32 位 Java 最多只能用约 1.5 GB，对模组来说太少。请安装 64 位 Java，或让启动器使用自带的 Java。",
+  "modkeel.mem.how_prism": "在 Prism 中：编辑实例 > 设置 > Java > 最大内存分配：%s MiB。然后重启 Minecraft。",
+  "modkeel.mem.how_curseforge": "在 CurseForge 中：设置 > Minecraft > Java Settings > 分配内存：%s MB。然后重启 Minecraft。",
+  "modkeel.mem.how_modrinth": "在 Modrinth App 中：实例设置 > Java 和内存 > 分配内存：%s MB。然后重启 Minecraft。",
+  "modkeel.mem.how_vanilla": "在 Minecraft 启动器中：安装配置 > 编辑 > 更多选项 > JVM 参数：把 -Xmx… 改为 -Xmx%sG。然后重启 Minecraft。",
+  "modkeel.mem.how_other": "在启动器中这个游戏的设置里，把最大内存设为 %s GB。然后重启 Minecraft。"
 }
