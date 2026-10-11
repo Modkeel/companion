@@ -64,7 +64,7 @@ public final class HealthScreen extends Page {
             Card c = body.addChild(new Card(w, Keel.EDGE_WARN));
             c.add(new Heading(Component.translatable("modkeel.health.last_action", CrashScreen.msg(action)),
                     c.inner()));
-            c.add(Text.in(Component.translatable("modkeel.health.turned_off"), c.inner(), Keel.SOFT));
+            c.add(Text.in(CrashScreen.msg(g.turnedOffWhy), c.inner(), Keel.SOFT));
         } else if (failed) {
             Card c = body.addChild(new Card(w, Keel.EDGE_WARN));
             c.add(new Heading(Component.translatable("modkeel.health.last_action", CrashScreen.msg(action)),

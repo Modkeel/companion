@@ -3,10 +3,8 @@ package modkeel.companion.early;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardOpenOption;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.stream.Stream;
@@ -23,14 +21,13 @@ import org.apache.logging.log4j.Logger;
  * (a jar made for a newer Minecraft, where the format changed) stops the game with no message
  * and no report, on every start, before Modkeel could run. So each jar's access transformer,
  * and those of the jars it bundles, is read first with Forge's own parser; a jar that would
- * stop the game is turned off, and a note left for Modkeel to show once the game is up.
+ * stop the game is turned off, and a note left for Modkeel to show once the game is up
+ * ({@link Note}).
  */
 final class AccessCheck {
     static final Logger LOG = LogManager.getLogger("modkeel");
     static final String AT = "META-INF/accesstransformer.cfg";
     static final String BUNDLED = "META-INF/jarjar/";
-    /** Read by Guardian: one "jar<TAB>disabled jar" line per jar turned off. */
-    static final String NOTE = "early.txt";
 
     private AccessCheck() {
     }
@@ -48,12 +45,11 @@ final class AccessCheck {
             LOG.warn("[modkeel] cannot list " + mods + ": " + e);
             return;
         }
-        StringBuilder note = new StringBuilder();
         for (Path jar : jars) {
             if (!breaks(jar)) {
                 continue;
             }
-            Path off = disabledName(jar);
+            Path off = Note.disabledName(jar);
             try {
                 Files.move(jar, off);
             } catch (IOException e) {
@@ -62,17 +58,7 @@ final class AccessCheck {
             }
             LOG.info("[modkeel] turned off " + jar.getFileName() + ": Forge cannot read its access"
                      + " transformer (made for another Minecraft version) and would close the game");
-            note.append(jar.getFileName()).append('\t').append(off.getFileName()).append('\n');
-        }
-        if (note.length() > 0) {
-            Path file = gameDir.resolve("modkeel").resolve(NOTE);
-            try {
-                Files.createDirectories(file.getParent());
-                Files.write(file, note.toString().getBytes(StandardCharsets.UTF_8),
-                        StandardOpenOption.CREATE, StandardOpenOption.APPEND);
-            } catch (IOException e) {
-                LOG.warn("[modkeel] cannot write " + file + ": " + e);
-            }
+            Note.add(gameDir, jar, off, "at");
         }
     }
 
@@ -126,14 +112,5 @@ final class AccessCheck {
         } finally {
             Files.deleteIfExists(tmp);
         }
-    }
-
-    /** "x.jar" to "x.jar.disabled", as Modkeel names the jars it turns off. */
-    static Path disabledName(Path jar) {
-        Path p = jar.resolveSibling(jar.getFileName() + ".disabled");
-        for (int i = 2; Files.exists(p); i++) {
-            p = jar.resolveSibling(jar.getFileName() + "." + i + ".disabled");
-        }
-        return p;
     }
 }

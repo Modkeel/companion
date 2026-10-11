@@ -6,13 +6,17 @@ import java.util.Set;
 import cpw.mods.modlauncher.api.IEnvironment;
 import cpw.mods.modlauncher.api.ITransformationService;
 import cpw.mods.modlauncher.api.ITransformer;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
- * Forge loads this with its own services, before it looks for mods: the one moment a check can
- * still keep a broken jar from stopping the start ({@link ModuleCheck}: two jars with one
- * package; {@link AccessCheck}: an access transformer Forge cannot read). Transforms nothing.
+ * NeoForge loads this with its own services, before it looks for mods and before it builds the
+ * module layer they share: the one moment a check can still keep two jars with one package from
+ * stopping every start ({@link ModuleCheck}). Transforms nothing.
  */
 public final class EarlyService implements ITransformationService {
+    static final Logger LOG = LogManager.getLogger("modkeel");
+
     @Override
     public String name() {
         return "modkeel";
@@ -27,21 +31,15 @@ public final class EarlyService implements ITransformationService {
     public void initialize(IEnvironment env) {
         env.getProperty(IEnvironment.Keys.GAMEDIR.get()).ifPresent(dir -> {
             try {
-                ModuleCheck.run(dir, AccessCheck.LOG::info);
+                ModuleCheck.run(dir, LOG::info);
             } catch (RuntimeException | LinkageError e) {
-                AccessCheck.LOG.warn("[modkeel] cannot check the last start: " + e);
-            }
-            try {
-                AccessCheck.run(dir);
-            } catch (RuntimeException | LinkageError e) {
-                AccessCheck.LOG.warn("[modkeel] cannot check the access transformers: " + e);
+                LOG.warn("[modkeel] cannot check the last start: " + e);
             }
         });
     }
 
     @Override
-    @SuppressWarnings("rawtypes")
-    public List<ITransformer> transformers() {
+    public List<? extends ITransformer<?>> transformers() {
         return List.of();
     }
 }

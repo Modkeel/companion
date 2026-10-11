@@ -78,6 +78,8 @@
   "modkeel.health.crash_open": "Ver o que houve",
   "modkeel.health.last_fail": "Alguns arquivos não puderam ser alterados: feche o Minecraft por completo e abra de novo.",
   "modkeel.health.turned_off": "Ele foi feito para outra versão do Minecraft: o Forge não conseguia lê-lo e fecharia o jogo antes de abrir. Você pode ligá-lo de novo em Mods, mas ele será desligado outra vez enquanto impedir o jogo de abrir.",
+  "modkeel.health.turned_off_module": "Ele e %s contêm o mesmo pacote (%s), e o jogo não consegue abrir com os dois: ele fechava antes de carregar qualquer mod. Você pode ligá-lo de novo em Mods depois de desligar o outro.",
+  "modkeel.health.turned_off_module_game": "Ele contém o pacote %s, que o jogo já tem, então o jogo fechava antes de carregar qualquer mod. Você pode ligá-lo de novo em Mods, mas ele será desligado outra vez enquanto impedir o jogo de abrir.",
   "modkeel.cta": "O Modkeel pode buscar versões dos seus mods que funcionem juntas hoje: modkeel.com",
   "modkeel.action.disabled": "%s desativado",
   "modkeel.action.turned_off": "%s desligado",

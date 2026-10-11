@@ -166,8 +166,15 @@ public final class Diagnosis {
         return d;
     }
 
+    /**
+     * Also the loaders' own modules and Java's, named in stack frames as modules
+     * ("cpw.mods.bootstraplauncher", "java.base"): a mod id never has a dot.
+     */
     private static boolean platform(String id) {
-        return PLATFORM.contains(id) || id.startsWith("fabric-") || id.startsWith("fabric_");
+        return PLATFORM.contains(id) || id.startsWith("fabric-") || id.startsWith("fabric_")
+               || id.startsWith("cpw.mods.") || id.startsWith("net.neoforged.")
+               || id.startsWith("net.minecraftforge.") || id.startsWith("java.")
+               || id.startsWith("jdk.");
     }
 
     /** A declared mod that is not part of the platform: one a player can act on. */

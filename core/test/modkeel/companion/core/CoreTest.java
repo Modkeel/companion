@@ -43,6 +43,7 @@ public final class CoreTest {
         run("guardian: crash found once", CoreTest::guardianCrash);
         run("guardian: crash that stopped the start", CoreTest::guardianStartingCrash);
         run("crash only the log kept", CoreTest::logCrash);
+        run("guardian: a module clash the early check handled", CoreTest::guardianClashHandled);
         run("guardian: crash in the last start's log", CoreTest::guardianLogCrash);
         run("crash that hung the game before its report", CoreTest::hungCrash);
         run("crash watch: report and close a game stuck after its crash", CoreTest::crashWatch);
@@ -430,6 +431,16 @@ public final class CoreTest {
         g = new Guardian(game);
         g.startup();
         eq(List.of(), g.turnedOff, "nothing on the next start");
+        eq("modkeel.health.turned_off", Msg.key(g.turnedOffWhy), "an access transformer, by default");
+        // two jars with one package (the module check): the other jar and the package come along
+        jar(mods, "split.jar.disabled", "split", null, "lib/A.class");
+        jar(mods, "other.jar", "other", null, "lib/A.class");
+        Files.writeString(note, "split.jar\tsplit.jar.disabled\tmodule\tother.jar\tlib\n");
+        g = new Guardian(game);
+        g.startup();
+        eq(List.of("SPLIT Mod"), g.turnedOff, "module clash: turned off, by name");
+        eq("modkeel.health.turned_off_module", Msg.key(g.turnedOffWhy), "module clash: why");
+        eq(List.of("OTHER Mod", "lib"), List.of(Msg.args(g.turnedOffWhy)), "module clash: with what");
     }
 
     static void guardianCrash() throws Exception {
@@ -521,6 +532,30 @@ public final class CoreTest {
         eq(null, g.worldAtCrash, "no world open");
         Files.setLastModifiedTime(gz, FileTime.fromMillis(System.currentTimeMillis() - 1000));
         eq(null, new Guardian(game).checkCrashes(), "read once");
+    }
+
+    static void guardianClashHandled() throws Exception {
+        // NeoForge 1.21.1: two mods with one package stopped the start before any mod ran
+        Path game = tmp();
+        Path mods = game.resolve("mods");
+        jar(mods, "mfsplita.jar", "mfsplita", null, "modkeel/split/A.class");
+        jar(mods, "mfsplitb.jar.disabled", "mfsplitb", null, "modkeel/split/A.class");
+        Path logs = game.resolve("logs");
+        Files.createDirectories(logs);
+        Path gz = logs.resolve("2026-10-11-1.log.gz");
+        try (java.io.OutputStream out = new java.util.zip.GZIPOutputStream(Files.newOutputStream(gz))) {
+            Files.copy(fixtures.resolve("neoforge-log-module-clash.log"), out);
+        }
+        Files.setLastModifiedTime(gz, FileTime.fromMillis(System.currentTimeMillis() + 1000));
+        Diagnosis unhandled = new Guardian(game).startup();
+        check(unhandled == null || unhandled.top() == null,
+              "never blamed on the loader's own modules: " + (unhandled == null ? null : unhandled.top()));
+        Files.setLastModifiedTime(gz, FileTime.fromMillis(System.currentTimeMillis() + 2000));
+        Path note = game.resolve("modkeel").resolve("early.txt");
+        Files.writeString(note, "mfsplitb.jar\tmfsplitb.jar.disabled\tmodule\tmfsplita.jar\tmodkeel.split\n");
+        Guardian g = new Guardian(game);
+        eq(null, g.startup(), "handled before the start: no crash to show");
+        eq(List.of("MFSPLITB Mod"), g.turnedOff, "the health screen shows what was turned off");
     }
 
     static void hungCrash() throws Exception {

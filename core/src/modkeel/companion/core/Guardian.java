@@ -45,6 +45,11 @@ public final class Guardian {
      * (Forge: an access transformer it cannot read); their names.
      */
     public final List<String> turnedOff = new ArrayList<>();
+    /**
+     * Why the early check turned them off, as a {@link Msg}: an access transformer Forge cannot
+     * read, or two jars with one package (then naming the other jar and the package).
+     */
+    public String turnedOffWhy = Msg.of("modkeel.health.turned_off");
 
     /** The crash found at startup, if any, and its report file. */
     public Diagnosis crash;
@@ -376,6 +381,11 @@ public final class Guardian {
                 if (report == null) {
                     return null;
                 }
+                if (clashHandled(text)) {
+                    Log.info("the last start stopped on two jars with one package: one was turned"
+                             + " off before this start");
+                    return null;
+                }
                 // the player opens this one, not a .gz no program on their system may read
                 plain = home.resolve("last-crash.log");
                 Files.createDirectories(home);
@@ -404,6 +414,18 @@ public final class Guardian {
                  + (d.top() == null ? ", no suspect" : ", suspect " + d.top().id + " ("
                     + d.confidence + ", " + Msg.plain(String.join("; ", d.top().reasons)) + ")"));
         return d;
+    }
+
+    /**
+     * The last start stopped when Java refused two jars with one package, and the early check
+     * already turned one of them off at this start: the health screen says so, there is no
+     * crash left to diagnose (its stack is the loader's, not a mod's).
+     */
+    private boolean clashHandled(String log) {
+        return !turnedOff.isEmpty()
+               && Msg.key(turnedOffWhy).startsWith("modkeel.health.turned_off_module")
+               && (log.contains("java.lang.module.ResolutionException")
+                   || log.contains("java.lang.LayerInstantiationException"));
     }
 
     /** The crash found at startup is only in the last start's log: it had no report. */
@@ -727,9 +749,11 @@ public final class Guardian {
     }
 
     /**
-     * The note the early check (forge-early's AccessCheck) left at this start: one
-     * "jar<TAB>disabled jar" line per jar it turned off. They become Modkeel's last change, and
-     * stay listed with the jars Modkeel disabled, so the player can turn them back on.
+     * The note the early check (the Forge and NeoForge early services) left at this start: one
+     * "jar<TAB>disabled jar[<TAB>why<TAB>detail...]" line per jar it turned off, why being "at"
+     * (an access transformer Forge cannot read) or "module" (two jars with one package; then the
+     * other jar and the package). They become Modkeel's last change, and stay listed with the
+     * jars Modkeel disabled, so the player can turn them back on.
      */
     private void takeTurnedOff() {
         Path f = home.resolve("early.txt");
@@ -741,10 +765,16 @@ public final class Guardian {
         try {
             for (String line : Files.readAllLines(f, StandardCharsets.UTF_8)) {
                 String[] p = line.split("\t");
-                if (p.length != 2) {
+                if (p.length < 2) {
                     continue;
                 }
                 turnedOff.add(displayName(modsDir.resolve(p[1]), p[0]));
+                if (p.length >= 5 && p[2].equals("module")) {
+                    String other = p[3].isEmpty() ? p[4] : displayName(modsDir.resolve(p[3]), p[3]);
+                    turnedOffWhy = p[3].isEmpty()
+                            ? Msg.of("modkeel.health.turned_off_module_game", p[4])
+                            : Msg.of("modkeel.health.turned_off_module", other, p[4]);
+                }
                 if (!disabled.contains(p[1])) {
                     disabled.add(p[1]);
                 }

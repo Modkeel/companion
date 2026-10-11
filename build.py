@@ -209,18 +209,35 @@ def class_sections(mc: str, out: Path) -> Path:
     return out
 
 
-def early(mc: str, out: Path, meta: dict[str, str | bytes], inner: Path, tmp: Path) -> None:
-    """Forge: the published jar is forge-early's service, run before Forge looks for mods, with
-    the mod inside it. Its metadata stays outside too, for the sites that read it; Forge skips
-    a jar with services when it looks for mods, so only the inner mod loads."""
-    cp, _ = remap.forge_classpath(mc)
+def early_sources(loader: str) -> list[Path]:
+    """The early service of `loader` and what both loaders' services share (early-common)."""
+    return sorted([*(HERE / f"{loader}-early" / "src").rglob("*.java"),
+                   *(HERE / "early-common" / "src").rglob("*.java")])
+
+
+def test_early(tmp: Path) -> None:
+    """early-common's checks against made-up jars and logs (plain Java, no loader)."""
+    classes, tests = tmp / "early-common", tmp / "early-test"
+    javac(17, [], sorted((HERE / "early-common" / "src").rglob("*.java")), classes)
+    javac(17, [classes], sorted((HERE / "early-common" / "test").rglob("*.java")), tests)
+    subprocess.run([tc.jdk_tool("java"), "-cp", tc.SEP.join([str(classes), str(tests)]),
+                    "modkeel.companion.early.EarlyTest"], check=True)
+
+
+def early(mc: str, loader: str, out: Path, meta: dict[str, str | bytes], inner: Path,
+          tmp: Path) -> None:
+    """Forge and NeoForge: the published jar is the loader's early service (forge-early,
+    neoforge-early), run before the loader looks for mods, with the mod inside it. Its metadata
+    stays outside too, for the sites that read it; the loader skips a jar with services when it
+    looks for mods, so only the inner mod loads. The service's package (modkeel.companion.early)
+    is in no other Modkeel jar: the mod's layer would refuse a package its parent layer has."""
+    cp = remap.forge_classpath(mc)[0] if loader == "forge" else remap.neoforge_classpath(mc)
     classes = tmp / "classes"
-    javac(remap.java_release(mc), cp, sorted((HERE / "forge-early" / "src").rglob("*.java")),
-          classes)
+    javac(remap.java_release(mc), cp, early_sources(loader), classes)
     manifest = "Manifest-Version: 1.0\nAutomatic-Module-Name: modkeel.companion.early\n"
     write_jar(out, {"META-INF/MANIFEST.MF": manifest, **meta,
                     "META-INF/modkeel/companion.jar": inner.read_bytes()},
-              [classes], [HERE / "forge-early" / "resources"])
+              [classes], [HERE / f"{loader}-early" / "resources"])
 
 
 def build(mc: str, loader: str = "fabric", run_tests: bool = True) -> dict[str, Path]:
@@ -230,6 +247,8 @@ def build(mc: str, loader: str = "fabric", run_tests: bool = True) -> dict[str, 
         core = build_core(tmp)
         if run_tests:
             test_core(core, tmp)
+            if loader != "fabric":
+                test_early(tmp)
         game = [*(HERE / "game" / "src").rglob("*.java"), *version_sources(HERE / "game", v)]
         adapter = [*(HERE / loader / "src").rglob("*.java"), *version_sources(HERE / loader, v)]
         resources = [HERE / "game" / "resources", HERE / loader / "resources"]
@@ -262,12 +281,9 @@ def build(mc: str, loader: str = "fabric", run_tests: bool = True) -> dict[str, 
                 "${updates}", UPDATES_URL).replace("${minecraft}", game_range).replace(
                 "${" + loader + "}", loader_range)
             meta = loader_metadata(loader, v, toml, "Modkeel Companion")
-            if loader == "forge":
-                inner = tmp / "inner.jar"
-                write_jar(inner, meta, [core, classes], resources)
-                early(mc, mod, meta, inner, tmp / "early")
-            else:
-                write_jar(mod, meta, [core, classes], resources)
+            inner = tmp / "inner.jar"
+            write_jar(inner, meta, [core, classes], resources)
+            early(mc, loader, mod, meta, inner, tmp / "early")
             for (test_mod, name), jar in zip((("mfcrash", "Crash Test Mod"),
                                               ("mfidle", "Mouse Release Test Mod")),
                                              test_jars(mc, loader)):

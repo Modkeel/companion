@@ -78,6 +78,8 @@
   "modkeel.health.crash_open": "See what happened",
   "modkeel.health.last_fail": "Some files could not be changed: close Minecraft fully and start it again.",
   "modkeel.health.turned_off": "It was made for another Minecraft version: Forge could not read it and would have closed the game before it started. You can turn it back on from Mods, but it will be turned off again while it stops the game.",
+  "modkeel.health.turned_off_module": "It and %s both contain the package %s, and the game cannot start with both: it closed before loading any mod. You can turn it back on from Mods, after turning the other one off.",
+  "modkeel.health.turned_off_module_game": "It contains the package %s, which the game already has, so the game closed before loading any mod. You can turn it back on from Mods, but it will be turned off again while it stops the game.",
   "modkeel.cta": "Modkeel can look for versions of your mods that work together today: modkeel.com",
   "modkeel.action.disabled": "Disabled %s",
   "modkeel.action.turned_off": "Turned off %s",
