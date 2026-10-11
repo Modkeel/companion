@@ -88,6 +88,7 @@
   "modkeel.health.clash_swap_action": "Заменить и закрыть",
   "modkeel.health.details": "Подробнее",
   "modkeel.health.hide_details": "Скрыть подробности",
+  "modkeel.health.show": "Показать",
   "modkeel.health.clash_details": "Оба содержат Java-пакет %s. Java не загружает две копии одного пакета, поэтому игра закрылась бы до загрузки модов. Обычно два мода включают одну и ту же библиотеку; их авторы могут исправить это, переместив её.",
   "modkeel.action.swapped": "%s снова включён, %s выключен",
   "modkeel.cta": "Modkeel может найти версии ваших модов, которые работают вместе уже сегодня: modkeel.com",

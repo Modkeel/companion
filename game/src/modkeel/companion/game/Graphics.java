@@ -59,7 +59,7 @@ final class Graphics {
                 && !"off".equals(g.state.get("gpuNotice", "on"));
     }
 
-    private static Component title() {
+    static Component title() {
         return Component.translatable(gpu.unused != null ? "modkeel.gpu.unused_title"
                 : "modkeel.gpu.software_title");
     }

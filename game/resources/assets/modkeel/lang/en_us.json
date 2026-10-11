@@ -88,6 +88,7 @@
   "modkeel.health.clash_swap_action": "Swap and close",
   "modkeel.health.details": "Details",
   "modkeel.health.hide_details": "Hide details",
+  "modkeel.health.show": "Show",
   "modkeel.health.clash_details": "Both contain the Java package %s. Java won't load two copies of one package, so the game would close before loading any mod. Usually two mods bundle the same library; their authors can fix it by relocating it.",
   "modkeel.action.swapped": "Turned %s back on and %s off",
   "modkeel.cta": "Modkeel can look for versions of your mods that work together today: modkeel.com",

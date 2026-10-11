@@ -88,6 +88,7 @@
   "modkeel.health.clash_swap_action": "Cambiar y cerrar",
   "modkeel.health.details": "Detalles",
   "modkeel.health.hide_details": "Ocultar detalles",
+  "modkeel.health.show": "Ver",
   "modkeel.health.clash_details": "Los dos contienen el paquete de Java %s. Java no carga dos copias de un mismo paquete, así que el juego se cerraría antes de cargar ningún mod. Suele pasar cuando dos mods incluyen la misma librería; sus autores pueden arreglarlo reubicándola.",
   "modkeel.action.swapped": "Se activó %s y se apagó %s",
   "modkeel.cta": "Modkeel puede buscar versiones de tus mods que funcionen juntas hoy: modkeel.com",

@@ -88,6 +88,7 @@
   "modkeel.health.clash_swap_action": "Tauschen und schließen",
   "modkeel.health.details": "Details",
   "modkeel.health.hide_details": "Details ausblenden",
+  "modkeel.health.show": "Anzeigen",
   "modkeel.health.clash_details": "Beide enthalten das Java-Paket %s. Java lädt keine zwei Kopien eines Pakets, deshalb würde sich das Spiel schließen, bevor ein Mod geladen ist. Meist bündeln zwei Mods dieselbe Bibliothek; ihre Autoren können das durch Verschieben (Relocation) beheben.",
   "modkeel.action.swapped": "%s wieder eingeschaltet und %s ausgeschaltet",
   "modkeel.cta": "Modkeel kann Versionen deiner Mods suchen, die heute zusammen funktionieren: modkeel.com",

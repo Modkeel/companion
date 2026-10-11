@@ -44,6 +44,11 @@ abstract class Page extends Screen {
         repositionElements();
     }
 
+    /** The height the body can use before it scrolls. */
+    int room() {
+        return Compat.contentHeight(layout) - 2 * Keel.INSET_Y;
+    }
+
     /** Opens {@code next}; Back there comes here. */
     void open(Screen next) {
         Compat.setScreen(minecraft, next);

@@ -88,6 +88,7 @@
   "modkeel.health.clash_swap_action": "替换并关闭",
   "modkeel.health.details": "详情",
   "modkeel.health.hide_details": "隐藏详情",
+  "modkeel.health.show": "查看",
   "modkeel.health.clash_details": "两者都包含 Java 包 %s。Java 不会加载同一个包的两份副本，因此游戏会在加载任何模组之前关闭。通常是两个模组打包了同一个库；它们的作者可以通过重定位该库来修复。",
   "modkeel.action.swapped": "已重新启用 %s 并关闭 %s",
   "modkeel.cta": "Modkeel 可以帮你找到如今能一起运行的模组版本：modkeel.com",

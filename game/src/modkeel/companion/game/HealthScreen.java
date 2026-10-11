@@ -3,12 +3,14 @@ package modkeel.companion.game;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 
 import modkeel.companion.core.Backups;
 import modkeel.companion.core.Diagnosis;
 import modkeel.companion.core.Guardian;
 import modkeel.companion.core.Spikes;
 import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.layouts.SpacerElement;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.CommonComponents;
@@ -22,6 +24,8 @@ public final class HealthScreen extends Page {
     private final Guardian g;
     /** The clash cards show their technical details (the package) only when asked. */
     private boolean details;
+    /** The warning shown in full when they do not all fit; the others fold to one line. */
+    private int open;
 
     public HealthScreen(Screen back, Guardian g) {
         super(Component.translatable("modkeel.health.title"), back);
@@ -30,12 +34,63 @@ public final class HealthScreen extends Page {
 
     @Override
     protected void body(Stack body, int w) {
-        status(body, w);
-        Graphics.card(this, body, w, g);
-        tiles(body, w);
+        List<Warning> warnings = warnings(w);
+        open = Math.min(open, Math.max(0, warnings.size() - 1));
+        Fit fit = Fit.FULL;
+        while (fit != Fit.TIGHT && tooTall(warnings, w, fit)) {
+            fit = Fit.values()[fit.ordinal() + 1];
+        }
+        fill(body, w, warnings, fit);
+    }
+
+    /**
+     * How much the screen gives up to fit without scrolling, tried in order: everything; one
+     * warning open and the others on one line each; that, and the three doors as plain buttons
+     * whose text moves to a tooltip (a small window).
+     */
+    private enum Fit { FULL, FOLDED, TIGHT }
+
+    /**
+     * Something the player should know, as a card: its colored edge, its one-line title (what
+     * a folded warning shows) and the full card.
+     */
+    private record Warning(int edge, Component title, Consumer<Stack> full) {
+    }
+
+    /**
+     * Status first, then the cards that are only shown when something needs a look, then the
+     * three doors, as compact as {@code fit} asks: below the scroll edge nobody sees them.
+     */
+    private void fill(Stack body, int w, List<Warning> warnings, Fit fit) {
+        if (!statusWarns()) {
+            ok(body, w);
+        }
+        for (int i = 0; i < warnings.size(); i++) {
+            Warning warning = warnings.get(i);
+            if (fit == Fit.FULL || i == open) {
+                warning.full.accept(body);
+            } else {
+                int index = i;
+                Card c = body.addChild(new Card(w, warning.edge));
+                c.row(warning.title, Keel.TEXT, new KeelButton(60,
+                        Component.translatable("modkeel.health.show"), b -> {
+                    open = index;
+                    rebuildWidgets();
+                }));
+            }
+        }
+        tiles(body, w, fit == Fit.TIGHT);
         if (g.crash == null && CrashScreen.stuck(g)) {
             body.addChild(Text.loose(Component.translatable("modkeel.cta"), w, Keel.AQUA));
         }
+    }
+
+    /** Laid out in full on a scratch column: does it need the scroll bar? */
+    private boolean tooTall(List<Warning> warnings, int w, Fit fit) {
+        Stack test = Stack.vertical(6);
+        fill(test, w, warnings, fit);
+        test.arrangeElements();
+        return test.getHeight() > room();
     }
 
     @Override
@@ -45,45 +100,73 @@ public final class HealthScreen extends Page {
         footer.addChild(new KeelButton(150, CommonComponents.GUI_DONE, b -> onClose()));
     }
 
-    /**
-     * Red when the last launch crashed, amber when a mod was turned off to let this one start
-     * or a change did not finish, green otherwise.
-     */
-    private void status(Stack body, int w) {
-        String action = g.state.get("lastAction", "");
-        boolean failed = !action.isEmpty()
+    private String action() {
+        return g.state.get("lastAction", "");
+    }
+
+    /** The last change did not finish: some files were held open. */
+    private boolean failed() {
+        return !action().isEmpty()
                 && g.state.getList("lastResult").stream().anyMatch(l -> l.startsWith("fail"));
+    }
+
+    /** Whether the status itself is a warning (else it is the green card). */
+    private boolean statusWarns() {
+        return g.crash != null || !g.clashes.isEmpty() || !g.turnedOff.isEmpty() || failed();
+    }
+
+    /**
+     * Red when the last launch crashed; amber when a mod was turned off to let this one start,
+     * a change did not finish, or the game draws on a slow (or no) graphics driver.
+     */
+    private List<Warning> warnings(int w) {
+        List<Warning> warnings = new ArrayList<>();
+        Component last = Component.translatable("modkeel.health.last_action", CrashScreen.msg(action()));
         if (g.crash != null) {
-            Card c = body.addChild(new Card(w, Keel.EDGE_BAD));
-            Diagnosis.Suspect s = g.crash.top();
-            Button open = new KeelButton(120, Component.translatable("modkeel.health.crash_open"),
-                    b -> open(new CrashScreen(this, g)));
-            c.add(new Heading(Component.translatable("modkeel.health.crash"), c.inner()));
-            c.row(s == null ? Component.translatable("modkeel.crash.unclear")
-                    : Component.translatable("modkeel.home.likely", CrashScreen.likely(g.crash), s.name),
-                    Keel.SOFT, open);
+            Component title = Component.translatable("modkeel.health.crash");
+            warnings.add(new Warning(Keel.EDGE_BAD, title, body -> {
+                Card c = body.addChild(new Card(w, Keel.EDGE_BAD));
+                Diagnosis.Suspect s = g.crash.top();
+                Button open = new KeelButton(120, Component.translatable("modkeel.health.crash_open"),
+                        b -> open(new CrashScreen(this, g)));
+                c.add(new Heading(title, c.inner()));
+                c.row(s == null ? Component.translatable("modkeel.crash.unclear")
+                        : Component.translatable("modkeel.home.likely", CrashScreen.likely(g.crash), s.name),
+                        Keel.SOFT, open);
+            }));
         } else if (!g.clashes.isEmpty()) {
             for (Guardian.Clash clash : g.clashes.subList(0, Math.min(g.clashes.size(), 3))) {
-                clash(body, w, clash);
+                warnings.add(new Warning(Keel.EDGE_WARN, clashTitle(clash), body -> clash(body, w, clash)));
             }
-        } else if (!g.turnedOff.isEmpty()) {
-            Card c = body.addChild(new Card(w, Keel.EDGE_WARN));
-            c.add(new Heading(Component.translatable("modkeel.health.last_action", CrashScreen.msg(action)),
-                    c.inner()));
-            c.add(Text.in(Component.translatable("modkeel.health.turned_off"), c.inner(), Keel.SOFT));
-        } else if (failed) {
-            Card c = body.addChild(new Card(w, Keel.EDGE_WARN));
-            c.add(new Heading(Component.translatable("modkeel.health.last_action", CrashScreen.msg(action)),
-                    c.inner()));
-            c.add(Text.in(Component.translatable("modkeel.health.last_fail"), c.inner(), Keel.SOFT));
-        } else {
-            Card c = body.addChild(new Card(w, Keel.EDGE_OK));
-            c.add(new Heading(Component.translatable("modkeel.home.ok"), c.inner()));
-            if (!action.isEmpty()) {
-                c.add(Text.in(Component.translatable("modkeel.health.last_action", CrashScreen.msg(action)),
-                        c.inner(), Keel.GRAY));
-            }
+        } else if (!g.turnedOff.isEmpty() || failed()) {
+            Component text = Component.translatable(g.turnedOff.isEmpty() ? "modkeel.health.last_fail"
+                    : "modkeel.health.turned_off");
+            warnings.add(new Warning(Keel.EDGE_WARN, last, body -> {
+                Card c = body.addChild(new Card(w, Keel.EDGE_WARN));
+                c.add(new Heading(last, c.inner()));
+                c.add(Text.in(text, c.inner(), Keel.SOFT));
+            }));
         }
+        if (Graphics.shown(g)) {
+            warnings.add(new Warning(Keel.EDGE_WARN, Graphics.title(), body -> Graphics.card(this, body, w, g)));
+        }
+        return warnings;
+    }
+
+    /** All is well: the green card, with the last change Modkeel made. */
+    private void ok(Stack body, int w) {
+        Card c = body.addChild(new Card(w, Keel.EDGE_OK));
+        c.add(new Heading(Component.translatable("modkeel.home.ok"), c.inner()));
+        if (!action().isEmpty()) {
+            c.add(Text.in(Component.translatable("modkeel.health.last_action", CrashScreen.msg(action())),
+                    c.inner(), Keel.GRAY));
+        }
+    }
+
+    private static Component clashTitle(Guardian.Clash clash) {
+        return clash.otherFile().isEmpty()
+                ? Component.translatable("modkeel.health.clash_game_title", clash.name())
+                : Component.translatable("modkeel.health.clash_title", clash.otherName(), clash.name());
     }
 
     /**
@@ -93,10 +176,7 @@ public final class HealthScreen extends Page {
     private void clash(Stack body, int w, Guardian.Clash clash) {
         Card c = body.addChild(new Card(w, Keel.EDGE_WARN));
         boolean withGame = clash.otherFile().isEmpty();
-        c.add(new Heading(withGame
-                ? Component.translatable("modkeel.health.clash_game_title", clash.name())
-                : Component.translatable("modkeel.health.clash_title", clash.otherName(), clash.name()),
-                c.inner()));
+        c.add(new Heading(clashTitle(clash), c.inner()));
         c.add(Text.in(withGame
                 ? Component.translatable("modkeel.health.clash_game_body")
                 : Component.translatable("modkeel.health.clash_body", clash.name()), c.inner(), Keel.SOFT));
@@ -128,7 +208,7 @@ public final class HealthScreen extends Page {
     }
 
     /** Three cards side by side, the same height, their buttons on one line. */
-    private void tiles(Stack body, int w) {
+    private void tiles(Stack body, int w, boolean tight) {
         List<Tile> tiles = List.of(
                 new Tile(Component.translatable("modkeel.home.worlds"), worldsText(),
                         Component.translatable("modkeel.home.worlds_go"), b -> open(new WorldsScreen(this, g))),
@@ -137,6 +217,14 @@ public final class HealthScreen extends Page {
                 new Tile(Component.translatable("modkeel.home.spikes"), spikesText(),
                         Component.translatable("modkeel.home.spikes_go"), b -> open(new SpikeScreen(this))));
         int tw = (w - 2 * GAP) / 3;
+        if (tight) {
+            Stack row = body.addChild(Stack.horizontal(GAP));
+            for (Tile t : tiles) {
+                Button b = row.addChild(new KeelButton(tw, t.title, t.press));
+                b.setTooltip(Tooltip.create(t.text));
+            }
+            return;
+        }
         int in = tw - 2 * Card.PAD;
         List<Heading> heads = new ArrayList<>();
         List<Text> texts = new ArrayList<>();
