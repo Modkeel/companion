@@ -34,7 +34,8 @@ import java.util.zip.ZipInputStream;
  * One jar per start: Java only reports the first clash, and each start reads the one before.
  *
  * <p>Plain Java only: it runs before the loader and is shared by the Forge and NeoForge early
- * services; the logger is passed in.
+ * services; the logger is passed in. NeoForge logs the clash; Forge 1.20.1 only prints it to
+ * stderr, so there the check finds nothing to act on.
  */
 public final class ModuleCheck {
     /** Java's messages for a package two modules provide (java.lang.module.Resolver, ModuleLayer). */
