@@ -45,11 +45,16 @@ public final class Guardian {
      * (Forge: an access transformer it cannot read); their names.
      */
     public final List<String> turnedOff = new ArrayList<>();
+    /** Of those, the ones turned off because they clash with another jar (one package). */
+    public final List<Clash> clashes = new ArrayList<>();
+
     /**
-     * Why the early check turned them off, as a {@link Msg}: an access transformer Forge cannot
-     * read, or two jars with one package (then naming the other jar and the package).
+     * A jar the early check turned off because it and another hold the same package, so the
+     * game could not start with both. `other` is empty when the other one is part of the game.
      */
-    public String turnedOffWhy = Msg.of("modkeel.health.turned_off");
+    public record Clash(String offFile, String name, String otherFile, String otherName,
+                        String pkg) {
+    }
 
     /** The crash found at startup, if any, and its report file. */
     public Diagnosis crash;
@@ -423,7 +428,7 @@ public final class Guardian {
      */
     private boolean clashHandled(String log) {
         return !turnedOff.isEmpty()
-               && Msg.key(turnedOffWhy).startsWith("modkeel.health.turned_off_module")
+               && !clashes.isEmpty()
                && (log.contains("java.lang.module.ResolutionException")
                    || log.contains("java.lang.LayerInstantiationException"));
     }
@@ -665,6 +670,15 @@ public final class Guardian {
         return p;
     }
 
+    /** Keep the jar a clash turned off and turn the other one off instead. */
+    public Plan swapPlan(Clash c) {
+        Plan p = enablePlan(c.offFile());
+        p.title = Msg.of("modkeel.action.swapped", c.name(), c.otherName());
+        Path other = modsDir.resolve(c.otherFile());
+        p.move(other, Plan.disabledName(other));
+        return p;
+    }
+
     /** Apply a fix picked on the crash screen and watch whether it holds. */
     public void applyCrashFix(Plan plan, Path selfJar) {
         if (crash != null) {
@@ -768,12 +782,11 @@ public final class Guardian {
                 if (p.length < 2) {
                     continue;
                 }
-                turnedOff.add(displayName(modsDir.resolve(p[1]), p[0]));
+                String name = displayName(modsDir.resolve(p[1]), p[0]);
+                turnedOff.add(name);
                 if (p.length >= 5 && p[2].equals("module")) {
-                    String other = p[3].isEmpty() ? p[4] : displayName(modsDir.resolve(p[3]), p[3]);
-                    turnedOffWhy = p[3].isEmpty()
-                            ? Msg.of("modkeel.health.turned_off_module_game", p[4])
-                            : Msg.of("modkeel.health.turned_off_module", other, p[4]);
+                    clashes.add(new Clash(p[1], name, p[3],
+                            p[3].isEmpty() ? "" : displayName(modsDir.resolve(p[3]), p[3]), p[4]));
                 }
                 if (!disabled.contains(p[1])) {
                     disabled.add(p[1]);

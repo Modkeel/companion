@@ -431,7 +431,7 @@ public final class CoreTest {
         g = new Guardian(game);
         g.startup();
         eq(List.of(), g.turnedOff, "nothing on the next start");
-        eq("modkeel.health.turned_off", Msg.key(g.turnedOffWhy), "an access transformer, by default");
+        eq(List.of(), g.clashes, "an access transformer is no clash");
         // two jars with one package (the module check): the other jar and the package come along
         jar(mods, "split.jar.disabled", "split", null, "lib/A.class");
         jar(mods, "other.jar", "other", null, "lib/A.class");
@@ -439,8 +439,16 @@ public final class CoreTest {
         g = new Guardian(game);
         g.startup();
         eq(List.of("SPLIT Mod"), g.turnedOff, "module clash: turned off, by name");
-        eq("modkeel.health.turned_off_module", Msg.key(g.turnedOffWhy), "module clash: why");
-        eq(List.of("OTHER Mod", "lib"), List.of(Msg.args(g.turnedOffWhy)), "module clash: with what");
+        eq(List.of(new Guardian.Clash("split.jar.disabled", "SPLIT Mod", "other.jar", "OTHER Mod", "lib")),
+           g.clashes, "module clash: with what");
+        // "use the other instead": this one back on, the other off
+        Path self = jar(game, "self.jar", "modkeel", null, "x/X.class");
+        g.apply(g.swapPlan(g.clashes.get(0)), self);
+        check(Files.exists(mods.resolve("split.jar")) && Files.exists(mods.resolve("other.jar.disabled")),
+              "swapped");
+        check(g.disabledByUs().contains("other.jar.disabled")
+              && !g.disabledByUs().contains("split.jar.disabled"), "the other one can be turned back on");
+        check(g.state.get("lastAction", "").startsWith("modkeel.action.swapped"), "swap is the last action");
     }
 
     static void guardianCrash() throws Exception {

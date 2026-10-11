@@ -27,7 +27,7 @@ public final class EarlyService implements ITransformationService {
     public void initialize(IEnvironment env) {
         env.getProperty(IEnvironment.Keys.GAMEDIR.get()).ifPresent(dir -> {
             try {
-                ModuleCheck.run(dir, AccessCheck.LOG::info);
+                ModuleCheck.run(dir, "META-INF/mods.toml", AccessCheck.LOG::info);
             } catch (RuntimeException | LinkageError e) {
                 AccessCheck.LOG.warn("[modkeel] cannot check the last start: " + e);
             }

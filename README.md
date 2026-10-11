@@ -127,7 +127,7 @@ report shows which engine and why, so you can judge for yourself.
 | `core/` | Loader-agnostic logic: mod sets, world backups, crash diagnosis, fixes. Plain Java 17, with its own tests |
 | `game/` | What only needs Minecraft: screens, backup and tick hooks, translations |
 | `fabric/`, `neoforge/`, `forge/` | Thin entrypoints per loader |
-| `forge-early/`, `neoforge-early/` | A service that runs before the loader reads the mods and carries the mod inside: it turns off a jar that would close the game before any mod runs (NeoForge: two jars with one package; Forge: an access transformer it cannot read) |
+| `forge-early/`, `neoforge-early/` | A service that runs before the loader reads the mods and carries the mod inside: it turns off a jar that would close the game before any mod runs (two mods with the same package; on Forge also an access transformer it cannot read) |
 | `early-common/` | What both services share, plain Java with its own tests |
 | `*/versions/<v>/` | What changed between Minecraft versions |
 | `testmods/` | Mods that crash on demand, for end-to-end tests |

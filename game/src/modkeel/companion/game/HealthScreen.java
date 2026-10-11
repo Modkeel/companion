@@ -20,6 +20,8 @@ public final class HealthScreen extends Page {
     private static final int GAP = 6;
 
     private final Guardian g;
+    /** The clash cards show their technical details (the package) only when asked. */
+    private boolean details;
 
     public HealthScreen(Screen back, Guardian g) {
         super(Component.translatable("modkeel.health.title"), back);
@@ -60,11 +62,15 @@ public final class HealthScreen extends Page {
             c.row(s == null ? Component.translatable("modkeel.crash.unclear")
                     : Component.translatable("modkeel.home.likely", CrashScreen.likely(g.crash), s.name),
                     Keel.SOFT, open);
+        } else if (!g.clashes.isEmpty()) {
+            for (Guardian.Clash clash : g.clashes.subList(0, Math.min(g.clashes.size(), 3))) {
+                clash(body, w, clash);
+            }
         } else if (!g.turnedOff.isEmpty()) {
             Card c = body.addChild(new Card(w, Keel.EDGE_WARN));
             c.add(new Heading(Component.translatable("modkeel.health.last_action", CrashScreen.msg(action)),
                     c.inner()));
-            c.add(Text.in(CrashScreen.msg(g.turnedOffWhy), c.inner(), Keel.SOFT));
+            c.add(Text.in(Component.translatable("modkeel.health.turned_off"), c.inner(), Keel.SOFT));
         } else if (failed) {
             Card c = body.addChild(new Card(w, Keel.EDGE_WARN));
             c.add(new Heading(Component.translatable("modkeel.health.last_action", CrashScreen.msg(action)),
@@ -77,6 +83,44 @@ public final class HealthScreen extends Page {
                 c.add(Text.in(Component.translatable("modkeel.health.last_action", CrashScreen.msg(action)),
                         c.inner(), Keel.GRAY));
             }
+        }
+    }
+
+    /**
+     * Two mods that cannot be used together: which one Modkeel turned off so the game could
+     * start, a button to keep that one instead, and the technical reason only on request.
+     */
+    private void clash(Stack body, int w, Guardian.Clash clash) {
+        Card c = body.addChild(new Card(w, Keel.EDGE_WARN));
+        boolean withGame = clash.otherFile().isEmpty();
+        c.add(new Heading(withGame
+                ? Component.translatable("modkeel.health.clash_game_title", clash.name())
+                : Component.translatable("modkeel.health.clash_title", clash.otherName(), clash.name()),
+                c.inner()));
+        c.add(Text.in(withGame
+                ? Component.translatable("modkeel.health.clash_game_body")
+                : Component.translatable("modkeel.health.clash_body", clash.name()), c.inner(), Keel.SOFT));
+        Button more = new KeelButton(110, Component.translatable(
+                details ? "modkeel.health.hide_details" : "modkeel.health.details"), b -> {
+            details = !details;
+            rebuildWidgets();
+        });
+        if (withGame) {
+            c.row(Component.empty(), Keel.SOFT, more);
+        } else {
+            Component swap = Component.translatable("modkeel.health.clash_swap",
+                    CrashScreen.clip(clash.name(), 22));
+            c.row(Component.empty(), Keel.SOFT, more, new KeelButton(170, swap,
+                    b -> open(Client.confirm(this,
+                            Component.translatable("modkeel.health.clash_swap_title", clash.name(),
+                                    clash.otherName()),
+                            Component.translatable("modkeel.health.clash_swap_note", clash.otherName()),
+                            Component.translatable("modkeel.health.clash_swap_action"),
+                            () -> Client.applyAndQuit(minecraft, g, g.swapPlan(clash))))));
+        }
+        if (details) {
+            c.add(Text.in(Component.translatable("modkeel.health.clash_details", clash.pkg()),
+                    c.inner(), Keel.GRAY));
         }
     }
 
