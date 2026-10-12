@@ -1,0 +1,39 @@
+[13:08:32] [main/INFO]: ModLauncher running: args [--username, Modkeel, --version, neoforge-21.1.252, --gameDir, C:\Users\player\.modkeel\lab\client\companion-neoforge-1.21.1-clash-raw, --assetsDir, C:\Users\player\.modkeel\lab\client\assets, --assetIndex, 17, --uuid, 00000000000000000000000000000000, --accessToken, ❄❄❄❄❄❄❄❄, --clientId, , --xuid, , --userType, , --versionType, release, --fml.neoForgeVersion, 21.1.252, --fml.fmlVersion, 4.0.44, --fml.mcVersion, 1.21.1, --fml.neoFormVersion, 20240808.144430, --launchTarget, forgeclient]
+[13:08:32] [main/INFO]: JVM identified as Microsoft OpenJDK 64-Bit Server VM 21.0.7+6-LTS
+[13:08:32] [main/INFO]: ModLauncher 11.0.5+main.901c6ea8 starting: java version 21.0.7 by Microsoft; OS Windows 11 arch amd64 version 10.0
+[13:08:32] [main/INFO]: Loading ImmediateWindowProvider fmlearlywindow
+[13:08:33] [main/INFO]: Trying GL version 4.6
+[13:08:33] [main/INFO]: Requested GL version 4.6 got version 4.6
+[13:08:34] [main/INFO]: SpongePowered MIXIN Subsystem Version=0.8.7 Source=union:/C:/Users/player/.modkeel/lab/client/libraries/net/fabricmc/sponge-mixin/0.15.2+mixin.0.8.7/sponge-mixin-0.15.2+mixin.0.8.7.jar%23121!/ Service=ModLauncher Env=CLIENT
+[13:08:34] [pool-2-thread-1/INFO]: GL info: NVIDIA GeForce GTX 1650/PCIe/SSE2 GL version 4.6.0 NVIDIA 591.44, NVIDIA Corporation
+[13:08:34] [main/INFO]: Found mod file "client-1.21.1-20240808.144430-srg.jar" [locator: production client provider +net.neoforged:neoforge:21.1.252:client]
+[13:08:35] [main/INFO]: Found mod file "neoforge-21.1.252-universal.jar" [locator: PathBasedLocator[name=neoforge, paths=[C:\Users\player\.modkeel\lab\client\libraries\net\neoforged\neoforge\21.1.252\neoforge-21.1.252-universal.jar]], reader: mod manifest]
+[13:08:35] [main/INFO]: Found mod file "mfsplita.jar" [locator: {mods folder locator at C:\Users\player\.modkeel\lab\client\companion-neoforge-1.21.1-clash-raw\mods}, reader: mod manifest]
+[13:08:35] [main/INFO]: Found mod file "mfsplitb.jar" [locator: {mods folder locator at C:\Users\player\.modkeel\lab\client\companion-neoforge-1.21.1-clash-raw\mods}, reader: mod manifest]
+[13:08:35] [main/INFO]: Found 2 dependencies adding them to mods collection
+[13:08:35] [main/INFO]: Found gamelibrary file "mixinextras-neoforge-0.5.3.jar" [parent: neoforge-21.1.252-universal.jar, locator: jarinjar, reader: mod manifest]
+[13:08:35] [main/INFO]: Found library file "net.neoforged.neoforge-coremods-21.1.252.jar" [parent: neoforge-21.1.252-universal.jar, locator: jarinjar, reader: mod manifest]
+[13:08:35] [main/INFO]: 
+     Mod List:
+		Name Version (Mod Id)
+
+		mfsplita 1.0 (mfsplita)
+		mfsplitb 1.0 (mfsplitb)
+		Minecraft 1.21.1 (minecraft)
+		NeoForge 21.1.252 (neoforge)
+[13:08:36] [main/ERROR]: Error while resolving modules.
+java.lang.module.ResolutionException: Module mfsplitb contains package modkeel.split, module mfsplita exports package modkeel.split to mfsplitb
+	at java.base/java.lang.module.Resolver.resolveFail(Resolver.java:900) ~[?:?]
+	at java.base/java.lang.module.Resolver.failTwoSuppliers(Resolver.java:806) ~[?:?]
+	at java.base/java.lang.module.Resolver.checkExportSuppliers(Resolver.java:735) ~[?:?]
+	at java.base/java.lang.module.Resolver.finish(Resolver.java:380) ~[?:?]
+	at java.base/java.lang.module.Configuration.<init>(Configuration.java:139) ~[?:?]
+	at java.base/java.lang.module.Configuration.resolveAndBind(Configuration.java:493) ~[?:?]
+	at MC-BOOTSTRAP/cpw.mods.modlauncher@11.0.5/cpw.mods.modlauncher.ModuleLayerHandler.buildLayer(ModuleLayerHandler.java:81) [modlauncher-11.0.5.jar%23112!/:?]
+	at MC-BOOTSTRAP/cpw.mods.modlauncher@11.0.5/cpw.mods.modlauncher.TransformationServicesHandler.buildTransformingClassLoader(TransformationServicesHandler.java:54) [modlauncher-11.0.5.jar%23112!/:?]
+	at MC-BOOTSTRAP/cpw.mods.modlauncher@11.0.5/cpw.mods.modlauncher.Launcher.run(Launcher.java:101) [modlauncher-11.0.5.jar%23112!/:?]
+	at MC-BOOTSTRAP/cpw.mods.modlauncher@11.0.5/cpw.mods.modlauncher.Launcher.main(Launcher.java:74) [modlauncher-11.0.5.jar%23112!/:?]
+	at MC-BOOTSTRAP/cpw.mods.modlauncher@11.0.5/cpw.mods.modlauncher.BootstrapLaunchConsumer.accept(BootstrapLaunchConsumer.java:26) [modlauncher-11.0.5.jar%23112!/:?]
+	at MC-BOOTSTRAP/cpw.mods.modlauncher@11.0.5/cpw.mods.modlauncher.BootstrapLaunchConsumer.accept(BootstrapLaunchConsumer.java:23) [modlauncher-11.0.5.jar%23112!/:?]
+	at cpw.mods.bootstraplauncher@2.0.2/cpw.mods.bootstraplauncher.BootstrapLauncher.run(BootstrapLauncher.java:210) [bootstraplauncher-2.0.2.jar:?]
+	at cpw.mods.bootstraplauncher@2.0.2/cpw.mods.bootstraplauncher.BootstrapLauncher.main(BootstrapLauncher.java:69) [bootstraplauncher-2.0.2.jar:?]
