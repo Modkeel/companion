@@ -41,6 +41,14 @@ name.
 
 </details>
 
+**Two mods that can't be used together?** On NeoForge and Forge, Modkeel sees it before the game
+starts, turns one off so you can play, and one button swaps which of the two stays on.
+
+**Your PC, checked.** Modkeel says when Minecraft draws without a graphics driver or on the slow
+built-in graphics (on Windows, one button switches to the fast card), and when Java has too
+little memory for your mods, or nearly all of your computer's, with where your launcher keeps
+the setting.
+
 **No mixins.** Modkeel does not patch the game, so it cannot be the reason a pack breaks.
 
 > **Made with AI.** Modkeel's code, tests and texts are written with Claude (Anthropic's AI),
