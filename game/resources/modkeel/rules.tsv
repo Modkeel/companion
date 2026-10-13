@@ -1,9 +1,12 @@
-# Modkeel rules bundle, built 2026-10-04 from lab data
+# Modkeel rules bundle, built 2026-10-12 from lab data
 # Modkeel lab data (modkeel.com), CC BY 4.0: see LICENSE-DATA
 jar	ffeeafb265d7f0914e9b96ab70a1181d3642773a	c2me	1.20.1	server	release_check; release made for 1.20.1 ran on a server
+jar	bb2fa8f3e493af16af9160d049f96c614a1faf2f	embeddium	1.20.1	client	client_bench; ran in a benchmark on a client
 jar	fd43e8a962d7026fa5342c260fd3b3f98809913c	entityculling	1.20.1	client	client_bench; ran in a benchmark on a client
+jar	856ef2e3c5bbde87fa5f06515c42fbca8af24a74	entityculling	1.20.1	client	client_bench; ran in a benchmark on a client
 jar	8fa3b84fc5860dbc30fdf8cced02af68dffcf3fa	ferritecore	1.20.1	server	release_check; release made for 1.20.1 ran on a server
 jar	9f0110b60dc752ca093f2fc10a72d221b6dc8ac3	immediatelyfast	1.20.1	client	release_check; release made for 1.20.1 ran on a client
+jar	9eacd407b7dea636d375dc47335d92f616484ea2	immediatelyfast	1.20.1	client	client_bench; ran in a benchmark on a client
 jar	880c0b9ce38bb4997645793407c1801df83f4233	iris	1.20.1	client	release_check; release made for 1.20.1 ran on a client
 jar	4d499819effd8afe811e5d93952fcc46765a00df	krypton	1.20.1	server	release_check; release made for 1.20.1 ran on a server
 jar	eb50a56760e7b8ccbee5479cf31b55375434ae76	lambdynlights	1.20.1	client	release_check; release made for 1.20.1 ran on a client
@@ -11,21 +14,28 @@ jar	048227ed60a3005cf9fa55880dfe0cf20b0ba680	lithium	1.20.1	client	client_bench;
 jar	be03b9eb570c1e9df7593e68623f0fecbd039460	modernfix	1.20.1	server	release_check; release made for 1.20.1 ran on a server
 jar	099c68feeb74887cbbbd8ce9a27c6123804a2c5a	modmenu	1.20.1	client	release_check; release made for 1.20.1 ran on a client
 jar	c99e1ede1b0a6b90467078a8abdd6259c83d77f4	moreculling	1.20.1	client	release_check; release made for 1.20.1 ran on a client
+jar	984f774e71790deaec674c7587bd24e0711871b2	oculus	1.20.1	client	client_bench; ran in a benchmark on a client
 jar	bcdbf37d9494e405cba210d7a80ed58e756297b5	sodium	1.20.1	client	release_check; release made for 1.20.1 ran on a client
 jar	0f97ec3f395b223848a63573b1a46cbecf97f19f	sodium-extra	1.20.1	client	release_check; release made for 1.20.1 ran on a client
 jar	46e896cabf7813275413c97e6dd2f48ef534057d	vmp	1.20.1	server	release_check; release made for 1.20.1 ran on a server
+jar	56063839172a000d079272794bad366f2ad4cbbd	embeddium	1.21.1	client	client_bench; ran in a benchmark on a client
 jar	c400f3fb5f8668f99cdb52b5d4f92d11b4e3edf1	entityculling	1.21.1	client	client_bench; ran in a benchmark on a client
+jar	2f723582d44b60b41d701a797846eaa45a3fef58	entityculling	1.21.1	client	client_bench; ran in a benchmark on a client
 jar	a8a6a34fcda177da2828cedef44e0e538cf78aad	ferritecore	1.21.1	server	release_check; release made for 1.21.1 ran on a server
 jar	023805be7d701b9769e987449d217c557de5f848	immediatelyfast	1.21.1	client	release_check; release made for 1.21.1 ran on a client
+jar	fee59af2f39c66d09c4c09f441c799e76af70f97	immediatelyfast	1.21.1	client	client_bench; ran in a benchmark on a client
 jar	6776c0340845887477bfa463acc736ce7fcb6de5	iris	1.21.1	client	release_check; release made for 1.21.1 ran on a client
+jar	1bd129cf7bce65d6b1c0543045f0620c98a0f885	iris	1.21.1	client	client_bench; ran in a benchmark on a client
 jar	73e792eb5f120787becda4b87b6ff18b26caea50	krypton	1.21.1	server	release_check; release made for 1.21.1 ran on a server
 jar	7b5afc75a094b4e8a7118f9856eec959b10f2422	lambdynlights	1.21.1	client	release_check; release made for 1.21.1 ran on a client
 jar	7d82a004403b7780d4443d8e40361a55cfd0ae63	lithium	1.21.1	client	client_bench; ran in a benchmark on a client
 jar	4ab39e9c736e7204146792c545ec5b29fc0a3872	modernfix	1.21.1	server	release_check; release made for 1.21.1 ran on a server
 jar	2321d890a25b5985eba576d7cd8fe9a9c136e33d	modmenu	1.21.1	client	release_check; release made for 1.21.1 ran on a client
 jar	d425f77706d8f6499aae64eb804b3802dad111d4	moreculling	1.21.1	client	release_check; release made for 1.21.1 ran on a client
+jar	7e2d906031fdba883649eef6ef48a4dbdbb0f6cf	moreculling	1.21.1	client	client_bench; ran in a benchmark on a client
 jar	ff6baa9ab1f2aecf0eba5b72595085551adddc7a	scalablelux	1.21.1	server	release_check; release made for 1.21.1 ran on a server
 jar	003c114c85ca88ef3362e018deb6aca0c682d6a1	sodium	1.21.1	client	release_check; release made for 1.21.1 ran on a client
+jar	1757289be21ed18db5b0d90703fa3db1b2de5693	sodium	1.21.1	client	client_bench; ran in a benchmark on a client
 jar	628487b330c9589d26cada5c4a51ac457af80a1f	sodium-extra	1.21.1	client	release_check; release made for 1.21.1 ran on a client
 jar	267975777ba52a23d4423a60e9288f9ce288344e	vmp	1.21.1	server	release_check; release made for 1.21.1 ran on a server
 jar	95055aca69fedd76967f75957fc93762fbe73874	entityculling	1.21.11	client	client_bench; ran in a benchmark on a client
@@ -42,124 +52,122 @@ jar	5ee4535324b48628424866eca29a4dceb364d27a	sodium-extra	1.21.11	client	release
 jar	6d665e488ea4f301d639cdf9fd4abf3ffdb44e0d	vmp	1.21.11	server	release_check; release made for 1.21.11 ran on a server
 jar	16f2fe0c762370775257a450983ec6e8a1c70b75	entityculling	26.1.2	client	client_bench; ran in a benchmark on a client
 jar	d107b02081262e243e80559192a2de86007155d6	sodium	26.1.2	client	client_bench; ran in a benchmark on a client
-jar	bb4908a9e8874234f36e977b6a1dc79b3d338a6e	vulkanmod	26.1.2	client	client_bench; ran in a benchmark on a client
 jar	f065e4422cf1d4d846c8e2b71a49ff748b5c9b2d	alternate-current	26.2	server	perf_bench; ran in a benchmark on a server
 jar	ba258f6d9dd779a7231f52c5a36d792a8b932d63	async	26.2	server	perf_bench; ran in a benchmark on a server
-jar	4bcbdf388bd5e387beca7c627224aac33584b55b	athena	26.2	crashes	official_runtime; crashed
+jar	4bcbdf388bd5e387beca7c627224aac33584b55b	athena	26.2	crashes	official_runtime; crashed; file athena-neoforge-1.21.1-4.0.6.jar; version 4.0.6; loader neoforge
 jar	2f4f2f83f0692be60cdc702c9532f2d96a472f4d	athena	26.2	server	runtime_test; ported build ran on a server
-jar	428ef2c95b334c145b26767f5c1a81d7951e5935	betterdeserttemples	26.2	crashes	official_runtime; crashed
+jar	428ef2c95b334c145b26767f5c1a81d7951e5935	betterdeserttemples	26.2	crashes	official_runtime; crashed; file YungsBetterDesertTemples-26.1.2-Fabric-5.1.1.jar; version 26.1.2-Fabric-5.1.1; loader fabric
 jar	74f47b54b7ecbadef24e2b628d4504139fb8fd45	betterdeserttemples	26.2	server	runtime_test; ported build ran on a server
-jar	0f3161628ce5df552ad728aaa7b39aaa785546ac	betterdungeons	26.2	crashes	official_runtime; crashed
-jar	d298a63387676e4cc02006657dd53b991e0b9f7d	betterendisland	26.2	server	official_runtime; started and ran on a server
+jar	0f3161628ce5df552ad728aaa7b39aaa785546ac	betterdungeons	26.2	crashes	official_runtime; crashed; file YungsBetterDungeons-26.1.2-Fabric-6.1.1.jar; version 26.1.2-Fabric-6.1.1; loader fabric
+jar	d298a63387676e4cc02006657dd53b991e0b9f7d	betterendisland	26.2	server	official_runtime; started and ran on a server; file YungsBetterEndIsland-26.1.2-Fabric-4.1.0.jar; version 26.1.2-Fabric-4.1.0; loader fabric
 jar	bbdf143659adb749588c2ab8fbe95de59774bdbe	betterendisland	26.2	server	runtime_test; ported build ran on a server
-jar	0e71f1e1fe51b52c6b8a45a4669294f2d591f004	betterfortresses	26.2	crashes	official_runtime; crashed
+jar	0e71f1e1fe51b52c6b8a45a4669294f2d591f004	betterfortresses	26.2	crashes	official_runtime; crashed; file YungsBetterNetherFortresses-26.1.2-Fabric-4.1.1.jar; version 26.1.2-Fabric-4.1.1; loader fabric
 jar	691ecc688222d9986410833cab07284860a873a9	betterfortresses	26.2	server	runtime_test; ported build ran on a server
-jar	d336cf71b466692ada74e7776e9bec124467c5b5	betterjungletemples	26.2	crashes	official_runtime; crashed
+jar	d336cf71b466692ada74e7776e9bec124467c5b5	betterjungletemples	26.2	crashes	official_runtime; crashed; file YungsBetterJungleTemples-26.1.2-Fabric-4.1.1.jar; version 26.1.2-Fabric-4.1.1; loader fabric
 jar	13171b9ff8bb9b720b787a005b0ff5fe6acdf4fc	betterjungletemples	26.2	server	runtime_test; ported build ran on a server
-jar	5109b66048dd81cd79872743e842bcda484546cb	bettermineshafts	26.2	crashes	official_runtime; crashed
+jar	5109b66048dd81cd79872743e842bcda484546cb	bettermineshafts	26.2	crashes	official_runtime; crashed; file YungsBetterMineshafts-26.1.2-Fabric-6.1.1.jar; version 26.1.2-Fabric-6.1.1; loader fabric
 jar	1a6723a91e0ee37d4b8b7a9f71272ee2e89ebdc3	bettermineshafts	26.2	server	runtime_test; ported build ran on a server
-jar	c9fdf25e920f522eab18eb38a7354d32657d21aa	betteroceanmonuments	26.2	crashes	official_runtime; crashed
+jar	c9fdf25e920f522eab18eb38a7354d32657d21aa	betteroceanmonuments	26.2	crashes	official_runtime; crashed; file YungsBetterOceanMonuments-26.1.2-Fabric-5.1.1.jar; version 26.1.2-Fabric-5.1.1; loader fabric
 jar	621e01993be91b215b8adf3b74c9e97a41d6ff5e	betteroceanmonuments	26.2	server	runtime_test; ported build ran on a server
-jar	0370595b9913e10362dc04c27ee655a480f9467c	betterstrongholds	26.2	crashes	official_runtime; crashed
+jar	0370595b9913e10362dc04c27ee655a480f9467c	betterstrongholds	26.2	crashes	official_runtime; crashed; file YungsBetterStrongholds-26.1.2-Fabric-6.1.1.jar; version 26.1.2-Fabric-6.1.1; loader fabric
 jar	335f4bd10bfcf132f86ea0e53519bcce5f78e27f	betterstrongholds	26.2	server	runtime_test; ported build ran on a server
-jar	ed29eda040c36e5f54ff4df1b31a9b78a379b8c9	betterwitchhuts	26.2	crashes	official_runtime; crashed
+jar	ed29eda040c36e5f54ff4df1b31a9b78a379b8c9	betterwitchhuts	26.2	crashes	official_runtime; crashed; file YungsBetterWitchHuts-26.1.2-Fabric-5.1.1.jar; version 26.1.2-Fabric-5.1.1; loader fabric
 jar	7e21595c5e4929d0dba59373ebe3cb95f0071b0c	betterwitchhuts	26.2	server	runtime_test; ported build ran on a server
 jar	994dcf809cbbf075a33b3f28c71331c845b415a2	c2me	26.2	client	client_bench; ran in a benchmark on a client
-jar	2c7c9cc8f0f94895ad1c0ba88bb238e2692d997e	dynamictrees	26.2	crashes	official_runtime; crashed
+jar	2c7c9cc8f0f94895ad1c0ba88bb238e2692d997e	dynamictrees	26.2	crashes	official_runtime; crashed; file dynamictrees-neoforge-26.1.2-1.8.0-BETA04.jar; version 1.8.0-BETA04; loader neoforge
 jar	f1824ea0872b60a72b5022fd5f0cbc017a8ab30d	dynamictrees	26.2	server	runtime_test; ported build ran on a server
-jar	d3fca102a9f5aeb108d5118665b86ead1dd30988	endrem	26.2	crashes	official_runtime; crashed
+jar	d3fca102a9f5aeb108d5118665b86ead1dd30988	endrem	26.2	crashes	official_runtime; crashed; file endrem-neoforge-1.21.1-6.3.0.jar; version 6.3.0; loader neoforge
 jar	fca724ff6732c217d36b82d399b3876a10c4f984	endrem	26.2	server	runtime_test; ported build ran on a server
 jar	8a379bf40ab7125756afe7bbdf9501324bc37216	entityculling	26.2	client	client_bench; ran in a benchmark on a client
-jar	1a2c41d2efbe1c60159b90a165557e7c06d03a5c	fabric_api	26.2	crashes	official_runtime; crashed
+jar	1a2c41d2efbe1c60159b90a165557e7c06d03a5c	fabric_api	26.2	crashes	official_runtime; crashed; file forgified-fabric-api-0.116.15+2.3.5+1.21.1.jar; version 0.116.15+2.3.5+1.21.1; loader neoforge
 jar	9a8eb8db2a25f1f56777c119e98301fc0d7daca3	fabric_api	26.2	server	runtime_test; ported build ran on a server
-jar	cabc7f77ce10fd58cf33cbfd04eeda3ef33167c8	fabrishot	26.2	crashes	official_runtime; crashed
+jar	cabc7f77ce10fd58cf33cbfd04eeda3ef33167c8	fabrishot	26.2	crashes	official_runtime; crashed; file fabrishot-1.17.0.jar; version 1.17.0; loader fabric
 jar	edc41a941fe9f3999c05c86152a5cae06e4c59fa	fabrishot	26.2	client	client_test; ported build ran on a client
 jar	eac76ff0f3753422c61b2c44487d0d195d88d4bc	ferritecore	26.2	server	perf_bench; ran in a benchmark on a server
-jar	49b54e6e86738f537ef2792404376fcd7cdc8c9b	healthindicators	26.2	client	official_runtime; started and ran on a client
+jar	49b54e6e86738f537ef2792404376fcd7cdc8c9b	healthindicators	26.2	client	official_runtime; started and ran on a client; file HealthIndicators-fabric-26.1.0.0-beta.jar; version 26.1.0.0-beta; loader fabric
 jar	83db699d0f695328a6a0be5932ddb2a99e4d04e9	healthindicators	26.2	client	client_test; ported build ran on a client
 jar	0286260261591fe77ba0d332d5d5a2d2e868c2c6	immediatelyfast	26.2	client	client_bench; ran in a benchmark on a client
 jar	bd0b24731a94b8fe164531e6345718d30ab08ed2	iris	26.2	client	client_bench; ran in a benchmark on a client
 jar	c83ed92c0f9f8523d7e6096151e74222fea91e96	krypton	26.2	server	perf_bench; ran in a benchmark on a server
-jar	026b789a30de912a40911443c37c2fc92579629e	ksyxis	26.2	server	perf_bench; ran in a benchmark on a server
 jar	621deba178aa7bb2d60c642a1c5d88987f0c296c	lazy_ai_pixelindiedev	26.2	server	perf_bench; ran in a benchmark on a server
 jar	435ad0289209bb72195e7a423756a03f5dfa5a9a	lithium	26.2	client	client_bench; ran in a benchmark on a client
 jar	4fb8b3865ce18705ec29b508e385e49870d5fd40	modernfix	26.2	server	runtime_test; ported build ran on a server
 jar	a14d2ba0fd0d56d12d48bb9f1c44fd3d345bf5e2	modernfix	26.2	server	perf_bench; ran in a benchmark on a server
-jar	5c3988988f4bc41fe5458b2e5bde7469726d028b	modernui	26.2	server	official_runtime; started and ran on a server
+jar	5c3988988f4bc41fe5458b2e5bde7469726d028b	modernui	26.2	server	official_runtime; started and ran on a server; file ModernUI-Forge-26.1.2-3.13.0.5-universal.jar; version 3.13.0.5; loader forge
 jar	5779c4e9576298d73bc0214d8e31ed4e969e2baa	modernui	26.2	server	runtime_test; ported build ran on a server
 jar	d31338bc63c5dd571d209315a15446d95765c0d8	moonrise	26.2	server	perf_bench; ran in a benchmark on a server
 jar	189d90ef598883df8197ea18b510dba21e69bac4	moreculling	26.2	client	client_bench; ran in a benchmark on a client
 jar	bdf972d940be22045aba6b6fe566808e195dd852	netmusic	26.2	server	runtime_test; ported build ran on a server
-jar	d90a5ad32d3d504b15fc57e5eb59b706c12b75e2	patchouli	26.2	crashes	official_runtime; crashed
+jar	d90a5ad32d3d504b15fc57e5eb59b706c12b75e2	patchouli	26.2	crashes	official_runtime; crashed; file patchouli-fabric-26.1-94.jar; version 26.1-94; loader fabric
 jar	b6127f4444958696b008d1b7688249669aeac43d	patchouli	26.2	server	runtime_test; ported build ran on a server
 jar	d3637cc2fe15761ca66070e5916f17c80f03ba51	scalablelux	26.2	server	perf_bench; ran in a benchmark on a server
 jar	43eda9e44e32e0e736ada0ff125f83cb87cbd59a	servercore	26.2	server	perf_bench; ran in a benchmark on a server
 jar	62a70961a5b3e06938e06ab5f2dc4c5a51cf3323	sodium	26.2	client	client_bench; ran in a benchmark on a client
 jar	4a0fc84879fe358bdfd395af9238e14950dca748	structure_layout_optimizer	26.2	server	perf_bench; ran in a benchmark on a server
-jar	45750276e3da25b592d363d9a70dc3531af86ac7	travelerstitles	26.2	crashes	official_runtime; crashed
+jar	45750276e3da25b592d363d9a70dc3531af86ac7	travelerstitles	26.2	crashes	official_runtime; crashed; file TravelersTitles-26.1.2-Fabric-6.1.0.jar; version 26.1.2-Fabric-6.1.0; loader fabric
 jar	6ee6c271fac0e0b5b1879cd0d6921108be2bd5c5	travelerstitles	26.2	client	client_test; ported build ran on a client
 jar	dcf1295db267f7b519ecdd7d1c9499910c7e6fc0	vmp	26.2	server	perf_bench; ran in a benchmark on a server
 jar	a810b96e42e775b3ae02102dd3742a34f2b2fa6b	yungsapi	26.2	server	runtime_test; ported build ran on a server
-jar	2f539192db79f1d13a4370f2fc766f0e5f3a3b8c	yungsbridges	26.2	server	official_runtime; started and ran on a server
+jar	2f539192db79f1d13a4370f2fc766f0e5f3a3b8c	yungsbridges	26.2	server	official_runtime; started and ran on a server; file YungsBridges-26.1.2-Fabric-6.1.0.jar; version 26.1.2-Fabric-6.1.0; loader fabric
 jar	9d40998dab25cc01d61790fd534b8d86ce4812d4	yungsbridges	26.2	server	runtime_test; ported build ran on a server
-jar	8cb5e5f083fe65747e70cb7b0d8369305ba63047	yungsextras	26.2	crashes	official_runtime; crashed
+jar	8cb5e5f083fe65747e70cb7b0d8369305ba63047	yungsextras	26.2	crashes	official_runtime; crashed; file YungsExtras-26.1.2-Fabric-6.1.0.jar; version 26.1.2-Fabric-6.1.0; loader fabric
 jar	2c24ceb1b8fbb18ce7842ee1d7eae39e7839a65e	yungsextras	26.2	server	runtime_test; ported build ran on a server
 jar	1c8e66ef04647320697c77fc99bb7d75e7400b7c	zfastnoise	26.2	server	perf_bench; ran in a benchmark on a server
 jar	ac1d18bbae472bf95c8d3a28e2c11d9714e64d30	ali	26.3	server	runtime_test; ported build ran on a server
 jar	1316efc4195fbf152f8521542bc2435bd588ddb6	alternate-current	26.3	server	perf_bench; ran in a benchmark on a server
 jar	bde225ad18d305d4a4d3e51a09c17b1de7be38e2	async	26.3	server	perf_bench; ran in a benchmark on a server
-jar	f86040d5010c7aad1c677c7a7fefe52d3b386abd	bettermounthud	26.3	client	official_runtime; started and ran on a client
+jar	f86040d5010c7aad1c677c7a7fefe52d3b386abd	bettermounthud	26.3	client	official_runtime; started and ran on a client; file bettermounthud-1.3.1.jar; version 1.3.1; loader fabric
 jar	139a769d95d6415a8ed80c13bdda43a09a9cb477	bettermounthud	26.3	client	client_test; ported build ran on a client
-jar	7acb26634632894b95ef09c06503c7cc8f04b90b	bobby	26.3	crashes	official_runtime; crashed
+jar	7acb26634632894b95ef09c06503c7cc8f04b90b	bobby	26.3	crashes	official_runtime; crashed; file bobby-5.2.15+mc26.2.jar; version 5.2.15+mc26.2; loader fabric
 jar	cf0528b3ae4253d396e258db5101db031ee96968	bobby	26.3	client	client_test; ported build ran on a client
 jar	1aa0ea7893737a54f855b1c04ff93f2f68c1fa80	c2me	26.3	server	perf_bench; ran in a benchmark on a server
-jar	3dbc5f73ccbaec35dbca4c07b731998938a5b09c	carryon	26.3	server	official_runtime; started and ran on a server
+jar	3dbc5f73ccbaec35dbca4c07b731998938a5b09c	carryon	26.3	server	official_runtime; started and ran on a server; file carryon-fabric-26.2-2.11.2.jar; version 2.11.2; loader fabric
 jar	563b4aa9f1c0934653db40855e5f747c8354e59e	carryon	26.3	server	runtime_test; ported build ran on a server
-jar	7d2539a4f4fd5bd4a19798cc73b1431511de1431	chatpatches	26.3	crashes	official_runtime; a mixin target is missing
+jar	7d2539a4f4fd5bd4a19798cc73b1431511de1431	chatpatches	26.3	crashes	official_runtime; a mixin target is missing; file chatpatches-8.0-alpha.11+26.2-fabric.jar; version 8.0-alpha.11; loader fabric
 jar	f9f94addf9fc6554ba40817a36adf765d8d9567a	chatpatches	26.3	client	client_test; ported build ran on a client
-jar	ab8dd841cafc3b4ecbf0250d3f5aee8a1fdb506a	customskinloader-bootstrap	26.3	crashes	official_runtime; crashed
+jar	ab8dd841cafc3b4ecbf0250d3f5aee8a1fdb506a	customskinloader-bootstrap	26.3	crashes	official_runtime; crashed; file CustomSkinLoader_Universal-15.0.1.jar; version 15.0.1; loader fabric
 jar	3581266215d6314f9b8d895e292b36e307754e42	customskinloader-bootstrap	26.3	client	client_test; ported build ran on a client
 jar	f2196e803fe77cfbb62c4a2acb64803d98b4f61c	entityculling	26.3	client	client_bench; ran in a benchmark on a client
-jar	600cedc72ebd662a565151b0c8ea223a724da747	extended_drawers	26.3	crashes	official_runtime; crashed
+jar	600cedc72ebd662a565151b0c8ea223a724da747	extended_drawers	26.3	crashes	official_runtime; crashed; file ExtendedDrawers-5.1.0+mc.26.2.jar; version 5.1.0+mc.26.2; loader fabric
 jar	609982ec56575702f98cbd30c57508ab8ab7896b	extended_drawers	26.3	server	runtime_test; ported build ran on a server
 jar	eac76ff0f3753422c61b2c44487d0d195d88d4bc	ferritecore	26.3	server	perf_bench; ran in a benchmark on a server
 jar	f565bbeb201f2305e81761429d3f1f47e1c3a321	immediatelyfast	26.3	client	client_bench; ran in a benchmark on a client
 jar	4c764496466216aa6722ef4b44b563e773bb4772	immersive_paintings	26.3	server	runtime_test; ported build ran on a server
 jar	fa03640ba1e4ef2f7ae3619c6373a06e46d0ba2c	iris	26.3	client	client_bench; ran in a benchmark on a client
-jar	c83ed92c0f9f8523d7e6096151e74222fea91e96	krypton	26.3	server	official_runtime; started and ran on a server
+jar	c83ed92c0f9f8523d7e6096151e74222fea91e96	krypton	26.3	server	official_runtime; started and ran on a server; file krypton-0.3.1.jar; version 0.3.1; loader fabric
 jar	de1bcb87b7086889d13c49deabfbba0902a07ac9	krypton	26.3	server	runtime_test; ported build ran on a server
 jar	21b21cb88e412f0bce73b6609de6dd6aca958d7d	krypton	26.3	server	perf_bench; ran in a benchmark on a server
 jar	026b789a30de912a40911443c37c2fc92579629e	ksyxis	26.3	server	perf_bench; ran in a benchmark on a server
-jar	261027cef3c476d4fafdf59362179eb8da9019d2	languagereload	26.3	crashes	official_runtime; crashed
+jar	261027cef3c476d4fafdf59362179eb8da9019d2	languagereload	26.3	crashes	official_runtime; crashed; file language-reload-1.7.7+26.2.jar; version 1.7.7+26.2; loader fabric
 jar	aa11763f38ed55172cf38378afc0d789f576bc49	languagereload	26.3	client	client_test; ported build ran on a client
 jar	907fbd71492571d97bf2040cff763996b210ad44	lazy_ai_pixelindiedev	26.3	server	perf_bench; ran in a benchmark on a server
 jar	dd5a4ec2c68d7601d8bce9076f789c55a5f8bef3	lithium	26.3	client	client_bench; ran in a benchmark on a client
 jar	6cf05afb36d68db3cabfc10512335770cd693864	macos_input_fixes	26.3	client	client_test; ported build ran on a client
-jar	4fd220c4371a29cee98ecbad86a06441019d0979	mca	26.3	crashes	official_runtime; crashed
+jar	4fd220c4371a29cee98ecbad86a06441019d0979	mca	26.3	crashes	official_runtime; crashed; file mca-neoforge-8.1.11+26.2.jar; version 8.1.11+26.2; loader neoforge
 jar	b5acd733c0ad9a87e69c5f280fe3f521f3b72792	mca	26.3	server	runtime_test; ported build ran on a server
 jar	b63337e801fbf2cb420a049d69220c56e083f514	modernfix	26.3	server	perf_bench; ran in a benchmark on a server
 jar	0a03a92d19f9edb99f331f6fdd66f7ae30c4baa3	moonrise	26.3	server	perf_bench; ran in a benchmark on a server
 jar	7308b0b0b6fffb0e076cabf97db7fc889d9ada68	moreculling	26.3	client	client_bench; ran in a benchmark on a client
-jar	1a0feff2a71be42406136fa5852c5fa8896601d0	nochatrestrictions	26.3	server	official_runtime; started and ran on a server
+jar	1a0feff2a71be42406136fa5852c5fa8896601d0	nochatrestrictions	26.3	server	official_runtime; started and ran on a server; file NoChatRestrictions-Fabric-MC26.2-v1.2.2.jar; version Fabric-MC26.2-v1.2.2; loader fabric
 jar	62c5fc549ae2a0d21624b04b5ec3c02a0c473303	nochatrestrictions	26.3	server	runtime_test; ported build ran on a server
-jar	18cdf7a4a325f943113c84a2ae37f743b6db3445	notenoughcrashes	26.3	server	official_runtime; started and ran on a server
+jar	18cdf7a4a325f943113c84a2ae37f743b6db3445	notenoughcrashes	26.3	server	official_runtime; started and ran on a server; file notenoughcrashes-fabric-4.4.9+26.2.jar; version 4.4.9+26.2; loader fabric
 jar	cd0922e73a7b9d6218a68350fa29e75e406ded3d	notenoughcrashes	26.3	server	runtime_test; ported build ran on a server
-jar	3111139453af67f14cb32e572bde7ae93126477b	owo	26.3	crashes	official_runtime; crashed
+jar	3111139453af67f14cb32e572bde7ae93126477b	owo	26.3	crashes	official_runtime; crashed; file owo-lib-0.13.1+26.2.jar; version 0.13.1+26.2; loader fabric
 jar	3320cdbddf28ddff9a00af38db4d5c770f144fa8	owo	26.3	server	runtime_test; ported build ran on a server
-jar	6c3fbc458fe9d4969443f49f718f713245b30a8d	promenade	26.3	crashes	official_runtime; crashed
-jar	f42ff41676fd1c091e6dbac6eb7a60f6c5c17a56	rsls	26.3	crashes	official_runtime; crashed
+jar	6c3fbc458fe9d4969443f49f718f713245b30a8d	promenade	26.3	crashes	official_runtime; crashed; file promenade-5.6.0.jar; version 5.6.0; loader fabric
+jar	f42ff41676fd1c091e6dbac6eb7a60f6c5c17a56	rsls	26.3	crashes	official_runtime; crashed; file rsls-1.2.2.jar; version 1.2.2; loader fabric
 jar	3ad40e1b661f8eac2b5fd047eebc674a2a52d0bf	rsls	26.3	client	client_test; ported build ran on a client
 jar	d51dcbe901452a1cb378139ca351009254e7ab0d	scalablelux	26.3	server	perf_bench; ran in a benchmark on a server
 jar	ec5fdf4798e29e483fa861dead101b0d9d6d72cb	servercore	26.3	server	perf_bench; ran in a benchmark on a server
 jar	5d88caf6f3e182cd39d0fb0d2e7200c5e613f287	sodium	26.3	client	client_bench; ran in a benchmark on a client
 jar	ce6a03a927297a5441dfa239bf2d6d804931530a	structure_layout_optimizer	26.3	server	perf_bench; ran in a benchmark on a server
-jar	7446bd898403a77ac64e9f3e4e2bb20bfa8002ee	subtle_effects	26.3	crashes	official_runtime; crashed
+jar	7446bd898403a77ac64e9f3e4e2bb20bfa8002ee	subtle_effects	26.3	crashes	official_runtime; crashed; file SubtleEffects-fabric-26.2-1.14.3.jar; version 1.14.3; loader fabric
 jar	44484aaae7d05eee0333848cd31a9934774b9a0a	subtle_effects	26.3	server	runtime_test; ported build ran on a server
-jar	9dc04ea204844373ac064e276fd44764e1871daa	vivecraft	26.3	crashes	official_runtime; crashed
+jar	9dc04ea204844373ac064e276fd44764e1871daa	vivecraft	26.3	crashes	official_runtime; crashed; file vivecraft-26.2-1.3.15-forge.jar; version 26.2-1.3.15; loader forge
 jar	ef7581bcd175eda07e2ebff0ddfd3094aa36026b	vmp	26.3	server	perf_bench; ran in a benchmark on a server
-jar	a345fbd2b2d1e378452763e2864f1056b212ac98	voxy	26.3	crashes	official_runtime; a mixin target is missing
+jar	a345fbd2b2d1e378452763e2864f1056b212ac98	voxy	26.3	crashes	official_runtime; a mixin target is missing; file voxy-0.2.19-beta.jar; version 0.2.19-beta; loader fabric
 jar	1193b8dca4d92d5f07a834cf90f357e71440893d	voxy	26.3	server	runtime_test; ported build ran on a server
-jar	215feafd6a59e35dd32e0e3e19d22ea888d2952e	walksylib	26.3	crashes	official_runtime; crashed
+jar	215feafd6a59e35dd32e0e3e19d22ea888d2952e	walksylib	26.3	crashes	official_runtime; crashed; file WalksyLib-1.0.12+26.2.jar; version 1.0.12+26.2; loader fabric
 jar	23c5f0fb9c36f447cd0264d07a05d395e121a98e	walksylib	26.3	client	client_test; ported build ran on a client
 jar	f440a683630858b8d4d69a170eae4428e0e5af51	zfastnoise	26.3	server	perf_bench; ran in a benchmark on a server
 pair	c2me	entityculling	1.20.1	server	release_check; ran together on a server
@@ -168,6 +176,7 @@ pair	c2me	krypton	1.20.1	server	release_check; ran together on a server
 pair	c2me	lithium	1.20.1	server	release_check; ran together on a server
 pair	c2me	modernfix	1.20.1	server	release_check; ran together on a server
 pair	c2me	vmp	1.20.1	server	release_check; ran together on a server
+pair	embeddium	oculus	1.20.1	client	client_bench; ran together on a client
 pair	entityculling	ferritecore	1.20.1	server	release_check; ran together on a server
 pair	entityculling	krypton	1.20.1	server	release_check; ran together on a server
 pair	entityculling	lithium	1.20.1	server	release_check; ran together on a server
