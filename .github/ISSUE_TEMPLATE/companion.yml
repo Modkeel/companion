@@ -1,0 +1,42 @@
+name: Companion problem
+description: The Modkeel Companion blamed the wrong mod, a fix did not work, or the mod itself misbehaved.
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: Thanks for reporting. The more of the fields below you fill in, the faster it gets fixed.
+  - type: input
+    id: version
+    attributes:
+      label: Companion version
+      description: In the mods list, or the jar's name (modkeel-companion-0.3.0-fabric-26.jar is 0.3.0).
+      placeholder: 0.3.0
+    validations:
+      required: true
+  - type: dropdown
+    id: loader
+    attributes:
+      label: Loader
+      options: [Fabric, Quilt, NeoForge, Forge]
+    validations:
+      required: true
+  - type: input
+    id: minecraft
+    attributes:
+      label: Minecraft version
+      placeholder: "26.2"
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened, and what you expected
+      placeholder: After a crash the Companion named Sodium, but the crash went away when I removed another mod.
+    validations:
+      required: true
+  - type: textarea
+    id: log
+    attributes:
+      label: Crash report or log
+      description: Paste crash-reports/crash-*.txt or logs/latest.log from your game folder, or a link to mclo.gs.
+      render: text
