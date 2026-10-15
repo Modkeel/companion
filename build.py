@@ -266,12 +266,13 @@ def build(mc: str, loader: str = "fabric", run_tests: bool = True) -> dict[str, 
                       resources)
             crash_out = remap.compile_fabric(
                 mc, sorted((HERE / "testmods" / "mfcrash").rglob("*.java")), tmp / "mfcrash",
-                "lifecycle-events-v1|api-base")
+                "lifecycle-events-v1|entity-events-v1|api-base")
             write_jar(test_jars(mc, loader)[0], {"fabric.mod.json": json.dumps(
                 {"schemaVersion": 1, "id": "mfcrash", "version": "1.0",
                  "name": "Crash Test Mod", "environment": "client",
                  "entrypoints": {"client": ["modkeel.testmods.MfCrash"]},
-                 "depends": {"fabric-lifecycle-events-v1": "*"}})}, [crash_out], [])
+                 "depends": {"fabric-lifecycle-events-v1": "*",
+                             "fabric-entity-events-v1": "*"}})}, [crash_out], [])
         else:
             compile_ = remap.compile_neoforge if loader == "neoforge" else remap.compile_forge
             classes = compile_(mc, sorted(game + adapter), tmp / "classes", [core])
