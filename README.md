@@ -130,6 +130,8 @@ report shows which engine and why, so you can judge for yourself.
 
 ## Layout
 
+Every file and where to start reading: [ARCHITECTURE.md](ARCHITECTURE.md).
+
 | Path | What |
 |------|------|
 | `core/` | Loader-agnostic logic: mod sets, world backups, crash diagnosis, fixes. Plain Java 17, with its own tests |

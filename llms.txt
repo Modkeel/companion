@@ -1,0 +1,12 @@
+# Modkeel Companion
+
+> Free, open source (MIT) Minecraft mod for Fabric, NeoForge and Forge. It backs up worlds when the mod set changes, names the mod that most likely crashed the game, and offers a one-click fix that can be undone (turn that mod off, or go back to the mods that last worked). It uses no mixins and sends nothing unless the player opts in.
+
+- Code map: [ARCHITECTURE.md](ARCHITECTURE.md): core/ (plain Java, no Minecraft classes, unit-tested), game/ (screens and hooks shared by loaders), one thin folder per loader.
+- Player docs, supported versions and how to verify a release: [README.md](README.md).
+- Security reports: [SECURITY.md](SECURITY.md).
+- Build: `python build.py --all` (javac, no Gradle). Release jars are built by GitHub Actions with SHA256SUMS and build provenance (`gh attestation verify <jar> -R Modkeel/companion`), and rebuild byte for byte from the tag.
+- Data: `game/resources/modkeel/rules.tsv` (known crashes, CC BY 4.0) is the only lab data in the jar; diagnosis works offline.
+- What leaves the computer: only opt-in anonymous reports; see `core/src/modkeel/companion/core/Sent.java` and https://modkeel.com/privacy.
+- Releases: https://github.com/Modkeel/companion/releases
+- Project site: https://modkeel.com (verification guide: https://modkeel.com/verify)
