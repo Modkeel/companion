@@ -94,6 +94,11 @@ public final class CrashReport {
             "^(\\s+at |\\s*\\.\\.\\. \\d+ more|Caused by: |\\s+Suppressed: |\\s+Caused by: |\\s*$)");
     /** Log lines a crash may still write after its stack trace. */
     private static final int TAIL_LINES = 5;
+    /**
+     * Modkeel logs this on a start's first title screen: an error logged before it did not stop
+     * that start (a mod caught it and went on), whatever ended the start later.
+     */
+    public static final String TITLE_REACHED = "title screen reached";
     /** Minecraft logs this right before the trace of a crash, then writes the report. */
     static final Pattern FATAL =Pattern.compile("(Unreported|Reported) exception thrown!$");
 
@@ -135,7 +140,8 @@ public final class CrashReport {
         }
         int tail = 0;
         for (int i = end; i < lines.length; i++) {
-            if (lines[i].contains("Stopping!") || (!running && ++tail > TAIL_LINES)) {
+            if (lines[i].contains("Stopping!") || (!running && ++tail > TAIL_LINES)
+                    || (!running && lines[i].contains("[modkeel] " + TITLE_REACHED))) {
                 return null;
             }
         }

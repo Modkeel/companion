@@ -745,6 +745,10 @@ public final class CoreTest {
         eq(null, CrashReport.fromLog(log + "[17:02:00] [Render thread/INFO]: Stopping!\n"),
            "the game closed after the error");
         eq(null, CrashReport.fromLog("[17:00:00] [main/INFO]: Loading 3 mods\n"), "no trace");
+        // a mod logged the error and went on: the start reached the title screen, then was killed
+        eq(null, CrashReport.fromLog(log + "[17:02:00] [Render thread/INFO]: [modkeel] "
+                                     + CrashReport.TITLE_REACHED + "\n"),
+           "the start reached the title screen after the error");
     }
 
     static void guardianLogCrash() throws Exception {
