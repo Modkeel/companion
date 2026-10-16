@@ -30,6 +30,8 @@ import org.slf4j.LoggerFactory;
 public final class Common {
     public static Guardian guardian;
     public static Spikes spikes;
+    /** Watches a crash close the game; the client adds its window to it. */
+    public static CrashWatch crashWatch;
     private static volatile MinecraftServer server;
     private static Supplier<Path> selfJar;
     private static int ticks;
@@ -62,7 +64,8 @@ public final class Common {
         // read every jar now, off the game threads, so the first spike is named without delay
         background(guardian::owners);
         spikes.start();
-        CrashLog.install(new CrashWatch(gameDir, guardian::owners));
+        crashWatch = new CrashWatch(gameDir, guardian::owners);
+        CrashLog.install(crashWatch);
     }
 
     public static Path selfJar() {

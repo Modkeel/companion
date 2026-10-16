@@ -41,6 +41,7 @@ public final class CoreTest {
         run("guardian: disable, dependents, enable", CoreTest::guardianDisable);
         run("guardian: jars the early check turned off", CoreTest::guardianTurnedOff);
         run("guardian: crash found once", CoreTest::guardianCrash);
+        run("crash window: reads the crash without recording it", CoreTest::crashWindow);
         run("guardian: crash that stopped the start", CoreTest::guardianStartingCrash);
         run("crash only the log kept", CoreTest::logCrash);
         run("guardian: a module clash the early check handled", CoreTest::guardianClashHandled);
@@ -494,6 +495,27 @@ public final class CoreTest {
         eq(fresh, g.crashFile, "report file");
         Files.setLastModifiedTime(fresh, FileTime.fromMillis(System.currentTimeMillis() - 1000));
         eq(null, new Guardian(game).checkCrashes(), "shown once");
+    }
+
+    static void crashWindow() throws Exception {
+        Path game = tmp();
+        jar(game.resolve("mods"), "fabrishot.jar", "fabrishot", null, "me/ramidzkh/fabrishot/F.class");
+        Path reports = game.resolve("crash-reports");
+        Files.createDirectories(reports);
+        Path fresh = reports.resolve("crash-2026-10-15_10.00.00-client.txt");
+        Files.copy(fixtures.resolve("fabric-mixin-fabrishot.txt"), fresh);
+        Files.setLastModifiedTime(fresh, FileTime.fromMillis(System.currentTimeMillis() - 1000));
+        Guardian w = new Guardian(game);
+        check(w.findCrash() != null, "the window finds the crash");
+        Guardian next = new Guardian(game);
+        check(next.findCrash() != null, "closed without a fix: the next start still finds it");
+        w.recordCrash(w.crash);
+        eq(null, new Guardian(game).checkCrashes(), "fixed in the window: the next start does not ask again");
+
+        Map<String, String> lang = CrashWindow.Lang.parse(
+                "{\n  \"a\": \"x \\\"q\\\" %s\",\n  \"b\": \"\\u00e9\\n\"\n}");
+        eq("x \"q\" %s", lang.get("a"), "escaped quotes");
+        eq("é\n", lang.get("b"), "unicode and newline escapes");
     }
 
     static void guardianStartingCrash() throws Exception {

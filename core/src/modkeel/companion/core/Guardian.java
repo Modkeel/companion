@@ -350,14 +350,24 @@ public final class Guardian {
      * report from the last 24 hours counts.
      */
     public Diagnosis checkCrashes() {
+        Diagnosis d = findCrash();
+        recordCrash(d);
+        return d;
+    }
+
+    /** When {@link #findCrash} looked: reports from before it are not shown again. */
+    private long checkedAt;
+
+    /**
+     * The crash since the last check, read without recording it: the crash window reads it
+     * after the game closed, and the next start still finds it unless the player acted there.
+     */
+    public Diagnosis findCrash() {
         playingAtLaunch = state.get("playing", null);
         playingClosedAt = state.getLong("playingClosed", 0);
-        state.set("playing", null);
-        state.set("playingClosed", null);
         long now = System.currentTimeMillis();
+        checkedAt = now;
         long since = state.getLong("lastCrashCheck", now - 24L * 3600 * 1000);
-        state.set("lastCrashCheck", now);
-        state.save();
         Path dir = gameDir.resolve("crash-reports");
         Path newest = null;
         long newestTime = since;
@@ -412,13 +422,21 @@ public final class Guardian {
         crashFile = plain != null ? plain : newest;
         // a start that never got to a world: none was open
         worldAtCrash = crashFromLog && !crashWhilePlaying ? null : worldAt(newestTime);
-        if (outcomes.watching()) {
-            outcomes.onCrash(d.signature, current().fingerprint());
-        }
         Log.info("crash " + newest.getFileName() + ": " + d.kind + ", " + d.error
                  + (d.top() == null ? ", no suspect" : ", suspect " + d.top().id + " ("
                     + d.confidence + ", " + Msg.plain(String.join("; ", d.top().reasons)) + ")"));
         return d;
+    }
+
+    /** The crash {@link #findCrash} found (or none) is handled: the next check starts after it. */
+    public void recordCrash(Diagnosis d) {
+        state.set("playing", null);
+        state.set("playingClosed", null);
+        state.set("lastCrashCheck", checkedAt == 0 ? System.currentTimeMillis() : checkedAt);
+        state.save();
+        if (d != null && outcomes.watching()) {
+            outcomes.onCrash(d.signature, current().fingerprint());
+        }
     }
 
     /**

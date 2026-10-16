@@ -15,6 +15,9 @@ import java.util.Optional;
  * {@code java -cp modkeel.jar modkeel.companion.core.Apply <pid> <plan> <result>}
  */
 public final class Apply {
+    /** How long a helper waits for the game to exit before it gives up. */
+    static final long WAIT_MINUTES = 10;
+
     private Apply() {
     }
 
@@ -26,7 +29,7 @@ public final class Apply {
         if (game.isPresent()) {
             // the game exits by itself right after starting us; never wait forever
             try {
-                game.get().onExit().get(10, java.util.concurrent.TimeUnit.MINUTES);
+                game.get().onExit().get(WAIT_MINUTES, java.util.concurrent.TimeUnit.MINUTES);
             } catch (java.util.concurrent.TimeoutException e) {
                 write(resultFile, List.of("#" + Plan.read(planFile).title, "fail game still running"));
                 return;

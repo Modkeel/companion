@@ -38,6 +38,8 @@ public final class CrashWatch {
     /** The threads' stacks; tests replace it. */
     Supplier<Map<Thread, StackTraceElement[]>> stacks = Thread::getAllStackTraces;
     private volatile Thread watcher;
+    /** Runs once at the first crash, before the watch starts (the client opens its window). */
+    public volatile Runnable onCrash;
 
     public CrashWatch(Path gameDir, Supplier<Owners> owners) {
         this.gameDir = gameDir;
@@ -55,6 +57,14 @@ public final class CrashWatch {
             return;
         }
         Log.info("crash logged on " + threadName + ": watching the game close");
+        Runnable r = onCrash;
+        if (r != null) {
+            try {
+                r.run();
+            } catch (RuntimeException | LinkageError e) {
+                Log.warn("cannot start the crash window", e);
+            }
+        }
         Thread w = new Thread(() -> watch(error, threadName), "modkeel-crash-watch");
         w.setDaemon(true);
         watcher = w;

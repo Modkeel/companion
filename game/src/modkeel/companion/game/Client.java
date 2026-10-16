@@ -2,6 +2,7 @@ package modkeel.companion.game;
 
 import java.util.function.Consumer;
 
+import modkeel.companion.core.CrashWindow;
 import modkeel.companion.core.Diagnosis;
 import modkeel.companion.core.Guardian;
 import modkeel.companion.core.Log;
@@ -44,6 +45,8 @@ public final class Client {
             StartingCrash.offer(Common.guardian, Common::selfJar);
         }
         Common.spikes.listener = Client::onSpike;
+        // a crash that closes the game is told in a window of its own, right away
+        Common.crashWatch.onCrash = () -> CrashWindow.launch(Common.guardian, Common.selfJar());
         Tour.start();
     }
 
