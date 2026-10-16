@@ -95,8 +95,8 @@ public final class CrashReport {
     /** Log lines a crash may still write after its stack trace. */
     private static final int TAIL_LINES = 5;
     /**
-     * Modkeel logs this on a start's first title screen: an error logged before it did not stop
-     * that start (a mod caught it and went on), whatever ended the start later.
+     * Modkeel logs this on a start's first title screen: that start finished loading, so an error
+     * it logged without Minecraft's own crash marker was caught by a mod and did not stop it.
      */
     public static final String TITLE_REACHED = "title screen reached";
     /** Minecraft logs this right before the trace of a crash, then writes the report. */
@@ -133,6 +133,9 @@ public final class CrashReport {
             return null;
         }
         boolean running = fatalStart >= 0;
+        if (!running && text.contains("[modkeel] " + TITLE_REACHED)) {
+            return null;
+        }
         if (running) {
             // the crash Minecraft logged, not what mods logged while the game stopped
             start = fatalStart;
@@ -140,8 +143,7 @@ public final class CrashReport {
         }
         int tail = 0;
         for (int i = end; i < lines.length; i++) {
-            if (lines[i].contains("Stopping!") || (!running && ++tail > TAIL_LINES)
-                    || (!running && lines[i].contains("[modkeel] " + TITLE_REACHED))) {
+            if (lines[i].contains("Stopping!") || (!running && ++tail > TAIL_LINES)) {
                 return null;
             }
         }
