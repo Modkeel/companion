@@ -6,6 +6,7 @@ import modkeel.companion.core.CrashWindow;
 import modkeel.companion.core.Diagnosis;
 import modkeel.companion.core.Guardian;
 import modkeel.companion.core.Log;
+import modkeel.companion.core.PixelFont;
 import modkeel.companion.core.Plan;
 import modkeel.companion.core.Spikes;
 import net.minecraft.client.Minecraft;
@@ -47,6 +48,11 @@ public final class Client {
         Common.spikes.listener = Client::onSpike;
         // a crash that closes the game is told in a window of its own, right away
         Common.crashWatch.onCrash = () -> CrashWindow.launch(Common.guardian, Common.selfJar());
+        // the window draws with the game's font, copied from the player's own game once
+        Thread font = new Thread(() -> PixelFont.export(Minecraft.class,
+                CrashWindow.fontDir(Common.guardian)), "modkeel-font");
+        font.setDaemon(true);
+        font.start();
         Tour.start();
     }
 

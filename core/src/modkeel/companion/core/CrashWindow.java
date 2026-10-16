@@ -1,15 +1,13 @@
 package modkeel.companion.core;
 
-import java.awt.BasicStroke;
 import java.awt.Color;
-import java.awt.Component;
 import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.Font;
-import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.GraphicsEnvironment;
+import java.awt.Rectangle;
 import java.awt.RenderingHints;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -37,14 +35,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import javax.imageio.ImageIO;
-import javax.swing.BorderFactory;
-import javax.swing.Box;
-import javax.swing.BoxLayout;
-import javax.swing.JCheckBox;
 import javax.swing.JComponent;
 import javax.swing.JFrame;
-import javax.swing.JPanel;
-import javax.swing.JTextArea;
 import javax.swing.SwingUtilities;
 import javax.swing.Timer;
 
@@ -54,49 +46,58 @@ import javax.swing.Timer;
  * start the game again to learn what happened. It waits for the game to exit, reads the crash
  * report the game wrote, and offers the same fix as the crash screen. A fix applied here is
  * recorded, so the next start does not ask again; closing it changes nothing, and the crash
- * screen still shows at the next start.
+ * screen still shows at the next start. It is drawn like the crash screen, in GUI pixels with
+ * the game's own font ({@link PixelFont}).
  * {@code java -cp window.jar modkeel.companion.core.CrashWindow <pid> <game dir> <mc> <loader> <loader version>}
  */
 public final class CrashWindow {
-    // not WIDTH: inside a Swing component that name is ImageObserver.WIDTH (1)
-    static final int TEXT_WIDTH = 460;
-    static final Color BG = new Color(0x262626);
-    static final Color CARD = new Color(0x343434);
-    static final Color TEXT = Color.WHITE;
-    static final Color SOFT = new Color(0xE0E0E0);
-    static final Color GRAY = new Color(0xC6C6C6);
-    static final Color EDGE_OK = new Color(0x5F8F4E);
-    static final Color EDGE_WARN = new Color(0xB08A3A);
+    /** The crash screen at GUI scale 2 on the game's default window. */
+    static final int SCREEN = 436;
+    static final int HEADER = 33;
+    static final int GUTTER = 10;
+    static final int PANEL_MARGIN = 8;
+    static final int INSET_X = 4;
+    static final int INSET_Y = 10;
+    static final int SCROLL_RESERVE = 10;
+    static final int BODY = SCREEN - 2 * (GUTTER + PANEL_MARGIN + SCROLL_RESERVE + INSET_X);
+    static final int PAD = 6;
+
+    static final int BLACK = 0xFF000000;
+    static final int TEXT = 0xFFFFFFFF;
+    static final int SOFT = 0xFFE0E0E0;
+    static final int GRAY = 0xFFC6C6C6;
+    static final int YELLOW = 0xFFFFFF55;
+    static final int EDGE_OK = 0xFF5F8F4E;
+    static final int EDGE_WARN = 0xFFB08A3A;
+    /** Behind everything: the game's darkened menu background. */
+    static final int BASE = 0xFF121212;
 
     private final Guardian g;
     private final Diagnosis d;
     private final Lang lang;
     private final Path selfJar;
-    private final Font regular;
-    private final Font bold;
+    private final PixelFont font;
     private final JFrame frame = new JFrame("Modkeel");
-    private final JPanel root = new JPanel();
-    private JCheckBox shareBox;
+    private final View view = new View();
     private boolean share;
     /** The last crash check when the window opened: another start changes it. */
     private long checked;
 
-    private CrashWindow(Guardian g, Diagnosis d, Lang lang, Path selfJar) {
+    private String title = "";
+    private final List<Block> body = new ArrayList<>();
+    private final List<List<Widget>> footer = new ArrayList<>();
+    private int scale = 2;
+    private int height;
+    private int mouseX = -1;
+    private int mouseY = -1;
+
+    private CrashWindow(Guardian g, Diagnosis d, Lang lang, Path selfJar, PixelFont font) {
         this.g = g;
         this.d = d;
         this.lang = lang;
         this.selfJar = selfJar;
+        this.font = font;
         this.share = g.shareChoice();
-        String sample = lang.get("modkeel.crash.title");
-        Font r = font("BricolageGrotesque-Regular.ttf");
-        Font b = font("BricolageGrotesque-Bold.ttf");
-        // Bricolage has Latin only: Russian and Chinese fall back to the system's UI font
-        if (r == null || b == null || r.canDisplayUpTo(sample) != -1) {
-            r = new Font(Font.DIALOG, Font.PLAIN, 1);
-            b = new Font(Font.DIALOG, Font.BOLD, 1);
-        }
-        this.regular = r.deriveFont(14f);
-        this.bold = b.deriveFont(15f);
     }
 
     /**
@@ -132,6 +133,11 @@ public final class CrashWindow {
         }
     }
 
+    /** Where the game copies its font for the window: one folder per Minecraft version. */
+    public static Path fontDir(Guardian g) {
+        return g.home.resolve("window-font").resolve(g.mcVersion);
+    }
+
     public static void main(String[] args) throws Exception {
         long pid = Long.parseLong(args[0]);
         Path gameDir = Paths.get(args[1]);
@@ -157,8 +163,14 @@ public final class CrashWindow {
             return;
         }
         Lang lang = Lang.load(gameDir);
+        Font vector = font("BricolageGrotesque-Regular.ttf");
+        PixelFont pf = PixelFont.load(fontDir(g),
+                vector == null ? new Font(Font.DIALOG, Font.PLAIN, 8) : vector.deriveFont(8f));
+        if (!pf.pixel()) {
+            Log.info("no copy of the game's font: the crash window uses its own");
+        }
         Path self = Paths.get(CrashWindow.class.getProtectionDomain().getCodeSource().getLocation().toURI());
-        SwingUtilities.invokeAndWait(() -> new CrashWindow(g, d, lang, self).show());
+        SwingUtilities.invokeAndWait(() -> new CrashWindow(g, d, lang, self, pf).show());
     }
 
     private void show() {
@@ -170,10 +182,14 @@ public final class CrashWindow {
                 System.exit(0);
             }
         });
-        root.setBackground(BG);
-        root.setLayout(new BoxLayout(root, BoxLayout.Y_AXIS));
-        root.setBorder(BorderFactory.createEmptyBorder(18, 18, 18, 18));
-        frame.setContentPane(root);
+        try (InputStream in = CrashWindow.class.getResourceAsStream("/assets/modkeel/icon.png")) {
+            if (in != null) {
+                frame.setIconImage(ImageIO.read(in));
+            }
+        } catch (IOException e) {
+            // the system's default icon
+        }
+        frame.setContentPane(view);
         main();
         frame.setResizable(false);
         frame.setLocationRelativeTo(null);
@@ -192,50 +208,44 @@ public final class CrashWindow {
         test();
     }
 
-    /** What happened, the world, the likely cause, and the fix. */
+    /** What happened, the world, the likely cause, and the fix: the crash screen's layout. */
     private void main() {
-        reset();
-        title(lang.get("modkeel.crash.title"));
+        reset(lang.get("modkeel.crash.title"));
         rescue();
         cause();
+        body.add(new Lines(lang.get("modkeel.window.later"), BODY, GRAY, true));
         Diagnosis.Suspect s = d.top();
-        JPanel buttons = row();
         if (s != null && s.file != null) {
-            buttons.add(button(lang.get("modkeel.crash.fix", s.name), true, this::confirmDisable));
+            footer.add(List.of(new Button(304, lang.get("modkeel.crash.fix", s.name), true,
+                    this::confirmDisable)));
         } else if (g.canRevert()) {
-            buttons.add(button(lang.get("modkeel.crash.fix_revert"), true, this::confirmRevert));
+            footer.add(List.of(new Button(304, lang.get("modkeel.crash.fix_revert"), true,
+                    this::confirmRevert)));
         }
-        buttons.add(button(lang.get("modkeel.crash.not_now"), false, frame::dispose));
+        footer.add(List.of(new Button(304, lang.get("modkeel.crash.not_now"), false, frame::dispose)));
         if (g.reports.enabled()) {
-            shareBox = new JCheckBox(lang.get("modkeel.share.checkbox"), share);
-            shareBox.setFont(regular);
-            shareBox.setForeground(GRAY);
-            shareBox.setOpaque(false);
-            shareBox.setFocusPainted(false);
-            shareBox.setAlignmentX(Component.LEFT_ALIGNMENT);
-            shareBox.addActionListener(e -> share = shareBox.isSelected());
-            gap(10);
-            root.add(shareBox);
+            footer.add(List.of(new Check(lang.get("modkeel.share.checkbox"))));
         }
-        gap(4);
-        note(lang.get("modkeel.window.later"));
         done();
     }
 
+    /** As the game's confirm screen: the question, what happens, the action and Back. */
     private void confirmDisable() {
         Diagnosis.Suspect s = d.top();
-        reset();
-        title(lang.get("modkeel.disable.confirm_title", s.name));
-        text(lang.get("modkeel.window.points"), SOFT);
+        reset(lang.get("modkeel.disable.confirm_title", s.name));
+        int in = BODY - 2 * PAD;
+        List<Block> lines = new ArrayList<>();
+        lines.add(new Lines(lang.get("modkeel.window.points"), in, SOFT, false));
         List<String> deps = g.dependents(s.id);
         if (!deps.isEmpty()) {
-            gap(8);
-            text(lang.get("modkeel.disable.dependents", String.join(", ", deps)), new Color(0xFFFF55));
+            lines.add(new Lines(lang.get("modkeel.disable.dependents", String.join(", ", deps)),
+                    in, YELLOW, false));
         }
-        JPanel buttons = row();
-        buttons.add(button(lang.get("modkeel.window.disable_go"), true,
-                () -> fix(g.disablePlan(s), g.reports.disableFix(s))));
-        buttons.add(button(lang.get("modkeel.window.back"), false, this::main));
+        body.add(new Card(0, null, lines));
+        footer.add(List.of(
+                new Button(150, lang.get("modkeel.window.disable_go"), true,
+                        () -> fix(g.disablePlan(s), g.reports.disableFix(s))),
+                new Button(150, lang.get("modkeel.window.back"), false, this::main)));
         done();
     }
 
@@ -243,14 +253,13 @@ public final class CrashWindow {
         List<String> names = new ArrayList<>();
         g.changedSinceGood().forEach(j -> names.add(j.file));
         String list = names.isEmpty() ? "-" : String.join(", ", names);
-        reset();
-        title(lang.get("modkeel.revert.confirm_title"));
-        text(lang.get("modkeel.window.revert_points",
-                list.length() <= 300 ? list : list.substring(0, 299) + "…"), SOFT);
-        JPanel buttons = row();
-        buttons.add(button(lang.get("modkeel.window.revert_go"), true,
-                () -> fix(g.revertPlan(), g.reports.revertFix())));
-        buttons.add(button(lang.get("modkeel.window.back"), false, this::main));
+        reset(lang.get("modkeel.revert.confirm_title"));
+        body.add(new Card(0, null, List.of(new Lines(lang.get("modkeel.window.revert_points",
+                list.length() <= 300 ? list : list.substring(0, 299) + "…"), BODY - 2 * PAD, SOFT, false))));
+        footer.add(List.of(
+                new Button(150, lang.get("modkeel.window.revert_go"), true,
+                        () -> fix(g.revertPlan(), g.reports.revertFix())),
+                new Button(150, lang.get("modkeel.window.back"), false, this::main)));
         done();
     }
 
@@ -260,62 +269,72 @@ public final class CrashWindow {
         checked = g.state.getLong("lastCrashCheck", 0);
         g.shareCrash(share, f);
         g.applyCrashFix(plan, selfJar);
-        reset();
-        title(lang.msg(plan.title));
-        text(lang.get("modkeel.window.reopen"), SOFT);
-        JPanel buttons = row();
-        buttons.add(button(lang.get("modkeel.window.close"), true, frame::dispose));
+        reset(lang.msg(plan.title));
+        body.add(new Lines(lang.get("modkeel.window.reopen"), BODY, SOFT, true));
+        footer.add(List.of(new Button(304, lang.get("modkeel.window.close"), true, frame::dispose)));
         done();
     }
 
     // ---- parts ---------------------------------------------------------------------------
 
+    /** The world that was open: it is still there, and how much of it Minecraft had saved. */
     private void rescue() {
         Guardian.WorldAtCrash world = g.worldAtCrash;
         if (world == null) {
             return;
         }
-        Card card = card(EDGE_OK);
-        card.heading(lang.get("modkeel.rescue.title"));
+        BufferedImage icon = null;
+        try {
+            Path p = world.dir.resolve("icon.png");
+            icon = Files.exists(p) ? ImageIO.read(p.toFile()) : null;
+        } catch (IOException e) {
+            // no icon: the lines take the whole card
+        }
+        int in = BODY - 2 * PAD - (icon == null ? 0 : 32 + 8);
+        List<Block> lines = new ArrayList<>();
+        lines.add(new Heading(lang.get("modkeel.rescue.title"), in));
         long minutes = world.unsavedMinutes();
         if (minutes == 0) {
-            card.line(lang.get("modkeel.rescue.saved", world.name), SOFT);
+            lines.add(new Lines(lang.get("modkeel.rescue.saved", world.name), in, SOFT, false));
         } else if (minutes > 0) {
-            card.line(lang.get("modkeel.rescue.saved_min", world.name, minutes), SOFT);
+            lines.add(new Lines(lang.get("modkeel.rescue.saved_min", world.name, minutes), in, SOFT, false));
         }
         if (world.backup != null) {
-            card.line(lang.get("modkeel.rescue.copy",
-                    backupTime(world.backup.getFileName().toString(), lang.code)), GRAY);
+            lines.add(new Lines(lang.get("modkeel.rescue.copy",
+                    backupTime(world.backup.getFileName().toString(), lang.code)), in, GRAY, false));
         }
-        gap(10);
+        body.add(new Card(EDGE_OK, icon, lines));
     }
 
+    /** The likely cause as the card's title, how sure in the words above it, then why. */
     private void cause() {
         Diagnosis.Suspect s = d.top();
-        Card card = card(EDGE_WARN);
+        int in = BODY - 2 * PAD;
+        List<Block> lines = new ArrayList<>();
         if (s != null) {
-            card.line(lang.get("modkeel.crash.likely." + switch (d.confidence) {
+            lines.add(new Lines(lang.get("modkeel.crash.likely." + switch (d.confidence) {
                 case HIGH -> "high";
                 case MEDIUM -> "medium";
                 default -> "low";
-            }), GRAY);
-            card.heading(s.name);
+            }), in, GRAY, false));
+            lines.add(new Heading(s.name, in));
             List<String> reasons = new ArrayList<>();
             for (String r : s.reasons) {
                 reasons.add(lang.msg(r));
             }
-            card.line(sentence(String.join("; ", reasons)), SOFT);
+            lines.add(new Lines(sentence(String.join("; ", reasons)), in, SOFT, false));
         } else {
-            card.heading(lang.get("modkeel.crash.unclear"));
+            lines.add(new Heading(lang.get("modkeel.crash.unclear"), in));
             if (g.lastGood() != null) {
                 int changed = g.changedSinceGood().size();
-                card.line(changed > 0 ? lang.get("modkeel.crash.changed", changed)
-                        : lang.get("modkeel.crash.unchanged"), SOFT);
+                lines.add(new Lines(changed > 0 ? lang.get("modkeel.crash.changed", changed)
+                        : lang.get("modkeel.crash.unchanged"), in, SOFT, false));
             }
         }
         if (d.kind == Diagnosis.Kind.OUT_OF_MEMORY) {
-            card.line(lang.get("modkeel.kind.out_of_memory"), GRAY);
+            lines.add(new Lines(lang.get("modkeel.kind.out_of_memory"), in, GRAY, false));
         }
+        body.add(new Card(EDGE_WARN, null, lines));
     }
 
     /** "its code is in the error" -> "Its code is in the error." */
@@ -339,181 +358,386 @@ public final class CrashWindow {
         }
     }
 
-    private void reset() {
-        root.removeAll();
-        shareBox = null;
+    // ---- layout --------------------------------------------------------------------------
+
+    private void reset(String title) {
+        this.title = title;
+        body.clear();
+        footer.clear();
     }
 
+    /** Sizes the window to the view: GUI scale 2 when the screen has room for it. */
     private void done() {
-        root.revalidate();
-        root.repaint();
+        int bodyH = INSET_Y * 2 - 6;
+        for (Block b : body) {
+            bodyH += b.height() + 6;
+        }
+        height = HEADER + bodyH + footerHeight();
+        Rectangle screen = GraphicsEnvironment.getLocalGraphicsEnvironment().getMaximumWindowBounds();
+        scale = SCREEN * 2 <= screen.width && height * 2 <= screen.height - 40 ? 2 : 1;
+        view.setPreferredSize(new Dimension(SCREEN * scale, height * scale));
         frame.pack();
+        view.repaint();
     }
 
-    private void gap(int h) {
-        root.add(Box.createRigidArea(new Dimension(0, h)));
+    private int footerHeight() {
+        return 12 + 24 * footer.size();
     }
 
-    private void title(String s) {
-        JTextArea t = area(s, TEXT, bold.deriveFont(19f), TEXT_WIDTH);
-        root.add(t);
-        gap(12);
-    }
-
-    private void text(String s, Color c) {
-        root.add(area(s, c, regular, TEXT_WIDTH));
-    }
-
-    private void note(String s) {
-        root.add(area(s, GRAY, regular.deriveFont(12.5f), TEXT_WIDTH));
-    }
-
-    private JPanel row() {
-        gap(14);
-        JPanel p = new JPanel();
-        p.setOpaque(false);
-        p.setLayout(new BoxLayout(p, BoxLayout.X_AXIS));
-        p.setAlignmentX(Component.LEFT_ALIGNMENT);
-        root.add(p);
-        return p;
-    }
-
-    private Card card(Color edge) {
-        Card c = new Card(edge);
-        root.add(c);
-        return c;
-    }
-
-    private JTextArea area(String s, Color c, Font f, int width) {
-        JTextArea t = new JTextArea(s);
-        t.setFont(f);
-        t.setForeground(c);
-        t.setOpaque(false);
-        t.setEditable(false);
-        t.setFocusable(false);
-        t.setLineWrap(true);
-        t.setWrapStyleWord(true);
-        t.setBorder(null);
-        t.setAlignmentX(Component.LEFT_ALIGNMENT);
-        t.setSize(width, Short.MAX_VALUE);
-        Dimension pref = new Dimension(width, t.getPreferredSize().height);
-        t.setPreferredSize(pref);
-        t.setMaximumSize(pref);
-        return t;
-    }
-
-    /** A card: dark panel, colored left edge, heading and lines. */
-    private final class Card extends JPanel {
-        private final Color edge;
-
-        Card(Color edge) {
-            this.edge = edge;
-            setOpaque(false);
-            setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
-            setBorder(BorderFactory.createEmptyBorder(10, 16, 10, 12));
-            setAlignmentX(Component.LEFT_ALIGNMENT);
+    /** Paints the view in GUI pixels (null: only hit-tests); returns the action under the mouse. */
+    private Runnable draw(Paint p, int mx, int my) {
+        int h = height;
+        int foot = footerHeight();
+        int mid = h - HEADER - foot;
+        int px = GUTTER;
+        int pw = SCREEN - 2 * GUTTER;
+        if (p != null) {
+            p.fill(0, 0, SCREEN, h, BASE);
+            strip(p, 0, 0, SCREEN, HEADER, false);
+            strip(p, 0, h - foot, SCREEN, foot, true);
+            checks(p, 0, HEADER, px, mid);
+            checks(p, px + pw, HEADER, SCREEN - px - pw, mid);
+            panel(p, px, HEADER, pw, mid);
+            int tw = font.width(title);
+            font.draw(p.g, title, (SCREEN - tw) / 2, (HEADER - 9) / 2 + 1, TEXT, true);
+            int y = HEADER + INSET_Y;
+            int x = (SCREEN - BODY) / 2;
+            for (Block b : body) {
+                b.paint(p, x, y);
+                y += b.height() + 6;
+            }
         }
-
-        void heading(String s) {
-            add(area(s, TEXT, bold, TEXT_WIDTH - 28));
-            add(Box.createRigidArea(new Dimension(0, 3)));
+        Runnable hit = null;
+        int y = h - foot + 8;
+        for (List<Widget> row : footer) {
+            int gap = row.size() > 1 ? 4 : 0;
+            int rw = -gap;
+            for (Widget w : row) {
+                rw += w.width() + gap;
+            }
+            int x = (SCREEN - rw) / 2;
+            for (Widget w : row) {
+                boolean over = mx >= x && mx < x + w.width() && my >= y && my < y + 20;
+                if (p != null) {
+                    w.paint(p, x, y, over);
+                }
+                if (over) {
+                    hit = w::click;
+                }
+                x += w.width() + gap;
+            }
+            y += 24;
         }
+        return hit;
+    }
 
-        void line(String s, Color c) {
-            add(area(s, c, regular, TEXT_WIDTH - 28));
-            add(Box.createRigidArea(new Dimension(0, 2)));
-        }
+    private final class View extends JComponent {
+        View() {
+            MouseAdapter m = new MouseAdapter() {
+                @Override
+                public void mouseMoved(MouseEvent e) {
+                    mouseX = e.getX() / scale;
+                    mouseY = e.getY() / scale;
+                    setCursor(Cursor.getPredefinedCursor(draw(null, mouseX, mouseY) != null
+                            ? Cursor.HAND_CURSOR : Cursor.DEFAULT_CURSOR));
+                    repaint();
+                }
 
-        @Override
-        public Dimension getMaximumSize() {
-            return new Dimension(TEXT_WIDTH, getPreferredSize().height);
+                @Override
+                public void mouseExited(MouseEvent e) {
+                    mouseX = -1;
+                    mouseY = -1;
+                    repaint();
+                }
+
+                @Override
+                public void mouseClicked(MouseEvent e) {
+                    Runnable r = draw(null, e.getX() / scale, e.getY() / scale);
+                    if (r != null) {
+                        r.run();
+                    }
+                }
+            };
+            addMouseListener(m);
+            addMouseMotionListener(m);
         }
 
         @Override
         protected void paintComponent(Graphics gr) {
-            Graphics2D g2 = (Graphics2D) gr;
-            g2.setColor(CARD);
-            g2.fillRect(0, 0, getWidth(), getHeight());
-            g2.setColor(new Color(255, 255, 255, 26));
-            g2.fillRect(0, 0, getWidth(), 1);
-            g2.setColor(new Color(0, 0, 0, 115));
-            g2.fillRect(0, getHeight() - 1, getWidth(), 1);
-            g2.setColor(edge);
-            g2.fillRect(0, 0, 4, getHeight());
+            Graphics2D g2 = (Graphics2D) gr.create();
+            g2.scale(scale, scale);
+            g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING,
+                    RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+            draw(new Paint(g2), mouseX, mouseY);
+            g2.dispose();
         }
     }
 
-    /** A Keel button: green for the fix, gray for the rest, bevelled like the game's. */
-    private JComponent button(String label, boolean green, Runnable action) {
-        JComponent b = new JComponent() {
-            boolean hot;
+    // ---- blocks and widgets --------------------------------------------------------------
 
-            {
-                setFont(green ? bold.deriveFont(14f) : regular);
-                setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-                addMouseListener(new MouseAdapter() {
-                    @Override
-                    public void mouseEntered(MouseEvent e) {
-                        hot = true;
-                        repaint();
-                    }
+    private interface Block {
+        int height();
 
-                    @Override
-                    public void mouseExited(MouseEvent e) {
-                        hot = false;
-                        repaint();
-                    }
+        void paint(Paint p, int x, int y);
+    }
 
-                    @Override
-                    public void mouseClicked(MouseEvent e) {
-                        action.run();
-                    }
-                });
+    /** Wrapped text: left-aligned inside a card, centered between cards. */
+    private final class Lines implements Block {
+        private final List<String> lines;
+        private final int width;
+        private final int color;
+        private final boolean centered;
+
+        Lines(String text, int width, int color, boolean centered) {
+            this.lines = font.wrap(text, width);
+            this.width = width;
+            this.color = color;
+            this.centered = centered;
+        }
+
+        @Override
+        public int height() {
+            return Math.max(0, lines.size() * PixelFont.LINE - 1);
+        }
+
+        @Override
+        public void paint(Paint p, int x, int y) {
+            for (String line : lines) {
+                int lx = centered ? x + (width - font.width(line)) / 2 : x;
+                font.draw(p.g, line, lx, y, color, true);
+                y += PixelFont.LINE;
             }
+        }
+    }
 
-            @Override
-            public Dimension getPreferredSize() {
-                FontMetrics fm = getFontMetrics(getFont());
-                return new Dimension(fm.stringWidth(label) + 36, 34);
-            }
+    /** A card's first line: the key fact in white. */
+    private final class Heading implements Block {
+        private static final int ROW = 14;
+        private final List<String> lines;
 
-            @Override
-            public Dimension getMaximumSize() {
-                return getPreferredSize();
-            }
+        Heading(String text, int width) {
+            this.lines = font.wrap(text, width);
+        }
 
-            @Override
-            protected void paintComponent(Graphics gr) {
-                Graphics2D g2 = (Graphics2D) gr;
-                g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING,
-                        RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
-                int w = getWidth();
-                int h = getHeight();
-                g2.setColor(Color.BLACK);
-                g2.fillRect(0, 0, w, h);
-                g2.setColor(new Color(green ? (hot ? 0x5A8049 : 0x4C6E3E) : hot ? 0x8C8C8C : 0x727272));
-                g2.fillRect(1, 1, w - 2, h - 2);
-                g2.setColor(new Color(green ? (hot ? 0x8DB37C : 0x769C66) : hot ? 0xC8C8C8 : 0xB0B0B0));
-                g2.setStroke(new BasicStroke(1));
-                g2.fillRect(1, 1, w - 2, 1);
-                g2.fillRect(1, 1, 1, h - 4);
-                g2.setColor(new Color(green ? 0x2C4224 : 0x3D3D3D));
-                g2.fillRect(1, h - 3, w - 2, 2);
-                g2.setColor(TEXT);
-                FontMetrics fm = g2.getFontMetrics(getFont());
-                g2.setFont(getFont());
-                g2.drawString(label, (w - fm.stringWidth(label)) / 2,
-                        (h - 2 - fm.getHeight()) / 2 + fm.getAscent());
+        @Override
+        public int height() {
+            return (lines.size() - 1) * ROW + 11;
+        }
+
+        @Override
+        public void paint(Paint p, int x, int y) {
+            for (String line : lines) {
+                font.draw(p.g, line, x, y + 2, TEXT, true);
+                y += ROW;
             }
-        };
-        b.setAlignmentY(Component.TOP_ALIGNMENT);
-        JPanel cell = new JPanel();
-        cell.setOpaque(false);
-        cell.setLayout(new BoxLayout(cell, BoxLayout.X_AXIS));
-        cell.add(b);
-        cell.add(Box.createRigidArea(new Dimension(8, 0)));
-        cell.setMaximumSize(cell.getPreferredSize());
-        return cell;
+        }
+    }
+
+    /** A Keel card: status edge on the left (0: none), an optional 32 px icon, lines 4 apart. */
+    private static final class Card implements Block {
+        private final int edge;
+        private final BufferedImage icon;
+        private final List<Block> lines;
+
+        Card(int edge, BufferedImage icon, List<Block> lines) {
+            this.edge = edge;
+            this.icon = icon;
+            this.lines = lines;
+        }
+
+        private int inner() {
+            int h = -4;
+            for (Block b : lines) {
+                h += b.height() + 4;
+            }
+            return Math.max(h, icon == null ? 0 : 32);
+        }
+
+        @Override
+        public int height() {
+            return inner() + 2 * PAD;
+        }
+
+        @Override
+        public void paint(Paint p, int x, int y) {
+            bevel(p, x, y, BODY, height(), 0xEB343434, 0x1AFFFFFF, 0x73000000);
+            if (edge != 0) {
+                p.fill(x + 1, y + 1, x + 3, y + height() - 1, edge);
+            }
+            int lx = x + PAD;
+            if (icon != null) {
+                p.g.setRenderingHint(RenderingHints.KEY_INTERPOLATION,
+                        RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
+                p.g.drawImage(icon, lx, y + PAD, 32, 32, null);
+                lx += 32 + 8;
+            }
+            int ly = y + PAD;
+            for (Block b : lines) {
+                b.paint(p, lx, ly);
+                ly += b.height() + 4;
+            }
+        }
+    }
+
+    private interface Widget {
+        int width();
+
+        void paint(Paint p, int x, int y, boolean hovered);
+
+        void click();
+    }
+
+    /** A Keel button: gray, or muted green for the fix; white outline when hovered. */
+    private final class Button implements Widget {
+        private final int width;
+        private final String label;
+        private final boolean green;
+        private final Runnable action;
+
+        Button(int width, String label, boolean green, Runnable action) {
+            this.width = width;
+            this.label = label;
+            this.green = green;
+            this.action = action;
+        }
+
+        @Override
+        public int width() {
+            return width;
+        }
+
+        @Override
+        public void click() {
+            action.run();
+        }
+
+        @Override
+        public void paint(Paint p, int x, int y, boolean hot) {
+            int w = width;
+            int h = 20;
+            p.fill(x, y, x + w, y + h, hot ? TEXT : BLACK);
+            p.fill(x + 1, y + 1, x + w - 1, y + h - 1,
+                    green ? (hot ? 0xFF5A8049 : 0xFF4C6E3E) : hot ? 0xFF8C8C8C : 0xFF727272);
+            int light = green ? (hot ? 0xFF8DB37C : 0xFF769C66) : hot ? 0xFFC8C8C8 : 0xFFB0B0B0;
+            p.fill(x + 1, y + 1, x + w - 1, y + 2, light);
+            p.fill(x + 1, y + 2, x + 2, y + h - 4, light);
+            p.fill(x + w - 2, y + 2, x + w - 1, y + h - 4, green ? 0xFF3A5530 : 0xFF4A4A4A);
+            p.fill(x + 1, y + h - 4, x + w - 1, y + h - 1, green ? 0xFF2C4224 : 0xFF3D3D3D);
+            String text = label;
+            if (font.width(text) > w - 8) {
+                while (text.length() > 1 && font.width(text + "…") > w - 8) {
+                    text = text.substring(0, text.length() - 1);
+                }
+                text += "…";
+            }
+            font.draw(p.g, text, x + (w - font.width(text)) / 2, y + (h - 4 - 8) / 2 + 1, TEXT, true);
+        }
+    }
+
+    /** The game's checkbox: a 17 px box, its label beside it. */
+    private final class Check implements Widget {
+        private static final int BOX = 17;
+        private final String label;
+
+        Check(String label) {
+            this.label = label;
+        }
+
+        @Override
+        public int width() {
+            return BOX + 4 + font.width(label);
+        }
+
+        @Override
+        public void click() {
+            share = !share;
+            view.repaint();
+        }
+
+        @Override
+        public void paint(Paint p, int x, int y, boolean hot) {
+            int by = y + (20 - BOX) / 2;
+            outline(p, x, by, BOX, BOX, hot ? TEXT : 0xFF6F6F6F);
+            p.fill(x + 1, by + 1, x + BOX - 1, by + BOX - 1, 0xFF2B2B2B);
+            if (share) {
+                // a check mark, two strokes 2 px thick
+                for (int i = 0; i < 4; i++) {
+                    p.fill(x + 4 + i, by + 8 + i, x + 6 + i, by + 10 + i, TEXT);
+                }
+                for (int i = 0; i < 7; i++) {
+                    p.fill(x + 8 + i, by + 10 - i, x + 10 + i, by + 12 - i, TEXT);
+                }
+            }
+            font.draw(p.g, label, x + BOX + 4, by + (BOX - 9) / 2 + 1, SOFT, true);
+        }
+    }
+
+    // ---- Keel paint (the game's Keel class, on Java2D) -----------------------------------
+
+    /** Fills in GUI pixels, corners as the game's: (x1, y1) to (x2, y2), color ARGB. */
+    static final class Paint {
+        final Graphics2D g;
+
+        Paint(Graphics2D g) {
+            this.g = g;
+        }
+
+        void fill(int x1, int y1, int x2, int y2, int argb) {
+            if (x2 > x1 && y2 > y1) {
+                g.setColor(new Color(argb, true));
+                g.fillRect(x1, y1, x2 - x1, y2 - y1);
+            }
+        }
+    }
+
+    static void bevel(Paint p, int x, int y, int w, int h, int fill, int light, int dark) {
+        outline(p, x, y, w, h, BLACK);
+        p.fill(x + 1, y + 1, x + w - 1, y + h - 1, fill);
+        p.fill(x + 1, y + 1, x + w - 1, y + 2, light);
+        p.fill(x + 1, y + 2, x + 2, y + h - 1, light);
+        p.fill(x + 2, y + h - 2, x + w - 1, y + h - 1, dark);
+        p.fill(x + w - 2, y + 2, x + w - 1, y + h - 2, dark);
+    }
+
+    static void outline(Paint p, int x, int y, int w, int h, int color) {
+        p.fill(x, y, x + w, y + 1, color);
+        p.fill(x, y + h - 1, x + w, y + h, color);
+        p.fill(x, y + 1, x + 1, y + h - 1, color);
+        p.fill(x + w - 1, y + 1, x + w, y + h - 1, color);
+    }
+
+    static void panel(Paint p, int x, int y, int w, int h) {
+        bevel(p, x, y, w, h, 0x60202020, 0x14FFFFFF, 0x40000000);
+        stripes(p, x + 2, y + 2, w - 4, h - 4, false);
+    }
+
+    static void strip(Paint p, int x, int y, int w, int h, boolean footer) {
+        p.fill(x, y, x + w, y + h, 0x66000000);
+        stripes(p, x, y, w, h, true);
+        int line = footer ? y : y + h - 1;
+        p.fill(x, line, x + w, line + 1, BLACK);
+    }
+
+    static void stripes(Paint p, int x, int y, int w, int h, boolean mirrored) {
+        int period = 10;
+        for (int row = 0; row < h; row++) {
+            int r = Math.floorMod(y + row, period);
+            int shift = Math.floorMod((mirrored ? period - 1 - r : r) + x, period);
+            for (int sx = x - shift; sx < x + w; sx += period) {
+                p.fill(Math.max(x, sx), y + row, Math.min(x + w, sx + 5), y + row + 1, 0x0DFFFFFF);
+            }
+        }
+    }
+
+    static void checks(Paint p, int x, int y, int w, int h) {
+        int c = 4;
+        for (int cy = y - Math.floorMod(y, c); cy < y + h; cy += c) {
+            for (int cx = x - Math.floorMod(x, c); cx < x + w; cx += c) {
+                boolean light = ((cx / c) + (cy / c)) % 2 == 0;
+                p.fill(Math.max(x, cx), Math.max(y, cy), Math.min(x + w, cx + c), Math.min(y + h, cy + c),
+                        light ? 0x0FFFFFFF : 0x0F000000);
+            }
+        }
     }
 
     private static Font font(String file) {
@@ -561,9 +785,9 @@ public final class CrashWindow {
         if (file == null) {
             return;
         }
-        BufferedImage im = new BufferedImage(root.getWidth(), root.getHeight(), BufferedImage.TYPE_INT_RGB);
+        BufferedImage im = new BufferedImage(SCREEN * scale, height * scale, BufferedImage.TYPE_INT_RGB);
         Graphics2D g2 = im.createGraphics();
-        root.paint(g2);
+        view.paint(g2);
         g2.dispose();
         Path out = Paths.get(file.replaceAll("\\.png$", "") + suffix + ".png");
         try {

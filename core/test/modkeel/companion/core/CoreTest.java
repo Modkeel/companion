@@ -516,6 +516,25 @@ public final class CoreTest {
                 "{\n  \"a\": \"x \\\"q\\\" %s\",\n  \"b\": \"\\u00e9\\n\"\n}");
         eq("x \"q\" %s", lang.get("a"), "escaped quotes");
         eq("é\n", lang.get("b"), "unicode and newline escapes");
+
+        // the game's font as the window reads it: a 2-cell bitmap, "a" 3 px wide
+        Path fonts = tmp();
+        java.awt.image.BufferedImage png = new java.awt.image.BufferedImage(16, 8,
+                java.awt.image.BufferedImage.TYPE_INT_ARGB);
+        for (int y = 0; y < 8; y++) {
+            png.setRGB(2, y, 0xFFFFFFFF);
+        }
+        javax.imageio.ImageIO.write(png, "png", fonts.resolve("ascii.png").toFile());
+        Files.writeString(fonts.resolve("default.json"), "{\"providers\": [{\"type\": \"bitmap\","
+                + " \"file\": \"minecraft:font/ascii.png\", \"ascent\": 7, \"chars\": [\"ab\"]}]}");
+        Files.writeString(fonts.resolve("ok"), "");
+        java.awt.Font dialog = new java.awt.Font(java.awt.Font.DIALOG, java.awt.Font.PLAIN, 8);
+        PixelFont f = PixelFont.load(fonts, dialog);
+        check(f.pixel(), "bitmap glyphs read");
+        eq(4, f.width("a"), "advance: rightmost column + 1");
+        eq(12, f.width("a a"), "space is 4");
+        eq(List.of("a", "a", "a"), f.wrap("a a a", 10), "wraps at spaces");
+        check(!PixelFont.load(tmp(), dialog).pixel(), "no copy yet: vector font only");
     }
 
     static void guardianStartingCrash() throws Exception {
