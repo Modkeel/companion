@@ -19,8 +19,11 @@ import java.util.Set;
  */
 public final class Guardian {
     public static final int KEEP_BACKUPS = Integer.getInteger("modkeel.backups.keep", 3);
+    /** Worlds bigger than this are not backed up; 0 (the default) backs up every world. */
     public static final long MAX_BACKUP_BYTES =
-            Long.getLong("modkeel.backups.max_mb", 8192L) * 1024 * 1024;
+            Long.getLong("modkeel.backups.max_mb", 0L) * 1024 * 1024;
+    /** Space kept free on the disk after a backup. */
+    static final long FREE_MARGIN = 512L << 20;
     /** Server ticks of play without a crash before the mod set counts as good (10 min). */
     public static final int GOOD_TICKS = Integer.getInteger("modkeel.test.good_ticks", 12000);
 
@@ -233,25 +236,44 @@ public final class Guardian {
                 changed = Files.exists(worldDir.resolve("level.dat"));
             }
             if (changed) {
-                long size = Backups.size(worldDir);
-                if (size > MAX_BACKUP_BYTES) {
-                    Log.info("world " + world + " is " + (size >> 20) + " MB, over the backup limit;"
-                             + " not backed up (raise -Dmodkeel.backups.max_mb)");
-                } else {
-                    long t0 = System.currentTimeMillis();
-                    backup = Backups.dir(gameDir, world).resolve(Backups.stamp() + ".zip");
-                    Backups.zip(worldDir, backup);
-                    Backups.setReason(backup, reason);
-                    Backups.prune(gameDir, world, KEEP_BACKUPS);
-                    Log.info("mods changed (" + before + " -> " + now.jars.size() + " mods): backed up "
-                             + world + " in " + (System.currentTimeMillis() - t0) + " ms to " + backup);
-                }
+                backup = backUp(worldDir, world, reason, before, now);
             }
             now.write(stored);
         } catch (IOException e) {
             Log.warn("backup of " + world + " failed", e);
         }
         return backup;
+    }
+
+    private Path backUp(Path worldDir, String world, String reason, String before, ModSet now)
+            throws IOException {
+        long size = Backups.size(worldDir);
+        if (MAX_BACKUP_BYTES > 0 && size > MAX_BACKUP_BYTES) {
+            Log.info("world " + world + " is " + (size >> 20) + " MB, over -Dmodkeel.backups.max_mb;"
+                     + " not backed up");
+            return null;
+        }
+        Path dir = Backups.dir(gameDir, world);
+        Files.createDirectories(dir);
+        // packs keep the chunks later backups replaced while any backup uses them: past twice
+        // the world, the next backup starts over so the old packs go with the old backups
+        boolean full = Snapshots.storeSize(dir) > 2 * size + (64L << 20);
+        boolean first = full || Backups.list(gameDir, world).stream().noneMatch(Snapshots::is);
+        long free = Files.getFileStore(dir).getUsableSpace();
+        if (first && free < size + FREE_MARGIN) {
+            Log.info("world " + world + " not backed up: " + (size >> 20) + " MB to copy, "
+                     + (free >> 20) + " MB free");
+            return null;
+        }
+        long t0 = System.currentTimeMillis();
+        Snapshots.Taken t = Snapshots.take(worldDir, dir, Backups.stamp(), full);
+        Backups.setReason(t.snap(), reason);
+        Backups.prune(gameDir, world, KEEP_BACKUPS);
+        Log.info("mods changed (" + before + " -> " + now.jars.size() + " mods): backed up " + world
+                 + " (" + (size >> 20) + " MB) in " + (System.currentTimeMillis() - t0) + " ms, "
+                 + (t.written() >> 10) + " KB written, " + t.reused() + "/" + t.files()
+                 + " files as in the last backup" + (t.full() ? ", full copy" : "") + ": " + t.snap());
+        return t.snap();
     }
 
     /** "Before playing with 2 new mods", "...without 1 mod", "...with 3 mods changed". */

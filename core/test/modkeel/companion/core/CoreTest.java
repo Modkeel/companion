@@ -36,6 +36,7 @@ public final class CoreTest {
         run("libraries and platform ids are never blamed", CoreTest::notBlamed);
         run("mod set fingerprint and hash cache", CoreTest::modSet);
         run("world backup, prune and restore", CoreTest::backups);
+        run("chunk snapshots: only changed chunks stored, worlds rebuilt", CoreTest::snapshots);
         run("guardian: backup only when mods change", CoreTest::guardianBackup);
         run("guardian: last good set and revert", CoreTest::guardianRevert);
         run("guardian: disable, dependents, enable", CoreTest::guardianDisable);
@@ -367,6 +368,98 @@ public final class CoreTest {
         eq(4096L, Files.size(w.resolve("region/r.0.0.mca")), "region restored");
         eq("changed", new String(Files.readAllBytes(aside.resolve("level.dat")), StandardCharsets.UTF_8),
            "replaced world kept");
+    }
+
+    /** A region file: slot -> {save time, payload size, fill byte}, laid out like the game does. */
+    static byte[] region(int[][] chunks) {
+        int sectors = 2;
+        for (int[] c : chunks) {
+            sectors += (c[2] + 5 + 4095) / 4096;
+        }
+        java.nio.ByteBuffer b = java.nio.ByteBuffer.allocate(sectors * 4096);
+        int at = 2;
+        for (int[] c : chunks) {
+            int count = (c[2] + 5 + 4095) / 4096;
+            b.putInt(c[0] * 4, at << 8 | count);
+            b.putInt(4096 + c[0] * 4, c[1]);
+            b.putInt(at * 4096, c[2] + 1);
+            b.put(at * 4096 + 4, (byte) 2);
+            for (int i = 0; i < c[2]; i++) {
+                b.put(at * 4096 + 5 + i, (byte) (c[3] + i));
+            }
+            at += count;
+        }
+        return b.array();
+    }
+
+    /** slot -> "time:bytes" of a region file, to compare two that differ only in layout. */
+    static Map<Integer, String> chunks(Path mca) throws IOException {
+        byte[] b = Files.readAllBytes(mca);
+        Map<Integer, String> out = new java.util.TreeMap<>();
+        for (int[] c : Snapshots.parseRegion(b)) {
+            out.put(c[0], c[1] + ":" + java.util.Arrays.hashCode(
+                    java.util.Arrays.copyOfRange(b, c[2], c[2] + c[3])));
+        }
+        return out;
+    }
+
+    static void snapshots() throws Exception {
+        Path game = tmp();
+        Path w = world(game.resolve("saves"), "World");
+        Files.createDirectories(w.resolve("data"));
+        Path mca = w.resolve("region/r.0.0.mca");
+        Files.write(mca, region(new int[][] {{0, 100, 100, 1}, {5, 100, 5000, 7}}));
+        Files.write(w.resolve("region/r.1.0.mca"), new byte[100]);
+        Path dir = Backups.dir(game, "World");
+
+        Snapshots.Taken a = Snapshots.take(w, dir, "20261015-100000-000", false);
+        check(a.written() > 5100, "first snapshot stores everything");
+        Path back = game.resolve("back-a");
+        Snapshots.restore(a.snap(), back);
+        eq(chunks(mca), chunks(back.resolve("region/r.0.0.mca")), "chunks and save times rebuilt");
+        eq(2, chunks(mca).size(), "both chunks");
+        eq(100L, Files.size(back.resolve("region/r.1.0.mca")), "unparsable region kept whole");
+        check(Files.isDirectory(back.resolve("data")), "empty folder kept");
+        check(!Files.exists(back.resolve("session.lock")), "session.lock left out");
+        eq("level", new String(Files.readAllBytes(back.resolve("level.dat")), StandardCharsets.UTF_8),
+           "file restored");
+        eq(Files.getLastModifiedTime(mca).toMillis(),
+           Files.getLastModifiedTime(back.resolve("region/r.0.0.mca")).toMillis(),
+           "save time of the file kept");
+
+        // an hour of play: one chunk saved again, in another sector; level.dat untouched
+        Files.write(mca, region(new int[][] {{5, 200, 3000, 9}, {0, 100, 100, 1}}));
+        Files.setLastModifiedTime(mca, FileTime.fromMillis(Files.getLastModifiedTime(mca).toMillis() + 5000));
+        Snapshots.Taken b = Snapshots.take(w, dir, "20261015-110000-000", false);
+        check(b.written() > 3000 && b.written() < 3000 + 1024, "only the changed chunk: " + b.written());
+        Path backB = game.resolve("back-b");
+        Snapshots.restore(b.snap(), backB);
+        eq(chunks(mca), chunks(backB.resolve("region/r.0.0.mca")), "second snapshot rebuilt");
+        eq(Map.of(0, chunks(back.resolve("region/r.0.0.mca")).get(0), 5, chunks(mca).get(5)),
+           chunks(backB.resolve("region/r.0.0.mca")), "old chunk from the first pack, new from the second");
+
+        // restored worlds get new file times: the chunk check keeps the backup small anyway
+        Snapshots.Taken c = Snapshots.take(backB, dir, "20261015-120000-000", false);
+        check(c.written() < 1024, "a restored world costs only chunk lists: " + c.written());
+
+        Files.delete(a.snap());
+        Snapshots.gc(dir);
+        check(Files.exists(dir.resolve("store/20261015-100000-000.pack")), "pack still used is kept");
+        Snapshots.Taken d = Snapshots.take(w, dir, "20261015-130000-000", true);
+        check(d.written() > 3100, "full snapshot stores everything again");
+        Files.delete(b.snap());
+        Files.delete(c.snap());
+        Snapshots.gc(dir);
+        try (var ds = Files.list(dir.resolve("store"))) {
+            eq(List.of("20261015-130000-000.pack"), ds.map(x -> x.getFileName().toString()).toList(),
+               "unused packs deleted");
+        }
+
+        Files.write(w.resolve("level.dat"), "changed".getBytes(StandardCharsets.UTF_8));
+        Backups.restore(game, game.resolve("saves"), "World", d.snap());
+        eq(chunks(back.resolve("region/r.0.0.mca")).get(0), chunks(mca).get(0), "restore through Backups");
+        eq("level", new String(Files.readAllBytes(w.resolve("level.dat")), StandardCharsets.UTF_8),
+           "world replaced by the snapshot");
     }
 
     static void guardianBackup() throws Exception {

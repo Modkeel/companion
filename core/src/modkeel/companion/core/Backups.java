@@ -21,7 +21,10 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
-/** World backups as zip files under {@code <game>/modkeel/backups/<world>/}. */
+/**
+ * World backups under {@code <game>/modkeel/backups/<world>/}: chunk-level snapshots
+ * ({@link Snapshots}, {@code .snap}) and the whole-world zips older versions made.
+ */
 public final class Backups {
     private Backups() {
     }
@@ -68,7 +71,7 @@ public final class Backups {
         List<Path> out = new ArrayList<>();
         Path dir = dir(gameDir, world);
         if (Files.isDirectory(dir)) {
-            try (DirectoryStream<Path> ds = Files.newDirectoryStream(dir, "*.zip")) {
+            try (DirectoryStream<Path> ds = Files.newDirectoryStream(dir, "*.{zip,snap}")) {
                 ds.forEach(out::add);
             } catch (IOException e) {
                 Log.warn("cannot list " + dir, e);
@@ -110,7 +113,7 @@ public final class Backups {
     }
 
     private static Path reasonFile(Path zip) {
-        return zip.resolveSibling(zip.getFileName().toString().replaceAll("\\.zip$", "") + ".txt");
+        return zip.resolveSibling(zip.getFileName().toString().replaceAll("\\.(zip|snap)$", "") + ".txt");
     }
 
     public static void prune(Path gameDir, String world, int keep) {
@@ -123,6 +126,7 @@ public final class Backups {
                 Log.warn("cannot delete " + all.get(i), e);
             }
         }
+        Snapshots.gc(dir(gameDir, world));
     }
 
     public static long size(Path dir) throws IOException {
@@ -146,7 +150,11 @@ public final class Backups {
         Path target = savesDir.resolve(world);
         Path staging = savesDir.resolve(world + ".modkeel-restore");
         deleteTree(staging);
-        unzip(zip, staging);
+        if (Snapshots.is(zip)) {
+            Snapshots.restore(zip, staging);
+        } else {
+            unzip(zip, staging);
+        }
         Path aside = null;
         if (Files.exists(target)) {
             aside = gameDir.resolve("modkeel").resolve("replaced").resolve(world + "-" + stamp());

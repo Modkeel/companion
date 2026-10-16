@@ -6,12 +6,14 @@ import net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents;
 import net.minecraft.server.MinecraftServer;
 import org.slf4j.LoggerFactory;
 
+import java.util.UUID;
+
 /**
  * Test mod: with -Dmfcrash.after=N, crashes the client N seconds after a world is loaded.
  * With -Dmfcrash.lag=N, freezes the client for -Dmfcrash.lag_ms (800) every 30 s from N
  * seconds after a world is loaded, busy in its own code (for the lag spike detector).
  * With -Dmfcrash.entity=N, summons a burning pig tagged mfcrash N seconds after a world is
- * loaded; its first fire damage throws inside the entity's tick (a vanilla "Ticking entity"
+ * loaded (fixed UUID); its first fire damage throws inside the entity's tick (a vanilla "Ticking entity"
  * crash of the integrated server, the kind entity guards like Neruina catch).
  */
 public final class MfCrash implements ClientModInitializer {
@@ -19,6 +21,8 @@ public final class MfCrash implements ClientModInitializer {
     private long lastLag;
     private boolean summoned;
     private static volatile long sink;
+    /** The summoned pig's fixed UUID: entity tag accessors differ by version, getUUID does not. */
+    private static final UUID PIG = new UUID(0L, 4242L);
 
     @Override
     public void onInitializeClient() {
@@ -30,7 +34,7 @@ public final class MfCrash implements ClientModInitializer {
         }
         long entityAt = entity == null ? Long.MAX_VALUE : Long.parseLong(entity) * 1000;
         ServerLivingEntityEvents.ALLOW_DAMAGE.register((victim, source, amount) -> {
-            if (victim.entityTags().contains("mfcrash")) {
+            if (PIG.equals(victim.getUUID())) {
                 LoggerFactory.getLogger("mfcrash").info("mfcrash: throwing in an entity tick");
                 throw new IllegalStateException("mfcrash: deliberate entity tick crash");
             }
@@ -58,7 +62,7 @@ public final class MfCrash implements ClientModInitializer {
                 server.execute(() -> server.getCommands().performPrefixedCommand(
                         server.createCommandSourceStack(),
                         "execute at @p run summon minecraft:pig ^ ^ ^3 "
-                                + "{Tags:[\"mfcrash\"],Fire:200s}"));
+                                + "{UUID:[I;0,0,0,4242],Tags:[\"mfcrash\"],Fire:200s}"));
             }
             if (inWorld > lagFrom && System.currentTimeMillis() - lastLag > 30_000) {
                 lastLag = System.currentTimeMillis();
