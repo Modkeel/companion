@@ -253,6 +253,14 @@ public final class Guardian {
 
     private Path backUp(Path worldDir, String world, String reason, String before, ModSet now,
                         boolean start) throws IOException {
+        // the player may be moving the backups to another folder from the settings
+        synchronized (Backups.class) {
+            return backUpLocked(worldDir, world, reason, before, now, start);
+        }
+    }
+
+    private Path backUpLocked(Path worldDir, String world, String reason, String before, ModSet now,
+                              boolean start) throws IOException {
         long size = Backups.size(worldDir);
         if (MAX_BACKUP_BYTES > 0 && size > MAX_BACKUP_BYTES) {
             Log.info("world " + world + " is " + (size >> 20) + " MB, over -Dmodkeel.backups.max_mb;"

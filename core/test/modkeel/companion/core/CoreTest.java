@@ -37,6 +37,7 @@ public final class CoreTest {
         run("mod set fingerprint and hash cache", CoreTest::modSet);
         run("world backup, prune and restore", CoreTest::backups);
         run("chunk snapshots: only changed chunks stored, worlds rebuilt", CoreTest::snapshots);
+        run("backup folder of the player's choice, backups moved along", CoreTest::backupFolder);
         run("guardian: backup only when mods change", CoreTest::guardianBackup);
         run("guardian: last good set and revert", CoreTest::guardianRevert);
         run("guardian: disable, dependents, enable", CoreTest::guardianDisable);
@@ -460,6 +461,51 @@ public final class CoreTest {
         eq(chunks(back.resolve("region/r.0.0.mca")).get(0), chunks(mca).get(0), "restore through Backups");
         eq("level", new String(Files.readAllBytes(w.resolve("level.dat")), StandardCharsets.UTF_8),
            "world replaced by the snapshot");
+    }
+
+    static void backupFolder() throws Exception {
+        Path game = tmp().resolve("Pack/.minecraft");
+        jar(game.resolve("mods"), "a.jar", "a", null, "a/A.class");
+        Path w = world(game.resolve("saves"), "World");
+        Path first = new Guardian(game).onWorldStarting(w);
+        check(first.startsWith(game.resolve("modkeel/backups/World")), "game folder by default");
+        Path drive = tmp().resolve("Drive");
+        Files.createDirectories(drive);
+        String name = Backups.instanceName(game);
+        check(name.startsWith("Pack-"), "instance named after the folder above .minecraft: " + name);
+
+        Path to = Backups.moveTo(game, drive);
+        eq(drive.resolve(name), to, "new root");
+        eq(drive, Backups.chosenFolder(game), "setting kept");
+        eq(1, Backups.list(game, "World").size(), "backup moved along");
+        check(!Files.exists(game.resolve("modkeel/backups/World")), "old copy deleted");
+        Files.write(w.resolve("level.dat"), "played".getBytes(StandardCharsets.UTF_8));
+        Path next = new Guardian(game).onWorldStarting(w);
+        check(next.startsWith(drive.resolve(name).resolve("World")), "next backup in the folder: " + next);
+        Backups.restore(game, game.resolve("saves"), "World", Backups.list(game, "World").get(1));
+        eq("level", new String(Files.readAllBytes(w.resolve("level.dat")), StandardCharsets.UTF_8),
+           "restored from the folder (old backup, packs moved too)");
+
+        Path other = tmp().resolve("Other/.minecraft");
+        check(!Backups.instanceName(other).equals(name), "two instances, two folders");
+        try {
+            Backups.moveTo(game, game.resolve("saves/World"));
+            check(false, "a folder inside the worlds is refused");
+        } catch (IOException e) {
+            // refused
+        }
+        eq(drive, Backups.chosenFolder(game), "a refused move keeps the setting");
+
+        Path gone = tmp().resolve("Gone");
+        Files.createDirectories(gone);
+        Backups.moveTo(game, gone);
+        Files.walk(gone).sorted(java.util.Comparator.reverseOrder()).forEach(p -> p.toFile().delete());
+        eq(game.resolve("modkeel/backups"), Backups.root(game), "folder gone: the game folder");
+
+        Files.createDirectories(gone);
+        Backups.moveTo(game, null);
+        eq(null, Backups.chosenFolder(game), "back to the game folder");
+        eq(game.resolve("modkeel/backups"), Backups.root(game), "default root again");
     }
 
     static void guardianBackup() throws Exception {

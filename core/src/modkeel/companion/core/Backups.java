@@ -8,6 +8,7 @@ import java.nio.file.DirectoryStream;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.BasicFileAttributes;
@@ -16,21 +17,159 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import java.util.Locale;
+import java.util.stream.Stream;
 import java.util.zip.Deflater;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
 /**
- * World backups under {@code <game>/modkeel/backups/<world>/}: chunk-level snapshots
- * ({@link Snapshots}, {@code .snap}) and the whole-world zips older versions made.
+ * World backups under {@code <game>/modkeel/backups/<world>/}, or under a folder the player
+ * chose ({@link #moveTo}): chunk-level snapshots ({@link Snapshots}, {@code .snap}) and the
+ * whole-world zips older versions made.
  */
 public final class Backups {
+    /** The chosen folder, one absolute path; absent for the game folder. */
+    static final String FOLDER_FILE = "backup-folder.txt";
+
     private Backups() {
     }
 
     public static Path dir(Path gameDir, String world) {
-        return gameDir.resolve("modkeel").resolve("backups").resolve(world);
+        return root(gameDir).resolve(world);
+    }
+
+    /**
+     * Where this game's backups live: {@code <folder>/<instance>} in the chosen folder, or the
+     * game folder's {@code modkeel/backups} when none was chosen or it is gone (a cloud drive
+     * not mounted, a USB disk out).
+     */
+    public static Path root(Path gameDir) {
+        Path folder = chosenFolder(gameDir);
+        if (folder != null) {
+            if (Files.isDirectory(folder)) {
+                return folder.resolve(instanceName(gameDir));
+            }
+            Log.info("backup folder " + folder + " not found; backing up in the game folder");
+        }
+        return local(gameDir);
+    }
+
+    private static Path local(Path gameDir) {
+        return gameDir.resolve("modkeel").resolve("backups");
+    }
+
+    /** The folder the player chose, or null for the game folder. */
+    public static Path chosenFolder(Path gameDir) {
+        Path f = gameDir.resolve("modkeel").resolve(FOLDER_FILE);
+        try {
+            if (Files.exists(f)) {
+                String s = new String(Files.readAllBytes(f), StandardCharsets.UTF_8).trim();
+                return s.isEmpty() ? null : Paths.get(s);
+            }
+        } catch (IOException | RuntimeException e) {
+            Log.warn("cannot read " + f, e);
+        }
+        return null;
+    }
+
+    /**
+     * This game's folder inside a shared backup folder: the instance's name (the folder above
+     * {@code .minecraft} in launchers that nest it) and a hash of its path, so two instances
+     * with a world of the same name never share snapshots.
+     */
+    static String instanceName(Path gameDir) {
+        Path abs = gameDir.toAbsolutePath().normalize();
+        Path name = abs.getFileName();
+        String n = name == null ? "minecraft" : name.toString();
+        if ((n.equals(".minecraft") || n.equals("minecraft")) && abs.getParent() != null
+                && abs.getParent().getFileName() != null) {
+            n = abs.getParent().getFileName().toString();
+        }
+        n = n.replaceAll("[^\\p{L}\\p{N} ._-]", "_").trim();
+        return (n.isEmpty() ? "minecraft" : n) + "-"
+               + String.format("%08x", abs.toString().toLowerCase(Locale.ROOT).hashCode());
+    }
+
+    /**
+     * Keep backups in {@code folder} from now on (null: the game folder again), bringing the
+     * existing ones along: copied, then the setting switched, then the old ones deleted, so a
+     * failure halfway leaves every backup where it was. Returns the new root.
+     */
+    public static Path moveTo(Path gameDir, Path folder) throws IOException {
+        synchronized (Backups.class) {
+            Path from = root(gameDir);
+            Path to;
+            if (folder == null) {
+                to = local(gameDir);
+            } else {
+                folder = folder.toAbsolutePath().normalize();
+                if (!Files.isDirectory(folder)) {
+                    throw new IOException("not a folder: " + folder);
+                }
+                Path saves = gameDir.toAbsolutePath().normalize().resolve("saves");
+                if (folder.startsWith(saves)) {
+                    throw new IOException("inside the worlds folder: " + folder);
+                }
+                to = folder.resolve(instanceName(gameDir));
+            }
+            from = from.toAbsolutePath().normalize();
+            to = to.toAbsolutePath().normalize();
+            if (!to.equals(from) && (to.startsWith(from) || from.startsWith(to))) {
+                throw new IOException("one folder inside the other: " + from + ", " + to);
+            }
+            List<Path> copied = new ArrayList<>();
+            if (!to.equals(from) && Files.isDirectory(from)) {
+                Files.createDirectories(to);
+                try (DirectoryStream<Path> ds = Files.newDirectoryStream(from, Files::isDirectory)) {
+                    for (Path w : ds) {
+                        Path dest = to.resolve(w.getFileName().toString());
+                        if (Files.exists(dest)) {
+                            throw new IOException("backups of " + w.getFileName() + " already in " + to);
+                        }
+                        copied.add(dest);
+                        copyTree(w, dest);
+                    }
+                } catch (IOException e) {
+                    for (Path d : copied) {
+                        deleteTree(d);
+                    }
+                    throw e;
+                }
+            }
+            Path f = gameDir.resolve("modkeel").resolve(FOLDER_FILE);
+            if (folder == null) {
+                Files.deleteIfExists(f);
+            } else {
+                Files.createDirectories(f.getParent());
+                Files.write(f, folder.toString().getBytes(StandardCharsets.UTF_8));
+            }
+            if (!to.equals(from) && Files.isDirectory(from)) {
+                for (Path d : copied) {
+                    try {
+                        deleteTree(from.resolve(d.getFileName().toString()));
+                    } catch (IOException e) {
+                        Log.warn("copied, but cannot delete the old backups in " + from, e);
+                    }
+                }
+            }
+            Log.info("backups now in " + to + " (" + copied.size() + " worlds moved from " + from + ")");
+            return to;
+        }
+    }
+
+    private static void copyTree(Path src, Path dest) throws IOException {
+        try (Stream<Path> s = Files.walk(src)) {
+            for (Path p : (Iterable<Path>) s::iterator) {
+                Path d = dest.resolve(src.relativize(p).toString());
+                if (Files.isDirectory(p)) {
+                    Files.createDirectories(d);
+                } else {
+                    Files.copy(p, d, StandardCopyOption.COPY_ATTRIBUTES);
+                }
+            }
+        }
     }
 
     public static String stamp() {
@@ -84,7 +223,7 @@ public final class Backups {
     /** Every world with at least one backup. */
     public static List<String> worlds(Path gameDir) {
         List<String> out = new ArrayList<>();
-        Path dir = gameDir.resolve("modkeel").resolve("backups");
+        Path dir = root(gameDir);
         if (Files.isDirectory(dir)) {
             try (DirectoryStream<Path> ds = Files.newDirectoryStream(dir, Files::isDirectory)) {
                 ds.forEach(p -> out.add(p.getFileName().toString()));
