@@ -86,15 +86,19 @@ public final class ModuleCheck {
      * One module the loader builds: a mod (by its first mod id), or a library (by its module
      * name). The loader keeps one file per module, so files with the same one are one unit, with
      * only the packages they all have (whichever it keeps has those). `owners` are the jars in
-     * the mods folder that bring it: the jar itself, or the jars that bundle it.
+     * the mods folder that bring it: the jar itself, or the jars that bundle it. `plugin` is
+     * the layer it goes in: language providers and plain libraries load in the loader's plugin
+     * layer, mods and game libraries in the game layer above it.
      */
     static final class Unit {
         final String id;
+        final boolean plugin;
         final Set<Path> owners = new LinkedHashSet<>();
         Set<String> packages;
 
-        Unit(String id, Path owner, Set<String> packages) {
+        Unit(String id, boolean plugin, Path owner, Set<String> packages) {
             this.id = id;
+            this.plugin = plugin;
             this.owners.add(owner);
             this.packages = new HashSet<>(packages);
         }
@@ -143,12 +147,17 @@ public final class ModuleCheck {
         return fixed;
     }
 
-    /** The first package two units share, in a stable order; null when none do. */
+    /**
+     * The first package two units of one layer share, in a stable order; null when none do. A
+     * package in both layers is no clash: each layer maps its own packages, and mods are
+     * automatic modules, which Java does not check against what they read (CreativeCore's copy
+     * of net.fabricmc.api beside the Fabric loader Connector's API bundles).
+     */
     static Predicted firstClash(List<Unit> units) {
         Map<String, Unit> byPackage = new HashMap<>();
         for (Unit u : units) {
             for (String pkg : u.packages.stream().sorted().toList()) {
-                Unit seen = byPackage.putIfAbsent(pkg, u);
+                Unit seen = byPackage.putIfAbsent((u.plugin ? "plugin " : "game ") + pkg, u);
                 if (seen != null && seen != u) {
                     return new Predicted(seen, u, pkg);
                 }
@@ -183,8 +192,8 @@ public final class ModuleCheck {
                 if (top.has(Note.INNER.substring(1)) || top.holdsServices() || !top.loaded(modsToml)) {
                     continue;
                 }
-                merge(byId, List.of(top.id(modsToml, jar.getFileName().toString())), jar,
-                      top.packages(modsToml));
+                merge(byId, List.of(top.id(modsToml, jar.getFileName().toString())), top.plugin(),
+                      jar, top.packages(modsToml));
                 for (Bundled b : top.bundled()) {
                     ZipEntry e = z.getEntry(b.path());
                     if (e == null) {
@@ -193,8 +202,8 @@ public final class ModuleCheck {
                     try (InputStream in = z.getInputStream(e)) {
                         Contents inner = Contents.of(in.readAllBytes());
                         String name = b.path().substring(b.path().lastIndexOf('/') + 1);
-                        merge(byId, List.of(b.identifier(), inner.id(modsToml, name)), jar,
-                              inner.packages(modsToml));
+                        merge(byId, List.of(b.identifier(), inner.id(modsToml, name)),
+                              inner.plugin(), jar, inner.packages(modsToml));
                     }
                 }
             } catch (IOException | RuntimeException e) {
@@ -205,8 +214,8 @@ public final class ModuleCheck {
     }
 
     /** Add a file to the unit any of its `keys` names (joining units it links), else a new one. */
-    private static void merge(Map<String, Unit> byId, List<String> keys, Path owner,
-                              Set<String> packages) {
+    private static void merge(Map<String, Unit> byId, List<String> keys, boolean plugin,
+                              Path owner, Set<String> packages) {
         Unit u = null;
         for (String k : keys) {
             Unit seen = byId.get(k);
@@ -226,7 +235,7 @@ public final class ModuleCheck {
             }
         }
         if (u == null) {
-            u = new Unit(keys.get(0), owner, packages);
+            u = new Unit(keys.get(0), plugin, owner, packages);
         } else {
             u.owners.add(owner);
             u.packages.retainAll(packages);
@@ -303,6 +312,12 @@ public final class ModuleCheck {
 
         boolean loaded(String modsToml) {
             return has(modsToml) || attribute("FMLModType") != null;
+        }
+
+        /** Whether the loader puts it in its plugin layer (FMLModType LANGPROVIDER or LIBRARY). */
+        boolean plugin() {
+            String type = attribute("FMLModType");
+            return type != null && (type.strip().equals("LANGPROVIDER") || type.strip().equals("LIBRARY"));
         }
 
         /** The module the loader names it: "mod:" its first mod id, else "lib:" its name. */

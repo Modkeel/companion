@@ -26,6 +26,7 @@ public final class EarlyTest {
         predictsTwoModsWithOnePackage();
         whatTheLoaderNeverLoadsIsNoClash();
         bundledJarsAsTheLoaderPicksThem();
+        onlyOneLayerClashes();
         severalClashesInOneStart();
         findsEachMessage();
         holdersAndPackages();
@@ -125,6 +126,25 @@ public final class EarlyTest {
         List<String> log = new ArrayList<>();
         eq(1, ModuleCheck.predict(game, TOML, log::add), "a mod against a bundled library");
         check(Files.exists(mods.resolve("shading.jar.disabled")), "the newest jar is off: " + log);
+    }
+
+    static void onlyOneLayerClashes() throws IOException {
+        Path game = tmp();
+        Path mods = game.resolve("mods");
+        // CreativeCore's own net.fabricmc.api, and the Fabric loader Forgified Fabric API bundles
+        // as a language provider: plugin layer and game layer, the game starts with both
+        mod(mods.resolve("creativecore.jar"), "creativecore", "net/fabricmc/api/EnvType.class");
+        bundling(mods.resolve("fabric-api.jar"), "fabric_api", "fabric-loader-2.6.0.jar",
+                jarBytes(Map.of("META-INF/MANIFEST.MF", manifest("LANGPROVIDER", "net.fabricmc.loader"),
+                        "net/fabricmc/api/EnvType.class", "x")));
+        eq(0, ModuleCheck.predict(game, TOML, s -> { }), "a package in both layers is no clash");
+        // two jars of the plugin layer with one package still clash
+        jar(mods.resolve("other-loader.jar"), Map.of("META-INF/MANIFEST.MF",
+                manifest("LIBRARY", "other.loader"), "net/fabricmc/api/EnvType.class", "y"));
+        Files.setLastModifiedTime(mods.resolve("other-loader.jar"), FileTime.fromMillis(clock += 1000));
+        eq(1, ModuleCheck.predict(game, TOML, s -> { }), "one layer, one package: a clash");
+        check(Files.exists(mods.resolve("other-loader.jar.disabled")), "the newest jar is off");
+        check(Files.exists(mods.resolve("creativecore.jar")), "the game-layer mod stays");
     }
 
     static void severalClashesInOneStart() throws IOException {
