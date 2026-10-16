@@ -75,6 +75,8 @@ public final class ModuleCheck {
     private static final Pattern MOD_ID = Pattern.compile("(?m)^\\s*modId\\s*=\\s*\"([^\"]+)\"");
     private static final Pattern DASH_VERSION = Pattern.compile("-([.\\d]+)");
     private static final Pattern BUNDLED_PATH = Pattern.compile("\"path\"\\s*:\\s*\"([^\"]+)\"");
+    private static final Pattern BUNDLED_GROUP = Pattern.compile("\"group\"\\s*:\\s*\"([^\"]+)\"");
+    private static final Pattern BUNDLED_ARTIFACT = Pattern.compile("\"artifact\"\\s*:\\s*\"([^\"]+)\"");
 
     /** What Java refused: the package, and the modules it named. */
     record Clash(String pkg, List<String> modules) {
@@ -160,8 +162,11 @@ public final class ModuleCheck {
      * loaded when it has this loader's mod metadata or a manifest FMLModType (else the loader
      * skips it: a Fabric mod, a stray file), unless it holds loader services (those load with the
      * loader) or is Modkeel's own; each jar it bundles and lists in its jar-in-jar metadata is a
-     * module too. Packages are the folders holding .class files, outside META-INF (and, for
-     * mods, assets/ and data/), as the loader's jar handler counts them.
+     * module too. Jar-in-jar loads one version per identifier, whatever its shape (MixinExtras
+     * 0.3 is a mod, 0.5 a library: never both), and one file per mod id, bundled or not (a mod
+     * that bundles Architectury beside Architectury itself): a bundled jar joins the unit of
+     * either. Packages are the folders holding .class files, outside META-INF (and, for mods,
+     * assets/ and data/), as the loader's jar handler counts them.
      */
     static List<Unit> units(Path mods, String modsToml) {
         Map<String, Unit> byId = new LinkedHashMap<>();
@@ -178,33 +183,61 @@ public final class ModuleCheck {
                 if (top.has(Note.INNER.substring(1)) || top.holdsServices() || !top.loaded(modsToml)) {
                     continue;
                 }
-                merge(byId, top.id(modsToml, jar.getFileName().toString()), jar, top.packages(modsToml));
-                for (String path : top.bundled()) {
-                    ZipEntry e = z.getEntry(path);
+                merge(byId, List.of(top.id(modsToml, jar.getFileName().toString())), jar,
+                      top.packages(modsToml));
+                for (Bundled b : top.bundled()) {
+                    ZipEntry e = z.getEntry(b.path());
                     if (e == null) {
                         continue;
                     }
                     try (InputStream in = z.getInputStream(e)) {
                         Contents inner = Contents.of(in.readAllBytes());
-                        String name = path.substring(path.lastIndexOf('/') + 1);
-                        merge(byId, inner.id(modsToml, name), jar, inner.packages(modsToml));
+                        String name = b.path().substring(b.path().lastIndexOf('/') + 1);
+                        merge(byId, List.of(b.identifier(), inner.id(modsToml, name)), jar,
+                              inner.packages(modsToml));
                     }
                 }
             } catch (IOException | RuntimeException e) {
                 // a jar the loader cannot read either: it says so itself
             }
         }
-        return new ArrayList<>(byId.values());
+        return new ArrayList<>(new LinkedHashSet<>(byId.values()));
     }
 
-    private static void merge(Map<String, Unit> byId, String id, Path owner, Set<String> packages) {
-        Unit u = byId.get(id);
+    /** Add a file to the unit any of its `keys` names (joining units it links), else a new one. */
+    private static void merge(Map<String, Unit> byId, List<String> keys, Path owner,
+                              Set<String> packages) {
+        Unit u = null;
+        for (String k : keys) {
+            Unit seen = byId.get(k);
+            if (seen == null || seen == u) {
+                continue;
+            }
+            if (u == null) {
+                u = seen;
+            } else {
+                u.owners.addAll(seen.owners);
+                u.packages.retainAll(seen.packages);
+                for (Map.Entry<String, Unit> e : byId.entrySet()) {
+                    if (e.getValue() == seen) {
+                        e.setValue(u);
+                    }
+                }
+            }
+        }
         if (u == null) {
-            byId.put(id, new Unit(id, owner, packages));
+            u = new Unit(keys.get(0), owner, packages);
         } else {
             u.owners.add(owner);
             u.packages.retainAll(packages);
         }
+        for (String k : keys) {
+            byId.put(k, u);
+        }
+    }
+
+    /** A jar the jar-in-jar metadata lists: "jij:group:artifact", and where it is. */
+    record Bundled(String identifier, String path) {
     }
 
     /** One jar's entries, manifest and the text of its metadata files. */
@@ -302,15 +335,23 @@ public final class ModuleCheck {
         }
 
         /** The bundled jars the jar-in-jar metadata lists (the loader picks among those only). */
-        List<String> bundled() {
+        List<Bundled> bundled() {
             String list = texts.get(BUNDLED_LIST);
             if (list == null) {
                 return List.of();
             }
-            List<String> out = new ArrayList<>();
-            Matcher m = BUNDLED_PATH.matcher(list);
-            while (m.find()) {
-                out.add(m.group(1));
+            List<Bundled> out = new ArrayList<>();
+            // one entry per "identifier" (group and artifact); without them, its path names it
+            for (String entry : list.split("\"identifier\"")) {
+                Matcher path = BUNDLED_PATH.matcher(entry);
+                if (!path.find()) {
+                    continue;
+                }
+                Matcher g = BUNDLED_GROUP.matcher(entry);
+                Matcher a = BUNDLED_ARTIFACT.matcher(entry);
+                String p = path.group(1);
+                out.add(new Bundled(g.find() && a.find() ? "jij:" + g.group(1) + ":" + a.group(1)
+                        : "jij:" + p, p));
             }
             return out;
         }

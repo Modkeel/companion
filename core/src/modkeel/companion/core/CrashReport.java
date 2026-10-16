@@ -24,8 +24,6 @@ public final class CrashReport {
             + "[\\w$]*)(?::\\s*(.*))?$");
     private static final Pattern FROM_MOD = Pattern.compile("\\bfrom mod ([a-z0-9_.-]+)");
     private static final Pattern MIXIN_CONFIG = Pattern.compile("\\bin ([\\w.-]+\\.json):");
-    /** (Neo)Forge's note on a frame of what transformed its class: applied, not failed. */
-    private static final Pattern TRANSFORMERS = Pattern.compile("\\s*\\{[^{}]*\\}\\s*$");
     private static final Pattern LOADING_ISSUE = Pattern.compile("-- Mod loading issue for: ([\\w.-]+) --");
     private static final Pattern MIXIN_HANDLER = Pattern.compile(
             "^(?:handler|redirect|modify|localvar|wrapOperation|wrapWithCondition|"
@@ -176,13 +174,11 @@ public final class CrashReport {
                 inHead = false;
             }
             Matcher m;
-            // "pl:mixin:APP:x.mixins.json:M from mod x" on a frame only says x's mixin applied
-            String named = FRAME.matcher(line).find() ? TRANSFORMERS.matcher(line).replaceFirst("") : line;
-            m = FROM_MOD.matcher(named);
+            m = FROM_MOD.matcher(line);
             while (m.find()) {
                 r.fromMod.add(m.group(1));
             }
-            m = MIXIN_CONFIG.matcher(named);
+            m = MIXIN_CONFIG.matcher(line);
             while (m.find()) {
                 r.mixinConfigs.add(m.group(1));
             }

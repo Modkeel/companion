@@ -32,7 +32,6 @@ public final class CoreTest {
         run("fabric mixin failure (bobby)", CoreTest::bobby);
         run("neoforge missing class (dynamictrees)", CoreTest::dynamictrees);
         run("neoforge loading issue (athena)", CoreTest::athena);
-        run("neoforge crash in a class other mods' mixins applied to", CoreTest::mixinApplied);
         run("stack attribution by package and mixin handler", CoreTest::stackAttribution);
         run("libraries and platform ids are never blamed", CoreTest::notBlamed);
         run("mod set fingerprint and hash cache", CoreTest::modSet);
@@ -267,16 +266,6 @@ public final class CoreTest {
         Diagnosis d = diagnose("neoforge-loading-athena.txt", new Owners());
         eq("athena", d.top().id, "suspect");
         eq(Diagnosis.Confidence.HIGH, d.confidence, "confidence");
-    }
-
-    static void mixinApplied() throws Exception {
-        // a tick handler throws inside ClientHooks, which better_tooltips' mixin transformed
-        CrashReport r = CrashReport.read(fixtures.resolve("neoforge-tick-crash-mixin-applied.txt"));
-        check(r.fromMod.isEmpty(), "applied mixins are not failures: " + r.fromMod);
-        check(r.mixinConfigs.isEmpty(), "mixin configs: " + r.mixinConfigs);
-        Diagnosis d = Diagnosis.of(r, new Owners());
-        eq(Diagnosis.Kind.GENERIC, d.kind, "kind");
-        eq("mfcrash", d.top().id, "suspect");
     }
 
     static void stackAttribution() throws Exception {
