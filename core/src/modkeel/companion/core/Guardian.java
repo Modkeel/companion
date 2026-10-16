@@ -112,6 +112,7 @@ public final class Guardian {
         Log.info("rules bundle: " + rules.size + " lab facts; Minecraft " + mcVersion);
         takeLastResult();
         takeTurnedOff();
+        dropPredicted();
         if (outcomes.watching()) {
             outcomes.checkUndone(modsDir);
             outcomes.bindSet(current().fingerprint());
@@ -867,6 +868,25 @@ public final class Guardian {
         state.setList("lastResult", result);
         state.save();
         Log.info("turned off before the start: " + String.join(", ", turnedOff));
+    }
+
+    /**
+     * The early check writes the module clashes it predicted and did not act on yet: a real one
+     * stops the game before any mod runs, so Modkeel running proves them wrong. Deleting the
+     * file keeps the next start from acting on them.
+     */
+    private void dropPredicted() {
+        Path f = home.resolve("early-predicted.txt");
+        try {
+            if (Files.exists(f)) {
+                List<String> wrong = Files.readAllLines(f, StandardCharsets.UTF_8);
+                Files.delete(f);
+                Log.info("predicted module clashes did not stop the game: "
+                         + String.join("; ", wrong).replace('\t', ' '));
+            }
+        } catch (IOException e) {
+            Log.warn("cannot drop " + f, e);
+        }
     }
 
     private static String displayName(Path jar, String fallback) {

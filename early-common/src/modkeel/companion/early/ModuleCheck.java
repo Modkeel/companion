@@ -35,7 +35,14 @@ import java.util.zip.ZipInputStream;
  * packages, the way the loader does (see {@link #units}), and when two share a package it turns
  * one off (the one not there when the game last started fine, else the newest) and leaves a
  * note for Modkeel to show once the game is up, with the other jar, so the player can swap
- * them. The game starts at the first try.
+ * them.
+ *
+ * <p>A prediction is only acted on once a start confirms it. The first start that predicts a
+ * clash turns nothing off and writes it to {@link #PREDICTED}; Modkeel deletes that file as
+ * soon as it runs, which a real clash never lets it do. So the next start acts only when the
+ * last one died before Modkeel ran. A clash between jars that were all in the last set the game
+ * started fine with is never acted on. A wrong prediction costs nothing; a right one costs one
+ * start that closes in seconds.
  *
  * <p>What that misses (a clash with a jar the loader itself brings), NeoForge names in its log
  * ({@code ResolutionException: Modules a and b export package p to module c}): when nothing was
@@ -57,6 +64,8 @@ public final class ModuleCheck {
     static final int READ_AT_MOST = 4 << 20;
     /** Which rolled log was already handled, so one failure is acted on once. */
     static final String SEEN = "early-module.txt";
+    /** Clashes predicted at the last start and not acted on yet; Modkeel deletes it when it runs. */
+    static final String PREDICTED = "early-predicted.txt";
     static final String BUNDLED = "META-INF/jarjar/";
     static final String BUNDLED_LIST = "META-INF/jarjar/metadata.json";
     /** A jar with one of these services is loaded with the loader, not as a mod. */
@@ -123,28 +132,95 @@ public final class ModuleCheck {
 
     // ---- predicted from the jars ---------------------------------------------------------
 
-    /** Turn off one jar per clash the jars show, until none is left; how many were. */
+    /**
+     * Turn off one jar per clash the jars show and the last start confirmed, until none is
+     * left; how many were. The others are written down for the next start to confirm.
+     */
     static int predict(Path gameDir, String modsToml, Consumer<String> log) {
+        Path home = gameDir.resolve("modkeel");
         Path mods = gameDir.resolve("mods");
-        Set<String> lastGood = lastGood(gameDir.resolve("modkeel"));
+        Set<String> lastGood = lastGood(home);
+        Set<String> confirmed = readLines(home.resolve(PREDICTED));
+        Set<String> waiting = new LinkedHashSet<>();
+        Set<String> passed = new HashSet<>();
         int fixed = 0;
         while (fixed < MAX_FIXES) {
-            Predicted p = firstClash(units(mods, modsToml));
+            Predicted p = null;
+            List<Path> holders = null;
+            String key = null;
+            for (Predicted c : clashes(units(mods, modsToml))) {
+                List<Path> h = holders(c);
+                String k = key(h, c.pkg());
+                if (!passed.contains(k)) {
+                    p = c;
+                    holders = h;
+                    key = k;
+                    break;
+                }
+            }
             if (p == null) {
                 break;
             }
-            List<Path> holders = new ArrayList<>(p.a().owners);
-            for (Path o : p.b().owners) {
-                if (!holders.contains(o)) {
-                    holders.add(o);
-                }
+            passed.add(key);
+            if (holders.stream().allMatch(o -> lastGood.contains(o.getFileName().toString()))) {
+                log.accept("[modkeel] not acting on a predicted clash (package " + p.pkg() + " in "
+                           + names(holders) + "): the game started fine with all of them");
+                continue;
+            }
+            if (!confirmed.contains(key)) {
+                waiting.add(key);
+                log.accept("[modkeel] predicted a clash (package " + p.pkg() + " in "
+                           + names(holders) + "); acting only if this start fails before Modkeel runs");
+                continue;
             }
             if (!turnOff(gameDir, holders, lastGood, p.pkg(), log)) {
                 break;
             }
             fixed++;
         }
+        writeLines(home.resolve(PREDICTED), waiting, log);
         return fixed;
+    }
+
+    /** The jars that bring either unit of a clash. */
+    private static List<Path> holders(Predicted p) {
+        List<Path> holders = new ArrayList<>(p.a().owners);
+        for (Path o : p.b().owners) {
+            if (!holders.contains(o)) {
+                holders.add(o);
+            }
+        }
+        return holders;
+    }
+
+    /** A clash as one line: its package and the jars' file names, sorted. */
+    static String key(List<Path> holders, String pkg) {
+        return pkg + "\t" + String.join("\t", names(holders));
+    }
+
+    private static List<String> names(List<Path> holders) {
+        return holders.stream().map(p -> p.getFileName().toString()).sorted().toList();
+    }
+
+    private static Set<String> readLines(Path f) {
+        try {
+            return new LinkedHashSet<>(Files.readAllLines(f, StandardCharsets.UTF_8));
+        } catch (IOException e) {
+            return Set.of();
+        }
+    }
+
+    private static void writeLines(Path f, Set<String> lines, Consumer<String> log) {
+        try {
+            if (lines.isEmpty()) {
+                Files.deleteIfExists(f);
+            } else {
+                Files.createDirectories(f.getParent());
+                Files.write(f, lines, StandardCharsets.UTF_8);
+            }
+        } catch (IOException e) {
+            log.accept("[modkeel] cannot write " + f + ": " + e);
+        }
     }
 
     /**
@@ -154,16 +230,24 @@ public final class ModuleCheck {
      * of net.fabricmc.api beside the Fabric loader Connector's API bundles).
      */
     static Predicted firstClash(List<Unit> units) {
+        List<Predicted> all = clashes(units);
+        return all.isEmpty() ? null : all.get(0);
+    }
+
+    /** Every pair of units of one layer that share a package (its first), in a stable order. */
+    static List<Predicted> clashes(List<Unit> units) {
         Map<String, Unit> byPackage = new HashMap<>();
+        Map<String, Predicted> pairs = new LinkedHashMap<>();
         for (Unit u : units) {
             for (String pkg : u.packages.stream().sorted().toList()) {
                 Unit seen = byPackage.putIfAbsent((u.plugin ? "plugin " : "game ") + pkg, u);
                 if (seen != null && seen != u) {
-                    return new Predicted(seen, u, pkg);
+                    pairs.putIfAbsent(System.identityHashCode(seen) + " " + System.identityHashCode(u),
+                                      new Predicted(seen, u, pkg));
                 }
             }
         }
-        return null;
+        return new ArrayList<>(pairs.values());
     }
 
     /**
