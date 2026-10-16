@@ -42,7 +42,8 @@ final class WorldScreen extends Page {
             }
             row.addChild(go);
         }
-        body.addChild(Text.loose(Component.translatable("modkeel.world.keep", Guardian.KEEP_BACKUPS),
+        body.addChild(Text.loose(Component.translatable("modkeel.world.keep", Guardian.KEEP_BACKUPS,
+                Guardian.KEEP_STARTS),
                 w, Keel.GRAY));
     }
 

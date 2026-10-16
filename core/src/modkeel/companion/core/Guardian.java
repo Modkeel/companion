@@ -13,12 +13,15 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * Everything a loader adapter calls: world backups when the mod set changes, the last good
+ * Everything a loader adapter calls: world backups each time a world starts, the last good
  * set, crash diagnosis on the next launch, and reversible fixes on the mods folder.
  * No Minecraft or loader classes here.
  */
 public final class Guardian {
+    /** Backups made before playing with changed mods, kept per world. */
     public static final int KEEP_BACKUPS = Integer.getInteger("modkeel.backups.keep", 3);
+    /** Backups made before playing with the same mods, kept per world besides those. */
+    public static final int KEEP_STARTS = Integer.getInteger("modkeel.backups.keep_starts", 5);
     /** Worlds bigger than this are not backed up; 0 (the default) backs up every world. */
     public static final long MAX_BACKUP_BYTES =
             Long.getLong("modkeel.backups.max_mb", 0L) * 1024 * 1024;
@@ -209,8 +212,9 @@ public final class Guardian {
     // ---- world backups -------------------------------------------------------------------
 
     /**
-     * Before a world loads: back it up if its mods changed since it was last played. Returns
-     * the backup, or null when none was needed or possible.
+     * Before a world loads: back it up. Snapshots store only what changed, so this runs on
+     * every start; one with the same mods and nothing changed since the last backup is dropped.
+     * Returns the backup, or null when none was needed or possible.
      */
     public Path onWorldStarting(Path worldDir) {
         worldDir = worldDir.toAbsolutePath().normalize();
@@ -223,30 +227,32 @@ public final class Guardian {
         ModSet now = current();
         Path backup = null;
         try {
-            boolean changed;
+            boolean changed = true;
             String before = "none";
             String reason = Msg.of("modkeel.copy.first");
             if (Files.exists(stored)) {
                 ModSet old = ModSet.read(stored);
                 changed = !old.fingerprint().equals(now.fingerprint());
                 before = old.jars.size() + " mods";
-                reason = copyReason(old, now);
-            } else {
-                // first time with Modkeel: back up any world that already existed
-                changed = Files.exists(worldDir.resolve("level.dat"));
+                reason = changed ? copyReason(old, now) : Msg.of(Backups.START);
             }
+            // written before the backup and only when it changes: the backup holds the mods it
+            // was made for, and a start with nothing changed finds the world as last backed up
             if (changed) {
-                backup = backUp(worldDir, world, reason, before, now);
+                now.write(stored);
             }
-            now.write(stored);
+            // a brand new world has nothing to back up yet
+            if (Files.exists(worldDir.resolve("level.dat"))) {
+                backup = backUp(worldDir, world, reason, before, now, !changed);
+            }
         } catch (IOException e) {
             Log.warn("backup of " + world + " failed", e);
         }
         return backup;
     }
 
-    private Path backUp(Path worldDir, String world, String reason, String before, ModSet now)
-            throws IOException {
+    private Path backUp(Path worldDir, String world, String reason, String before, ModSet now,
+                        boolean start) throws IOException {
         long size = Backups.size(worldDir);
         if (MAX_BACKUP_BYTES > 0 && size > MAX_BACKUP_BYTES) {
             Log.info("world " + world + " is " + (size >> 20) + " MB, over -Dmodkeel.backups.max_mb;"
@@ -267,9 +273,17 @@ public final class Guardian {
         }
         long t0 = System.currentTimeMillis();
         Snapshots.Taken t = Snapshots.take(worldDir, dir, Backups.stamp(), full);
+        if (start && !t.full() && t.written() == 0) {
+            Files.delete(t.snap());
+            Snapshots.gc(dir);
+            Log.info("world " + world + " unchanged since its last backup (" + t.files() + " files, "
+                     + (System.currentTimeMillis() - t0) + " ms)");
+            return null;
+        }
         Backups.setReason(t.snap(), reason);
-        Backups.prune(gameDir, world, KEEP_BACKUPS);
-        Log.info("mods changed (" + before + " -> " + now.jars.size() + " mods): backed up " + world
+        Backups.prune(gameDir, world, KEEP_BACKUPS, KEEP_STARTS);
+        Log.info((start ? "world start" : "mods changed (" + before + " -> " + now.jars.size()
+                 + " mods)") + ": backed up " + world
                  + " (" + (size >> 20) + " MB) in " + (System.currentTimeMillis() - t0) + " ms, "
                  + (t.written() >> 10) + " KB written, " + t.reused() + "/" + t.files()
                  + " files as in the last backup" + (t.full() ? ", full copy" : "") + ": " + t.snap());

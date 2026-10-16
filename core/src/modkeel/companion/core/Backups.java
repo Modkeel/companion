@@ -116,14 +116,32 @@ public final class Backups {
         return zip.resolveSibling(zip.getFileName().toString().replaceAll("\\.(zip|snap)$", "") + ".txt");
     }
 
+    /** The reason of a backup made before playing with the same mods as last time. */
+    public static final String START = "modkeel.copy.start";
+
     public static void prune(Path gameDir, String world, int keep) {
+        prune(gameDir, world, keep, keep);
+    }
+
+    /**
+     * Keep the newest {@code keep} backups made for other reasons (mods changed, first copy) and,
+     * besides them, the newest {@code keepStarts} made on a start with the same mods: playing
+     * many times never pushes out the copy from before a mod change.
+     */
+    public static void prune(Path gameDir, String world, int keep, int keepStarts) {
         List<Path> all = list(gameDir, world);
-        for (int i = keep; i < all.size(); i++) {
+        int others = 0;
+        int starts = 0;
+        for (Path b : all) {
+            boolean start = START.equals(reason(b));
+            if (start ? ++starts <= keepStarts : ++others <= keep) {
+                continue;
+            }
             try {
-                Files.deleteIfExists(reasonFile(all.get(i)));
-                Files.delete(all.get(i));
+                Files.deleteIfExists(reasonFile(b));
+                Files.delete(b);
             } catch (IOException e) {
-                Log.warn("cannot delete " + all.get(i), e);
+                Log.warn("cannot delete " + b, e);
             }
         }
         Snapshots.gc(dir(gameDir, world));

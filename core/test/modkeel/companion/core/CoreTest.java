@@ -472,12 +472,23 @@ public final class CoreTest {
         eq(Msg.of("modkeel.copy.first"), Backups.reason(first), "first copy's reason");
         check(Files.exists(w.resolve("modkeel/modset.txt")), "world mod set stored");
         g = new Guardian(game);
-        eq(null, g.onWorldStarting(w), "same mods: no backup");
+        eq(null, g.onWorldStarting(w), "same mods, world unchanged: no backup");
+        eq(1, Backups.list(game, "World").size(), "the unchanged start left nothing behind");
         jar(game.resolve("mods"), "b.jar", "b", null, "b/B.class");
         g = new Guardian(game);
         Path added = g.onWorldStarting(w);
         check(added != null, "new mod: backup");
         eq(Msg.of("modkeel.copy.added", 1), Backups.reason(added), "new mod's reason");
+        for (int i = 0; i < Guardian.KEEP_STARTS + 2; i++) {
+            Thread.sleep(2);
+            Files.write(w.resolve("level.dat"), ("played " + i).getBytes(StandardCharsets.UTF_8));
+            Path start = new Guardian(game).onWorldStarting(w);
+            check(start != null, "same mods, world played: backup " + i);
+            eq(Msg.of(Backups.START), Backups.reason(start), "start's reason");
+        }
+        List<Path> kept = Backups.list(game, "World");
+        eq(Guardian.KEEP_STARTS + 2, kept.size(), "starts kept besides the other copies: " + kept);
+        check(kept.contains(added) && kept.contains(first), "playing never pushes out the mod copies");
         Path fresh = game.resolve("saves/New");
         Files.createDirectories(fresh);
         eq(null, new Guardian(game).onWorldStarting(fresh), "a brand new world needs no backup");
