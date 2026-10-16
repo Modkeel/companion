@@ -226,9 +226,10 @@ def fabric_classpath(mc: str, modules: str, tmp: Path) -> list[Path]:
 NEOFORGE_MAVEN = "https://maven.neoforged.net/releases/net/neoforged/neoforge"
 
 
-def neoforge_version(mc: str) -> str:
-    """NEOFORGE[mc], installed in the client dir with NeoForge's own installer if missing."""
-    version = NEOFORGE[mc]
+def neoforge_version(mc: str, version: str | None = None) -> str:
+    """NEOFORGE[mc] (or `version`), installed in the client dir with NeoForge's own installer if
+    missing."""
+    version = version or NEOFORGE[mc]
     if (tc.CLIENT / "versions" / f"neoforge-{version}" / f"neoforge-{version}.json").exists():
         return version
     installer = fetch(f"{NEOFORGE_MAVEN}/{version}/neoforge-{version}-installer.jar",
@@ -246,10 +247,10 @@ def neoforge_version(mc: str) -> str:
 FORGE_MAVEN = "https://maven.minecraftforge.net/net/minecraftforge/forge"
 
 
-def forge_version(mc: str) -> str:
-    """FORGE[mc] (e.g. 47.4.10), installed in the client dir with Forge's own installer if
-    missing."""
-    version = FORGE[mc]
+def forge_version(mc: str, version: str | None = None) -> str:
+    """FORGE[mc] (e.g. 47.4.10, or `version`), installed in the client dir with Forge's own
+    installer if missing."""
+    version = version or FORGE[mc]
     if (tc.CLIENT / "versions" / f"{mc}-forge-{version}" / f"{mc}-forge-{version}.json").exists():
         return version
     full = f"{mc}-{version}"
