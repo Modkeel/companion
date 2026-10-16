@@ -647,7 +647,12 @@ public final class CoreTest {
         Files.copy(fixtures.resolve("fabric-mixin-bobby.txt"), old);
         Files.setLastModifiedTime(old, FileTime.fromMillis(System.currentTimeMillis() - 48L * 3600 * 1000));
         eq(null, new Guardian(game).checkCrashes(), "a report older than a day is ignored on first run");
-        Path fresh = reports.resolve("crash-2026-09-28_10.00.00-client.txt");
+        // a pack can ship its author's old report: the installer writes it now, its name says when
+        Path shipped = reports.resolve("crash-2024-11-30_15.42.36-client.txt");
+        Files.copy(fixtures.resolve("fabric-mixin-fabrishot.txt"), shipped);
+        eq(null, new Guardian(game).checkCrashes(), "an old report written now is ignored on first run");
+        Files.delete(shipped);
+        Path fresh = reports.resolve(reportName(System.currentTimeMillis() + 1000));
         Files.copy(fixtures.resolve("fabric-mixin-fabrishot.txt"), fresh);
         Files.setLastModifiedTime(fresh, FileTime.fromMillis(System.currentTimeMillis() + 1000));
         Guardian g = new Guardian(game);
@@ -658,12 +663,18 @@ public final class CoreTest {
         eq(null, new Guardian(game).checkCrashes(), "shown once");
     }
 
+    /** A crash report's name as the game writes it, for a crash at {@code millis}. */
+    static String reportName(long millis) {
+        return "crash-" + java.time.Instant.ofEpochMilli(millis).atZone(java.time.ZoneId.systemDefault())
+                .format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd_HH.mm.ss")) + "-client.txt";
+    }
+
     static void crashWindow() throws Exception {
         Path game = tmp();
         jar(game.resolve("mods"), "fabrishot.jar", "fabrishot", null, "me/ramidzkh/fabrishot/F.class");
         Path reports = game.resolve("crash-reports");
         Files.createDirectories(reports);
-        Path fresh = reports.resolve("crash-2026-10-15_10.00.00-client.txt");
+        Path fresh = reports.resolve(reportName(System.currentTimeMillis() - 1000));
         Files.copy(fixtures.resolve("fabric-mixin-fabrishot.txt"), fresh);
         Files.setLastModifiedTime(fresh, FileTime.fromMillis(System.currentTimeMillis() - 1000));
         Guardian w = new Guardian(game);
