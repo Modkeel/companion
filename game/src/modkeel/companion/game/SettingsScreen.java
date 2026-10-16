@@ -39,7 +39,7 @@ final class SettingsScreen extends Page {
             Button toggle = new KeelButton(100, Component.translatable(on ? "modkeel.sessions.stop" : "modkeel.sessions.start"),
                     b -> {
                         g.setShareSessions(!on);
-                        open(this);
+                        rebuildWidgets();
                     });
             toggle.setTooltip(Tooltip.create(Component.translatable("modkeel.sessions.tooltip")));
             c.row(Component.translatable(on ? "modkeel.sessions.on" : "modkeel.sessions.off"), Keel.SOFT,
@@ -56,15 +56,15 @@ final class SettingsScreen extends Page {
         Component where = Component.literal(chosen == null
                 ? g.gameDir.toAbsolutePath().normalize().resolve("modkeel").resolve("backups").toString()
                 : chosen.toString());
-        Button change = new KeelButton(70, Component.translatable("modkeel.settings.backups_change"),
-                b -> pickFolder(chosen));
+        Component changeLabel = Component.translatable("modkeel.settings.backups_change");
+        Button change = new KeelButton(fit(changeLabel), changeLabel, b -> pickFolder(chosen));
         change.setTooltip(Tooltip.create(Component.translatable("modkeel.settings.backups_tip")));
         change.active = !moving;
         if (chosen == null) {
             copies.row(Component.translatable("modkeel.settings.backups", where), Keel.SOFT, change);
         } else {
-            Button back = new KeelButton(70, Component.translatable("modkeel.settings.backups_default"),
-                    b -> move(null));
+            Component backLabel = Component.translatable("modkeel.settings.backups_default");
+            Button back = new KeelButton(fit(backLabel), backLabel, b -> move(null));
             back.active = !moving;
             copies.row(Component.translatable("modkeel.settings.backups", where), Keel.SOFT, change, back);
         }
@@ -76,6 +76,11 @@ final class SettingsScreen extends Page {
         site.row(Component.translatable("modkeel.health.app"), Keel.SOFT,
                 new KeelButton(100, Component.translatable("modkeel.more.open"),
                         b -> Compat.openLink(this, HealthScreen.APP_URL)));
+    }
+
+    /** A button as wide as its label needs ("Carpeta del juego"), at least 70. */
+    private int fit(Component label) {
+        return Math.max(70, font.width(label) + 12);
     }
 
     /** The system's folder picker (LWJGL's tinyfd, in every Minecraft) off the render thread. */
@@ -122,7 +127,7 @@ final class SettingsScreen extends Page {
     private void refresh() {
         minecraft.execute(() -> {
             if (showing) {
-                open(this);
+                rebuildWidgets();
             }
         });
     }
