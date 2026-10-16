@@ -28,6 +28,7 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
@@ -80,6 +81,59 @@ public final class Snapshots {
     public record Taken(Path snap, long written, long files, long reused, boolean full) {
     }
 
+    /**
+     * A backup under way: bytes of the world gone through out of its size. Written by the
+     * thread taking the backup, read by any other (the loading screen draws it).
+     */
+    public static final class Progress {
+        public final String world;
+        public final long total;
+        public final long started = System.currentTimeMillis();
+        /** Test hook: the backup takes at least this long, so its progress can be seen. */
+        private final long slowMs;
+        private volatile long done;
+
+        public Progress(String world, long total, long slowMs) {
+            this.world = world;
+            this.total = Math.max(1, total);
+            this.slowMs = slowMs;
+        }
+
+        public long done() {
+            return Math.min(done, total);
+        }
+
+        public int percent() {
+            return (int) (done() * 100 / total);
+        }
+
+        /** Only the backup's own thread calls this. */
+        void add(long bytes) {
+            done += bytes;
+            if (slowMs > 0) {
+                long wait = started + slowMs * done() / total - System.currentTimeMillis();
+                if (wait > 0) {
+                    try {
+                        Thread.sleep(wait);
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                    }
+                }
+            }
+        }
+
+        /** "840 KB", "312 MB", "2.9 GB". */
+        public static String size(long bytes) {
+            if (bytes < 1L << 20) {
+                return Math.max(1, bytes >> 10) + " KB";
+            }
+            if (bytes < 1L << 30) {
+                return (bytes >> 20) + " MB";
+            }
+            return String.format(Locale.ROOT, "%.1f GB", bytes / (double) (1L << 30));
+        }
+    }
+
     public static boolean is(Path p) {
         return p.getFileName().toString().endsWith(EXT);
     }
@@ -89,6 +143,12 @@ public final class Snapshots {
      * snapshot there already holds. {@code full} stores everything again (dead space bound).
      */
     public static Taken take(Path world, Path dir, String stamp, boolean full) throws IOException {
+        return take(world, dir, stamp, full, null);
+    }
+
+    /** The same, adding each file's size to {@code progress} (may be null) once it is stored. */
+    public static Taken take(Path world, Path dir, String stamp, boolean full, Progress progress)
+            throws IOException {
         Files.createDirectories(dir.resolve("store"));
         clean(dir);
         Map<String, Entry> prev = new HashMap<>();
@@ -132,6 +192,7 @@ public final class Snapshots {
                     if (old != null && old.size == size && old.mtime == mtime) {
                         lines.add(old.line());
                         stats[1]++;
+                        tick(size);
                         return FileVisitResult.CONTINUE;
                     }
                     Entry e = null;
@@ -145,7 +206,14 @@ public final class Snapshots {
                         stats[1]++;
                     }
                     lines.add(e.line());
+                    tick(size);
                     return FileVisitResult.CONTINUE;
+                }
+
+                private void tick(long size) {
+                    if (progress != null) {
+                        progress.add(size);
+                    }
                 }
             });
             out.force(true);

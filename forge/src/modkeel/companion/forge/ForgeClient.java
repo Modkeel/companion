@@ -1,6 +1,7 @@
 package modkeel.companion.forge;
 
 import modkeel.companion.game.Client;
+import modkeel.companion.game.Compat;
 import net.minecraft.client.Minecraft;
 import net.minecraftforge.client.event.ScreenEvent;
 import net.minecraftforge.common.MinecraftForge;
@@ -23,5 +24,9 @@ final class ForgeClient {
         MinecraftForge.EVENT_BUS.addListener(EventPriority.NORMAL, false, ScreenEvent.Init.Post.class,
                 e -> Client.afterScreenInit(Minecraft.getInstance(), e.getScreen(),
                         e.getScreen().width, e::addListener));
+        // the 1.20.1 loading screen draws no widgets: the backup bar goes on after it
+        Client.backupBarByEvent = true;
+        MinecraftForge.EVENT_BUS.addListener(EventPriority.NORMAL, false, ScreenEvent.Render.Post.class,
+                e -> Compat.drawBackupBar(e.getScreen(), e.getGuiGraphics()));
     }
 }

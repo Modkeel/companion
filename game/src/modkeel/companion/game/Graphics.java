@@ -43,19 +43,9 @@ final class Graphics {
         }
     }
 
-    /**
-     * GL_RENDERER through LWJGL, which no loader remaps: the same call on every version. Only
-     * with a current GL context: on 26.x the game may draw with Vulkan (chosen, or when OpenGL
-     * fails, as on macOS without a GPU), and a GL call without a context aborts the JVM.
-     */
+    /** GL_RENDERER through LWJGL, which no loader remaps: the same call on every version. */
     private static String renderer() {
         try {
-            long context = (long) Class.forName("org.lwjgl.glfw.GLFW")
-                    .getMethod("glfwGetCurrentContext").invoke(null);
-            if (context == 0L) {
-                Log.info("graphics card not read: no OpenGL context (another backend)");
-                return null;
-            }
             return (String) Class.forName("org.lwjgl.opengl.GL11")
                     .getMethod("glGetString", int.class).invoke(null, 0x1F01);
         } catch (ReflectiveOperationException | RuntimeException | LinkageError e) {

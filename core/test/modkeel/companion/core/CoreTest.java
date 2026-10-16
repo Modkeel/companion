@@ -32,12 +32,12 @@ public final class CoreTest {
         run("fabric mixin failure (bobby)", CoreTest::bobby);
         run("neoforge missing class (dynamictrees)", CoreTest::dynamictrees);
         run("neoforge loading issue (athena)", CoreTest::athena);
-        run("neoforge crash in a class other mods' mixins applied to", CoreTest::mixinApplied);
         run("stack attribution by package and mixin handler", CoreTest::stackAttribution);
         run("libraries and platform ids are never blamed", CoreTest::notBlamed);
         run("mod set fingerprint and hash cache", CoreTest::modSet);
         run("world backup, prune and restore", CoreTest::backups);
         run("chunk snapshots: only changed chunks stored, worlds rebuilt", CoreTest::snapshots);
+        run("backup progress: counted per file, readable from another thread", CoreTest::backupProgress);
         run("backup folder of the player's choice, backups moved along", CoreTest::backupFolder);
         run("guardian: backup only when mods change", CoreTest::guardianBackup);
         run("guardian: last good set and revert", CoreTest::guardianRevert);
@@ -269,16 +269,6 @@ public final class CoreTest {
         eq(Diagnosis.Confidence.HIGH, d.confidence, "confidence");
     }
 
-    static void mixinApplied() throws Exception {
-        // a tick handler throws inside ClientHooks, which better_tooltips' mixin transformed
-        CrashReport r = CrashReport.read(fixtures.resolve("neoforge-tick-crash-mixin-applied.txt"));
-        check(r.fromMod.isEmpty(), "applied mixins are not failures: " + r.fromMod);
-        check(r.mixinConfigs.isEmpty(), "mixin configs: " + r.mixinConfigs);
-        Diagnosis d = Diagnosis.of(r, new Owners());
-        eq(Diagnosis.Kind.GENERIC, d.kind, "kind");
-        eq("mfcrash", d.top().id, "suspect");
-    }
-
     static void stackAttribution() throws Exception {
         Path mods = tmp().resolve("mods");
         jar(mods, "boom.jar", "boom", null, "com/example/boom/Boom.class");
@@ -474,6 +464,58 @@ public final class CoreTest {
            "world replaced by the snapshot");
     }
 
+    static void backupProgress() throws Exception {
+        Path game = tmp();
+        Path w = world(game.resolve("saves"), "World");
+        Files.write(w.resolve("region/r.0.0.mca"), region(new int[][] {{0, 100, 100, 1}, {5, 100, 5000, 7}}));
+        for (int i = 0; i < 20; i++) {
+            Files.write(w.resolve("data" + i + ".dat"), new byte[1000]);
+        }
+        long size = Backups.size(w);
+        Path dir = Backups.dir(game, "World");
+
+        Snapshots.Progress p = new Snapshots.Progress("World", size, 0);
+        eq(0, p.percent(), "nothing done before the backup");
+        Snapshots.take(w, dir, "20261015-100000-000", false, p);
+        eq(size - 1, p.done(), "every file counted but session.lock");
+        eq(99, p.percent(), "percent of the world's size");
+
+        // read from another thread while the backup runs, slowed down as the test hook does
+        Snapshots.Progress slow = new Snapshots.Progress("World", size, 400);
+        List<Long> seen = java.util.Collections.synchronizedList(new ArrayList<>());
+        Thread reader = new Thread(() -> {
+            while (slow.done() < size - 1) {
+                seen.add(slow.done());
+                try {
+                    Thread.sleep(2);
+                } catch (InterruptedException e) {
+                    return;
+                }
+            }
+        });
+        reader.setDaemon(true);
+        reader.start();
+        long t0 = System.currentTimeMillis();
+        Snapshots.take(w, dir, "20261015-110000-000", false, slow);
+        reader.join(2000);
+        long took = System.currentTimeMillis() - t0;
+        check(took >= 350, "the test hook slows the backup down: " + took + " ms");
+        check(seen.stream().anyMatch(d -> d > 0 && d < size - 1), "partial progress seen");
+        for (int i = 1; i < seen.size(); i++) {
+            check(seen.get(i) >= seen.get(i - 1), "progress never goes back");
+        }
+
+        Guardian g = new Guardian(game);
+        check(g.backingUp == null, "no backup under way");
+        g.onWorldStarting(w);
+        check(g.backingUp == null, "cleared once the backup is done");
+
+        eq("1 KB", Snapshots.Progress.size(300), "tiny sizes");
+        eq("840 KB", Snapshots.Progress.size(840L << 10), "KB");
+        eq("312 MB", Snapshots.Progress.size(312L << 20), "MB");
+        eq("2.9 GB", Snapshots.Progress.size((29L << 30) / 10), "GB with one decimal");
+    }
+
     static void backupFolder() throws Exception {
         Path game = tmp().resolve("Pack/.minecraft");
         jar(game.resolve("mods"), "a.jar", "a", null, "a/A.class");
@@ -647,12 +689,7 @@ public final class CoreTest {
         Files.copy(fixtures.resolve("fabric-mixin-bobby.txt"), old);
         Files.setLastModifiedTime(old, FileTime.fromMillis(System.currentTimeMillis() - 48L * 3600 * 1000));
         eq(null, new Guardian(game).checkCrashes(), "a report older than a day is ignored on first run");
-        // a pack can ship its author's old report: the installer writes it now, its name says when
-        Path shipped = reports.resolve("crash-2024-11-30_15.42.36-client.txt");
-        Files.copy(fixtures.resolve("fabric-mixin-fabrishot.txt"), shipped);
-        eq(null, new Guardian(game).checkCrashes(), "an old report written now is ignored on first run");
-        Files.delete(shipped);
-        Path fresh = reports.resolve(reportName(System.currentTimeMillis() + 1000));
+        Path fresh = reports.resolve("crash-2026-09-28_10.00.00-client.txt");
         Files.copy(fixtures.resolve("fabric-mixin-fabrishot.txt"), fresh);
         Files.setLastModifiedTime(fresh, FileTime.fromMillis(System.currentTimeMillis() + 1000));
         Guardian g = new Guardian(game);
@@ -663,18 +700,12 @@ public final class CoreTest {
         eq(null, new Guardian(game).checkCrashes(), "shown once");
     }
 
-    /** A crash report's name as the game writes it, for a crash at {@code millis}. */
-    static String reportName(long millis) {
-        return "crash-" + java.time.Instant.ofEpochMilli(millis).atZone(java.time.ZoneId.systemDefault())
-                .format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd_HH.mm.ss")) + "-client.txt";
-    }
-
     static void crashWindow() throws Exception {
         Path game = tmp();
         jar(game.resolve("mods"), "fabrishot.jar", "fabrishot", null, "me/ramidzkh/fabrishot/F.class");
         Path reports = game.resolve("crash-reports");
         Files.createDirectories(reports);
-        Path fresh = reports.resolve(reportName(System.currentTimeMillis() - 1000));
+        Path fresh = reports.resolve("crash-2026-10-15_10.00.00-client.txt");
         Files.copy(fixtures.resolve("fabric-mixin-fabrishot.txt"), fresh);
         Files.setLastModifiedTime(fresh, FileTime.fromMillis(System.currentTimeMillis() - 1000));
         Guardian w = new Guardian(game);
@@ -756,11 +787,6 @@ public final class CoreTest {
         eq(null, CrashReport.fromLog(log + "[17:02:00] [Render thread/INFO]: Stopping!\n"),
            "the game closed after the error");
         eq(null, CrashReport.fromLog("[17:00:00] [main/INFO]: Loading 3 mods\n"), "no trace");
-        // a mod logged the error and went on: the start reached the title screen, then was killed
-        String title = "[17:00:00] [Render thread/INFO]: [modkeel] " + CrashReport.TITLE_REACHED
-                       + "\n";
-        eq(null, CrashReport.fromLog(log + title), "the start reached the title screen after the error");
-        eq(null, CrashReport.fromLog(title + log), "an error on the title screen did not stop the start");
     }
 
     static void guardianLogCrash() throws Exception {

@@ -1,10 +1,7 @@
 package modkeel.companion.game;
 
 import java.util.function.Consumer;
-import java.util.function.Predicate;
-import java.util.regex.Pattern;
 
-import modkeel.companion.core.CrashReport;
 import modkeel.companion.core.CrashWindow;
 import modkeel.companion.core.Diagnosis;
 import modkeel.companion.core.Guardian;
@@ -32,7 +29,6 @@ public final class Client {
     static final long TOAST_EVERY_MS = 60_000;
 
     private static boolean crashHandled;
-    private static boolean titleReached;
     /** What the title screen opens, held until resources load: 1.20.1 shows the title screen
      *  mid-load, and a screen built then keeps raw translation keys. */
     private static Runnable whenLoaded;
@@ -40,22 +36,11 @@ public final class Client {
     private static Spikes.Watch frames;
     private static volatile long inWorldSince;
     private static long lastToast;
-    /** Lab only: a mod's own screen shown outside a world (a welcome or update prompt that waits
-     *  for a click) is named in the log, then closed after this many seconds as Escape would. */
-    static final long BLOCKING_S = Long.getLong("modkeel.test.blocking", 0);
-    private static Screen blocking;
-    private static long blockingSince;
-    /** Screens of Minecraft, the loaders (their error screens are refusals) and Modkeel are not
-     *  prompts of another mod; obfuscated Minecraft keeps the net.minecraft package. */
-    private static final Predicate<String> OTHER_MOD = Pattern.compile(
-            "^(net\\.minecraft|net\\.minecraftforge|net\\.neoforged|net\\.fabricmc|modkeel)\\.")
-            .asPredicate().negate();
-    /** A mod that swaps the title screen for its own (deltaclient's menu, a shader prompt) does
-     *  it as the title opens, so the first screen of another mod shown before it stands in. */
-    private static Class<?> titleStandIn;
-    private static final long STAND_IN_MS = 2000;
-    private static Screen standInSeen;
-    private static long standInSince;
+    /**
+     * The loader draws the backup bar from its own render event instead of a widget: Forge
+     * 1.20.1, whose loading screen draws no widgets.
+     */
+    public static boolean backupBarByEvent;
 
     private Client() {
     }
@@ -88,12 +73,6 @@ public final class Client {
             whenLoaded = null;
             r.run();
         }
-        if (loaded && !titleReached && titleStandIn == null && mc.level == null) {
-            findStandIn(mc);
-        }
-        if (BLOCKING_S > 0 && loaded && mc.level == null) {
-            closeBlocking(mc);
-        }
         if (frames == null) {
             frames = Common.spikes.watch(Spikes.Where.FRAME);
         }
@@ -106,49 +85,6 @@ public final class Client {
             inWorldSince = System.currentTimeMillis();
         }
         frames.beat();
-    }
-
-    /** The screen that stays once loading ends, not one a mod shows to draw the loading itself
-     *  (Drippy's, whose overlay leaves for a moment mid-load); it was built mid-load, so it is
-     *  opened again for the button to go on. */
-    private static void findStandIn(Minecraft mc) {
-        Screen s = Compat.screen(mc);
-        if (Compat.loading(mc) || s == null || s instanceof TitleScreen
-                || !OTHER_MOD.test(s.getClass().getName())) {
-            standInSeen = null;
-            return;
-        }
-        long now = System.currentTimeMillis();
-        if (s != standInSeen) {
-            standInSeen = s;
-            standInSince = now;
-            return;
-        }
-        if (now - standInSince < STAND_IN_MS) {
-            return;
-        }
-        titleStandIn = s.getClass();
-        Log.info("title screen stands in: " + titleStandIn.getName());
-        Compat.setScreen(mc, s);
-    }
-
-    private static void closeBlocking(Minecraft mc) {
-        Screen s = Compat.screen(mc);
-        if (s == null || s.getClass() == titleStandIn || !OTHER_MOD.test(s.getClass().getName())) {
-            blocking = null;
-            return;
-        }
-        long now = System.currentTimeMillis();
-        if (s != blocking) {
-            blocking = s;
-            blockingSince = now;
-            Log.info("test: screen " + s.getClass().getName() + " outside a world");
-        } else if (blockingSince > 0 && now - blockingSince >= BLOCKING_S * 1000) {
-            // once per screen: one that ignores Escape stays, and the lab sees the start hang
-            blockingSince = 0;
-            Log.info("test: closing " + s.getClass().getName() + " after " + BLOCKING_S + "s");
-            s.onClose();
-        }
     }
 
     static boolean spikeAlerts() {
@@ -184,6 +120,10 @@ public final class Client {
     /** Called by the loader after a screen is initialised; `add` puts a widget on it. */
     public static void afterScreenInit(Minecraft mc, Screen screen, int width,
                                        Consumer<AbstractWidget> add) {
+        if (BackupBar.on(screen) && !backupBarByEvent) {
+            add.accept(new BackupBar(width, screen.height));
+            return;
+        }
         if (screen instanceof PauseScreen) {
             add.accept(Button.builder(Component.translatable("modkeel.spikes.button"),
                             b -> Compat.setScreen(mc, new SpikeScreen(screen)))
@@ -192,12 +132,8 @@ public final class Client {
                     .build());
             return;
         }
-        if (!(screen instanceof TitleScreen) && screen.getClass() != titleStandIn) {
+        if (!(screen instanceof TitleScreen)) {
             return;
-        }
-        if (!titleReached) {
-            titleReached = true;
-            Log.info(CrashReport.TITLE_REACHED);
         }
         Guardian g = Common.guardian;
         add.accept(Button.builder(Component.literal("Modkeel"),

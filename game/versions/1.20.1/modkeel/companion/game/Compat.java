@@ -140,4 +140,14 @@ public final class Compat {
     public static Checkbox checkbox(Component label, Font font, boolean selected) {
         return new Checkbox(0, 0, font.width(label) + 24, 20, label, selected);
     }
+
+    /**
+     * From a loader's after-render event: 1.20.1's loading screen draws no widgets, so the
+     * backup bar cannot ride on one there.
+     */
+    public static void drawBackupBar(Screen screen, net.minecraft.client.gui.GuiGraphics g) {
+        if (BackupBar.on(screen)) {
+            BackupBar.draw(Canvas.paint(g), screen.width, screen.height);
+        }
+    }
 }
