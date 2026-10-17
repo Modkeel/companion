@@ -116,6 +116,7 @@ public final class Guardian {
         Log.info("rules bundle: " + rules.size + " lab facts; Minecraft " + mcVersion);
         takeLastResult();
         takeTurnedOff();
+        dropPredicted();
         if (outcomes.watching()) {
             outcomes.checkUndone(modsDir);
             outcomes.bindSet(current().fingerprint());
@@ -409,6 +410,30 @@ public final class Guardian {
         return d;
     }
 
+    private static final java.util.regex.Pattern REPORT_NAME = java.util.regex.Pattern.compile(
+            "crash-(\\d{4}-\\d{2}-\\d{2}_\\d{2}\\.\\d{2}\\.\\d{2})-.*");
+
+    /**
+     * When a crash report was written: the time in its name when it has one and it is older than
+     * the file. A modpack can ship its author's old reports, and the launcher that installs it
+     * writes them now, so the file's own time says nothing.
+     */
+    static long reportTime(Path report, long mtime) {
+        java.util.regex.Matcher m = REPORT_NAME.matcher(report.getFileName().toString());
+        if (!m.matches()) {
+            return mtime;
+        }
+        try {
+            long named = java.time.LocalDateTime.parse(m.group(1),
+                            java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd_HH.mm.ss"))
+                    .atZone(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli();
+            // the name has whole seconds: a crash in the second of the last check still counts
+            return Math.min(named + 999, mtime);
+        } catch (java.time.DateTimeException e) {
+            return mtime;
+        }
+    }
+
     /** When {@link #findCrash} looked: reports from before it are not shown again. */
     private long checkedAt;
 
@@ -428,7 +453,7 @@ public final class Guardian {
         if (Files.isDirectory(dir)) {
             try (DirectoryStream<Path> ds = Files.newDirectoryStream(dir, "crash-*.txt")) {
                 for (Path p : ds) {
-                    long t = Files.getLastModifiedTime(p).toMillis();
+                    long t = reportTime(p, Files.getLastModifiedTime(p).toMillis());
                     if (t > newestTime) {
                         newest = p;
                         newestTime = t;
@@ -877,6 +902,25 @@ public final class Guardian {
         state.setList("lastResult", result);
         state.save();
         Log.info("turned off before the start: " + String.join(", ", turnedOff));
+    }
+
+    /**
+     * The early check writes the module clashes it predicted and did not act on yet: a real one
+     * stops the game before any mod runs, so Modkeel running proves them wrong. Deleting the
+     * file keeps the next start from acting on them.
+     */
+    private void dropPredicted() {
+        Path f = home.resolve("early-predicted.txt");
+        try {
+            if (Files.exists(f)) {
+                List<String> wrong = Files.readAllLines(f, StandardCharsets.UTF_8);
+                Files.delete(f);
+                Log.info("predicted module clashes did not stop the game: "
+                         + String.join("; ", wrong).replace('\t', ' '));
+            }
+        } catch (IOException e) {
+            Log.warn("cannot drop " + f, e);
+        }
     }
 
     private static String displayName(Path jar, String fallback) {

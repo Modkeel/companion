@@ -1,0 +1,81 @@
+# The mod in a real Minecraft client on GitHub's machines (ci/client_check.py): a crash, the
+# crash window fixing it, the screens, and the system folder picker. Linux runs under Xvfb with
+# Mesa's software OpenGL; macOS is a trial (its runners have no GPU), it may fail without
+# blocking anything. Screens and logs of every run are uploaded as an artifact.
+name: Client
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  client:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-24.04
+            jdk_url: https://github.com/adoptium/temurin25-binaries/releases/download/jdk-25.0.4.1%2B1/OpenJDK25U-jdk_x64_linux_hotspot_25.0.4.1_1.tar.gz
+            jdk_sha256: dbb698396d478e7fa2b1e50f4103324b2a99b90569ee27c33f2261f9215cf41e
+            jdk_home: jdk-25.0.4.1+1
+            trial: false
+          - os: macos-15
+            jdk_url: https://github.com/adoptium/temurin25-binaries/releases/download/jdk-25.0.4.1%2B1/OpenJDK25U-jdk_aarch64_mac_hotspot_25.0.4.1_1.tar.gz
+            jdk_sha256: 61979887f7506a24a57439ff99adb8b3a7fc89977d9cfe3b8984f58a981b7b9d
+            jdk_home: jdk-25.0.4.1+1/Contents/Home
+            trial: true
+    runs-on: ${{ matrix.os }}
+    continue-on-error: ${{ matrix.trial }}
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97  # v7.0.0
+        with:
+          python-version: "3.14"
+
+      - name: JDK
+        env:
+          JDK_URL: ${{ matrix.jdk_url }}
+          JDK_SHA256: ${{ matrix.jdk_sha256 }}
+          JDK_HOME: ${{ matrix.jdk_home }}
+        run: |
+          curl -fsSL -o jdk.tar.gz "$JDK_URL"
+          echo "$JDK_SHA256  jdk.tar.gz" | shasum -a 256 -c -
+          mkdir -p "$RUNNER_TEMP/jdk" && tar -xzf jdk.tar.gz -C "$RUNNER_TEMP/jdk" && rm jdk.tar.gz
+          echo "MODKEEL_JDK=$RUNNER_TEMP/jdk/$JDK_HOME" >> "$GITHUB_ENV"
+          echo "MODKEEL_HOME=$RUNNER_TEMP/modkeel" >> "$GITHUB_ENV"
+
+      - name: Linux packages (virtual screen, picker, input, screenshots)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq xvfb xdotool zenity imagemagick libgl1-mesa-dri
+
+      - name: portablemc (starts the game)
+        run: python -m pip install portablemc==4.4.1
+
+      - name: Build
+        run: python build.py --mc 26.2 --loader fabric
+
+      - name: Client check (Linux)
+        if: runner.os == 'Linux'
+        run: xvfb-run -a -s "-screen 0 1280x720x24" python ci/client_check.py --mc 26.2 --no-build --out "$RUNNER_TEMP/out"
+
+      - name: Client check (macOS)
+        if: runner.os == 'macOS'
+        run: python ci/client_check.py --mc 26.2 --no-build --out "$RUNNER_TEMP/out"
+
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a  # v7.0.1
+        if: always()
+        with:
+          name: client-${{ runner.os }}
+          path: ${{ runner.temp }}/out/
+          if-no-files-found: ignore
