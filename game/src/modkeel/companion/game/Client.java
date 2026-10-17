@@ -85,6 +85,9 @@ public final class Client {
             whenLoaded = null;
             r.run();
         }
+        if (loaded && !titleReached && titleStandIn == null && mc.level == null) {
+            findStandIn(mc);
+        }
         if (BLOCKING_S > 0 && loaded && mc.level == null) {
             closeBlocking(mc);
         }
@@ -100,6 +103,18 @@ public final class Client {
             inWorldSince = System.currentTimeMillis();
         }
         frames.beat();
+    }
+
+    /** The screen shown once loading ends, not the ones a mod builds to draw the loading itself
+     *  (Drippy's); it was built mid-load, so it is opened again for the button to go on. */
+    private static void findStandIn(Minecraft mc) {
+        Screen s = Compat.screen(mc);
+        if (s == null || s instanceof TitleScreen || !OTHER_MOD.test(s.getClass().getName())) {
+            return;
+        }
+        titleStandIn = s.getClass();
+        Log.info("title screen stands in: " + titleStandIn.getName());
+        Compat.setScreen(mc, s);
     }
 
     private static void closeBlocking(Minecraft mc) {
@@ -161,12 +176,6 @@ public final class Client {
                     .tooltip(Tooltip.create(Component.translatable("modkeel.spikes.tooltip")))
                     .build());
             return;
-        }
-        if (!titleReached && titleStandIn == null && mc.level == null
-                && !(screen instanceof TitleScreen)
-                && OTHER_MOD.test(screen.getClass().getName())) {
-            titleStandIn = screen.getClass();
-            Log.info("title screen stands in: " + titleStandIn.getName());
         }
         if (!(screen instanceof TitleScreen) && screen.getClass() != titleStandIn) {
             return;
