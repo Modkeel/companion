@@ -15,7 +15,7 @@ public final class CompanionMod implements ModInitializer {
         boolean quilt = loader.isModLoaded("quilt_loader");
         Common.init(loader.getGameDir(), CompanionPreLaunch.version(loader, "minecraft"), quilt ? "quilt" : "fabric",
                 CompanionPreLaunch.version(loader, quilt ? "quilt_loader" : "fabricloader"), CompanionPreLaunch::selfJar);
-        ServerLifecycleEvents.SERVER_STARTING.register(Common::serverStarting);
+        WorldStart.register();
         ServerLifecycleEvents.SERVER_STOPPED.register(server -> Common.serverStopped());
         ServerTickEvents.END_SERVER_TICK.register(server -> Common.serverTick());
         if (loader.getEnvironmentType() == EnvType.SERVER) {

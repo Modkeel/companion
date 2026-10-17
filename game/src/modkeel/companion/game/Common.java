@@ -38,6 +38,8 @@ public final class Common {
     /** Play is counted towards fix outcomes once a minute. */
     private static final int PLAY_CHUNK = (int) Math.min(1200, Outcomes.HELD_TICKS);
     private static boolean marked;
+    /** The server started with its world start left to the first level created. */
+    private static boolean startPending;
     private static Tracker tracker = new Tracker();
     private static boolean trackerFailed;
     /** Test hook: the players mine and use stone every second (-Dmodkeel.test.play=true). */
@@ -73,11 +75,31 @@ public final class Common {
     }
 
     public static void serverStarting(MinecraftServer server) {
+        serverStarting(server, true);
+    }
+
+    /**
+     * `backUpNow` false leaves the world start (and its backup) to {@link #levelsCreated}: on
+     * Fabric 1.20.1 and 1.21.1 the client shows no loading screen until the server has made its
+     * levels, so a backup at server start froze the window without its bar.
+     */
+    public static void serverStarting(MinecraftServer server, boolean backUpNow) {
         Common.server = server;
         ticks = 0;
         marked = false;
         tracker = new Tracker();
-        guardian.onWorldStarting(server.getWorldPath(LevelResource.ROOT));
+        startPending = !backUpNow;
+        if (backUpNow) {
+            guardian.onWorldStarting(server.getWorldPath(LevelResource.ROOT));
+        }
+    }
+
+    /** Called by the loader as each level is created, before any chunk loads. */
+    public static void levelsCreated(MinecraftServer server) {
+        if (startPending && server == Common.server) {
+            startPending = false;
+            guardian.onWorldStarting(server.getWorldPath(LevelResource.ROOT));
+        }
     }
 
     public static void serverStopped() {

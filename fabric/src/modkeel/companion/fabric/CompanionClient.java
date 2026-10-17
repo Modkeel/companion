@@ -10,10 +10,12 @@ public final class CompanionClient implements ClientModInitializer {
     @Override
     public void onInitializeClient() {
         Client.init();
+        Client.backupBarByEvent = FabricCompat.BACKUP_BAR_BY_EVENT;
         ClientTickEvents.END_CLIENT_TICK.register(Client::clientTick);
         ScreenEvents.AFTER_INIT.register((mc, screen, width, height) -> {
             Client.afterScreenInit(mc, screen, width, w -> FabricCompat.addWidget(screen, w));
             ScreenEvents.afterTick(screen).register(Client::afterScreenTick);
+            FabricCompat.afterScreenInit(screen);
         });
     }
 }
