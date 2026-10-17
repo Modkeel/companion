@@ -1,6 +1,8 @@
 package modkeel.companion.game;
 
 import java.util.function.Consumer;
+import java.util.function.Predicate;
+import java.util.regex.Pattern;
 
 import modkeel.companion.core.CrashReport;
 import modkeel.companion.core.CrashWindow;
@@ -38,6 +40,16 @@ public final class Client {
     private static Spikes.Watch frames;
     private static volatile long inWorldSince;
     private static long lastToast;
+    /** Lab only: a mod's own screen shown outside a world (a welcome or update prompt that waits
+     *  for a click) is named in the log, then closed after this many seconds as Escape would. */
+    static final long BLOCKING_S = Long.getLong("modkeel.test.blocking", 0);
+    private static Screen blocking;
+    private static long blockingSince;
+    /** Screens of Minecraft, the loaders (their error screens are refusals) and Modkeel are not
+     *  prompts of another mod; obfuscated Minecraft keeps the net.minecraft package. */
+    private static final Predicate<String> BLOCKER = Pattern.compile(
+            "^(net\\.minecraft|net\\.minecraftforge|net\\.neoforged|net\\.fabricmc|modkeel)\\.")
+            .asPredicate().negate();
 
     private Client() {
     }
@@ -70,6 +82,9 @@ public final class Client {
             whenLoaded = null;
             r.run();
         }
+        if (BLOCKING_S > 0 && loaded && mc.level == null) {
+            closeBlocking(mc);
+        }
         if (frames == null) {
             frames = Common.spikes.watch(Spikes.Where.FRAME);
         }
@@ -82,6 +97,25 @@ public final class Client {
             inWorldSince = System.currentTimeMillis();
         }
         frames.beat();
+    }
+
+    private static void closeBlocking(Minecraft mc) {
+        Screen s = Compat.screen(mc);
+        if (s == null || !BLOCKER.test(s.getClass().getName())) {
+            blocking = null;
+            return;
+        }
+        long now = System.currentTimeMillis();
+        if (s != blocking) {
+            blocking = s;
+            blockingSince = now;
+            Log.info("test: screen " + s.getClass().getName() + " outside a world");
+        } else if (blockingSince > 0 && now - blockingSince >= BLOCKING_S * 1000) {
+            // once per screen: one that ignores Escape stays, and the lab sees the start hang
+            blockingSince = 0;
+            Log.info("test: closing " + s.getClass().getName() + " after " + BLOCKING_S + "s");
+            s.onClose();
+        }
     }
 
     static boolean spikeAlerts() {
