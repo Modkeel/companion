@@ -53,6 +53,9 @@ public final class Client {
     /** A mod that swaps the title screen for its own (deltaclient's menu, a shader prompt) does
      *  it as the title opens, so the first screen of another mod shown before it stands in. */
     private static Class<?> titleStandIn;
+    private static final long STAND_IN_MS = 2000;
+    private static Screen standInSeen;
+    private static long standInSince;
 
     private Client() {
     }
@@ -105,11 +108,23 @@ public final class Client {
         frames.beat();
     }
 
-    /** The screen shown once loading ends, not the ones a mod builds to draw the loading itself
-     *  (Drippy's); it was built mid-load, so it is opened again for the button to go on. */
+    /** The screen that stays once loading ends, not one a mod shows to draw the loading itself
+     *  (Drippy's, whose overlay leaves for a moment mid-load); it was built mid-load, so it is
+     *  opened again for the button to go on. */
     private static void findStandIn(Minecraft mc) {
         Screen s = Compat.screen(mc);
-        if (s == null || s instanceof TitleScreen || !OTHER_MOD.test(s.getClass().getName())) {
+        if (Compat.loading(mc) || s == null || s instanceof TitleScreen
+                || !OTHER_MOD.test(s.getClass().getName())) {
+            standInSeen = null;
+            return;
+        }
+        long now = System.currentTimeMillis();
+        if (s != standInSeen) {
+            standInSeen = s;
+            standInSince = now;
+            return;
+        }
+        if (now - standInSince < STAND_IN_MS) {
             return;
         }
         titleStandIn = s.getClass();
