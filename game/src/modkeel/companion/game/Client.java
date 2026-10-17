@@ -47,9 +47,12 @@ public final class Client {
     private static long blockingSince;
     /** Screens of Minecraft, the loaders (their error screens are refusals) and Modkeel are not
      *  prompts of another mod; obfuscated Minecraft keeps the net.minecraft package. */
-    private static final Predicate<String> BLOCKER = Pattern.compile(
+    private static final Predicate<String> OTHER_MOD = Pattern.compile(
             "^(net\\.minecraft|net\\.minecraftforge|net\\.neoforged|net\\.fabricmc|modkeel)\\.")
             .asPredicate().negate();
+    /** A mod that swaps the title screen for its own (deltaclient's menu, a shader prompt) does
+     *  it as the title opens, so the first screen of another mod shown before it stands in. */
+    private static Class<?> titleStandIn;
 
     private Client() {
     }
@@ -101,7 +104,7 @@ public final class Client {
 
     private static void closeBlocking(Minecraft mc) {
         Screen s = Compat.screen(mc);
-        if (s == null || !BLOCKER.test(s.getClass().getName())) {
+        if (s == null || s.getClass() == titleStandIn || !OTHER_MOD.test(s.getClass().getName())) {
             blocking = null;
             return;
         }
@@ -159,7 +162,13 @@ public final class Client {
                     .build());
             return;
         }
-        if (!(screen instanceof TitleScreen)) {
+        if (!titleReached && titleStandIn == null && mc.level == null
+                && !(screen instanceof TitleScreen)
+                && OTHER_MOD.test(screen.getClass().getName())) {
+            titleStandIn = screen.getClass();
+            Log.info("title screen stands in: " + titleStandIn.getName());
+        }
+        if (!(screen instanceof TitleScreen) && screen.getClass() != titleStandIn) {
             return;
         }
         if (!titleReached) {
