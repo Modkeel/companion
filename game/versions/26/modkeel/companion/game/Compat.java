@@ -8,6 +8,7 @@ import java.nio.file.Files;
 import java.util.List;
 
 import com.mojang.blaze3d.platform.NativeImage;
+import com.mojang.blaze3d.systems.RenderSystem;
 import modkeel.companion.core.Log;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.Checkbox;
@@ -68,6 +69,15 @@ public final class Compat {
     /** A resource reload (the loading overlay) is covering the screen. */
     public static boolean loading(Minecraft mc) {
         return mc.gui.overlay() != null;
+    }
+
+    /**
+     * Lets Windows know the window is alive while the world loads: 26.x's wait for the
+     * integrated server draws frames but polls no window events, so a backup longer than
+     * 5 s turned the window into a frozen "Not responding" ghost.
+     */
+    public static void keepWindowAwake() {
+        RenderSystem.pollEvents();
     }
 
     /** Test tour: press a button as a click would. */

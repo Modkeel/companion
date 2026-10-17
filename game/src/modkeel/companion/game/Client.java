@@ -187,6 +187,13 @@ public final class Client {
         });
     }
 
+    /** Called by the loader after a screen ticks, the world loading screen's wait included. */
+    public static void afterScreenTick(Screen screen) {
+        if (BackupBar.on(screen) && Common.guardian != null && Common.guardian.backingUp != null) {
+            Compat.keepWindowAwake();
+        }
+    }
+
     /** Called by the loader after a screen is initialised; `add` puts a widget on it. */
     public static void afterScreenInit(Minecraft mc, Screen screen, int width,
                                        Consumer<AbstractWidget> add) {

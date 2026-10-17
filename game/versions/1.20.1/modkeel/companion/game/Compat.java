@@ -80,6 +80,10 @@ public final class Compat {
         return mc.getOverlay() != null;
     }
 
+    /** Nothing to do: this version's frames poll the window events themselves. */
+    public static void keepWindowAwake() {
+    }
+
     /** Test tour: press a button as a click would. */
     public static void press(AbstractButton button) {
         button.onPress();

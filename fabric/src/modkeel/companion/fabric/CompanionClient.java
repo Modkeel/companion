@@ -11,7 +11,9 @@ public final class CompanionClient implements ClientModInitializer {
     public void onInitializeClient() {
         Client.init();
         ClientTickEvents.END_CLIENT_TICK.register(Client::clientTick);
-        ScreenEvents.AFTER_INIT.register((mc, screen, width, height) ->
-                Client.afterScreenInit(mc, screen, width, w -> FabricCompat.addWidget(screen, w)));
+        ScreenEvents.AFTER_INIT.register((mc, screen, width, height) -> {
+            Client.afterScreenInit(mc, screen, width, w -> FabricCompat.addWidget(screen, w));
+            ScreenEvents.afterTick(screen).register(Client::afterScreenTick);
+        });
     }
 }
