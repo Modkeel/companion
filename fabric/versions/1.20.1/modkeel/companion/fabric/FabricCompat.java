@@ -18,6 +18,7 @@ final class FabricCompat {
         Screens.getButtons(screen).add(widget);
     }
 
+    /** Draws the backup bar over the loading screen, which skips its widgets. */
     static void afterScreenInit(Screen screen) {
         ScreenEvents.afterRender(screen).register((s, g, mouseX, mouseY, delta) ->
                 Compat.drawBackupBar(s, g));

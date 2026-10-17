@@ -6,6 +6,7 @@ import net.minecraft.client.gui.screens.Screen;
 
 /** Fabric API calls that changed between Minecraft versions. */
 final class FabricCompat {
+    /** The loading screen draws its widgets, the bar among them. */
     static final boolean BACKUP_BAR_BY_EVENT = false;
 
     private FabricCompat() {
