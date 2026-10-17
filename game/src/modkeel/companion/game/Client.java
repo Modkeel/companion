@@ -2,6 +2,7 @@ package modkeel.companion.game;
 
 import java.util.function.Consumer;
 
+import modkeel.companion.core.CrashReport;
 import modkeel.companion.core.CrashWindow;
 import modkeel.companion.core.Diagnosis;
 import modkeel.companion.core.Guardian;
@@ -29,6 +30,7 @@ public final class Client {
     static final long TOAST_EVERY_MS = 60_000;
 
     private static boolean crashHandled;
+    private static boolean titleReached;
     /** What the title screen opens, held until resources load: 1.20.1 shows the title screen
      *  mid-load, and a screen built then keeps raw translation keys. */
     private static Runnable whenLoaded;
@@ -125,6 +127,10 @@ public final class Client {
         }
         if (!(screen instanceof TitleScreen)) {
             return;
+        }
+        if (!titleReached) {
+            titleReached = true;
+            Log.info(CrashReport.TITLE_REACHED);
         }
         Guardian g = Common.guardian;
         add.accept(Button.builder(Component.literal("Modkeel"),

@@ -32,6 +32,7 @@ public final class CoreTest {
         run("fabric mixin failure (bobby)", CoreTest::bobby);
         run("neoforge missing class (dynamictrees)", CoreTest::dynamictrees);
         run("neoforge loading issue (athena)", CoreTest::athena);
+        run("neoforge crash in a class other mods' mixins applied to", CoreTest::mixinApplied);
         run("stack attribution by package and mixin handler", CoreTest::stackAttribution);
         run("libraries and platform ids are never blamed", CoreTest::notBlamed);
         run("mod set fingerprint and hash cache", CoreTest::modSet);
@@ -266,6 +267,16 @@ public final class CoreTest {
         Diagnosis d = diagnose("neoforge-loading-athena.txt", new Owners());
         eq("athena", d.top().id, "suspect");
         eq(Diagnosis.Confidence.HIGH, d.confidence, "confidence");
+    }
+
+    static void mixinApplied() throws Exception {
+        // a tick handler throws inside ClientHooks, which better_tooltips' mixin transformed
+        CrashReport r = CrashReport.read(fixtures.resolve("neoforge-tick-crash-mixin-applied.txt"));
+        check(r.fromMod.isEmpty(), "applied mixins are not failures: " + r.fromMod);
+        check(r.mixinConfigs.isEmpty(), "mixin configs: " + r.mixinConfigs);
+        Diagnosis d = Diagnosis.of(r, new Owners());
+        eq(Diagnosis.Kind.GENERIC, d.kind, "kind");
+        eq("mfcrash", d.top().id, "suspect");
     }
 
     static void stackAttribution() throws Exception {
@@ -636,7 +647,12 @@ public final class CoreTest {
         Files.copy(fixtures.resolve("fabric-mixin-bobby.txt"), old);
         Files.setLastModifiedTime(old, FileTime.fromMillis(System.currentTimeMillis() - 48L * 3600 * 1000));
         eq(null, new Guardian(game).checkCrashes(), "a report older than a day is ignored on first run");
-        Path fresh = reports.resolve("crash-2026-09-28_10.00.00-client.txt");
+        // a pack can ship its author's old report: the installer writes it now, its name says when
+        Path shipped = reports.resolve("crash-2024-11-30_15.42.36-client.txt");
+        Files.copy(fixtures.resolve("fabric-mixin-fabrishot.txt"), shipped);
+        eq(null, new Guardian(game).checkCrashes(), "an old report written now is ignored on first run");
+        Files.delete(shipped);
+        Path fresh = reports.resolve(reportName(System.currentTimeMillis() + 1000));
         Files.copy(fixtures.resolve("fabric-mixin-fabrishot.txt"), fresh);
         Files.setLastModifiedTime(fresh, FileTime.fromMillis(System.currentTimeMillis() + 1000));
         Guardian g = new Guardian(game);
@@ -647,12 +663,18 @@ public final class CoreTest {
         eq(null, new Guardian(game).checkCrashes(), "shown once");
     }
 
+    /** A crash report's name as the game writes it, for a crash at {@code millis}. */
+    static String reportName(long millis) {
+        return "crash-" + java.time.Instant.ofEpochMilli(millis).atZone(java.time.ZoneId.systemDefault())
+                .format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd_HH.mm.ss")) + "-client.txt";
+    }
+
     static void crashWindow() throws Exception {
         Path game = tmp();
         jar(game.resolve("mods"), "fabrishot.jar", "fabrishot", null, "me/ramidzkh/fabrishot/F.class");
         Path reports = game.resolve("crash-reports");
         Files.createDirectories(reports);
-        Path fresh = reports.resolve("crash-2026-10-15_10.00.00-client.txt");
+        Path fresh = reports.resolve(reportName(System.currentTimeMillis() - 1000));
         Files.copy(fixtures.resolve("fabric-mixin-fabrishot.txt"), fresh);
         Files.setLastModifiedTime(fresh, FileTime.fromMillis(System.currentTimeMillis() - 1000));
         Guardian w = new Guardian(game);
@@ -734,6 +756,11 @@ public final class CoreTest {
         eq(null, CrashReport.fromLog(log + "[17:02:00] [Render thread/INFO]: Stopping!\n"),
            "the game closed after the error");
         eq(null, CrashReport.fromLog("[17:00:00] [main/INFO]: Loading 3 mods\n"), "no trace");
+        // a mod logged the error and went on: the start reached the title screen, then was killed
+        String title = "[17:00:00] [Render thread/INFO]: [modkeel] " + CrashReport.TITLE_REACHED
+                       + "\n";
+        eq(null, CrashReport.fromLog(log + title), "the start reached the title screen after the error");
+        eq(null, CrashReport.fromLog(title + log), "an error on the title screen did not stop the start");
     }
 
     static void guardianLogCrash() throws Exception {

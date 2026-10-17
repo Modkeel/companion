@@ -24,8 +24,10 @@ public final class EarlyTest {
 
     public static void main(String[] args) throws Exception {
         predictsTwoModsWithOnePackage();
+        aWrongPredictionTurnsNothingOff();
         whatTheLoaderNeverLoadsIsNoClash();
         bundledJarsAsTheLoaderPicksThem();
+        onlyOneLayerClashes();
         severalClashesInOneStart();
         findsEachMessage();
         holdersAndPackages();
@@ -49,13 +51,39 @@ public final class EarlyTest {
         lastGood(game, "create.jar");
         List<String> log = new ArrayList<>();
         ModuleCheck.run(game, TOML, log::add);
+        check(Files.exists(mods.resolve("flywheel.jar")), "the first start only writes it down");
+        eq(List.of("lib.shared\tcreate.jar\tflywheel.jar"),
+           Files.readAllLines(game.resolve("modkeel").resolve(ModuleCheck.PREDICTED)), "predicted");
+        // that start died before Modkeel ran (the file is still there): the next one acts
+        ModuleCheck.run(game, TOML, log::add);
         check(Files.exists(mods.resolve("flywheel.jar.disabled")), "the one not in the last good set is off");
         check(Files.exists(mods.resolve("create.jar")), "the other stays");
         eq(List.of("flywheel.jar\tflywheel.jar.disabled\tmodule\tcreate.jar\tlib.shared"),
            Files.readAllLines(game.resolve("modkeel").resolve(Note.FILE)), "the note names the other");
-        check(log.size() == 1 && log.get(0).contains("turned off flywheel.jar"), "logged " + log);
+        check(log.size() == 2 && log.get(1).contains("turned off flywheel.jar"), "logged " + log);
+        check(!Files.exists(game.resolve("modkeel").resolve(ModuleCheck.PREDICTED)), "nothing waits");
         ModuleCheck.run(game, TOML, log::add);
-        eq(1, log.size(), "nothing left on the next start");
+        eq(2, log.size(), "nothing left on the next start");
+    }
+
+    static void aWrongPredictionTurnsNothingOff() throws IOException {
+        Path game = tmp();
+        Path mods = game.resolve("mods");
+        mod(mods.resolve("a.jar"), "a", "p/A.class");
+        mod(mods.resolve("b.jar"), "b", "p/B.class");
+        Path predicted = game.resolve("modkeel").resolve(ModuleCheck.PREDICTED);
+        for (int start = 0; start < 3; start++) {
+            eq(0, ModuleCheck.predict(game, TOML, s -> { }), "start " + start + " turns nothing off");
+            check(Files.exists(predicted), "written down");
+            Files.delete(predicted);   // Modkeel ran: the game got past the module layer
+        }
+        check(Files.exists(mods.resolve("a.jar")) && Files.exists(mods.resolve("b.jar")), "both stay");
+        // the game started fine with both: never acted on, not even written down
+        lastGood(game, "a.jar", "b.jar");
+        List<String> log = new ArrayList<>();
+        eq(0, ModuleCheck.predict(game, TOML, log::add), "proven wrong");
+        check(!Files.exists(predicted), "nothing to confirm");
+        check(log.size() == 1 && log.get(0).contains("started fine with all of them"), "logged " + log);
     }
 
     static void whatTheLoaderNeverLoadsIsNoClash() throws IOException {
@@ -100,12 +128,52 @@ public final class EarlyTest {
                 "META-INF/jarjar/stray.jar", new String(unlisted, StandardCharsets.ISO_8859_1)));
         mod(mods.resolve("four.jar"), "four", "org/stray/S.class");
         eq(0, ModuleCheck.predict(game, TOML, s -> { }), "no clash between bundled copies");
+        // one identifier, two shapes: MixinExtras 0.3 is a mod, 0.5 a library; one version loads
+        byte[] mixinextrasMod = jarBytes(Map.of(TOML, "modId = \"mixinextras\"\n",
+                "META-INF/MANIFEST.MF", manifest("GAMELIBRARY", null),
+                "com/llamalad7/mixinextras/platform/forge/F.class", "x"));
+        byte[] mixinextrasLib = jarBytes(Map.of(
+                "META-INF/MANIFEST.MF", manifest("GAMELIBRARY", "mixinextras"),
+                "com/llamalad7/mixinextras/platform/forge/F.class", "y"));
+        Path mx = tmp();
+        bundling(mx.resolve("mods").resolve("older.jar"), "older", "mixinextras-forge-0.3.2.jar", mixinextrasMod);
+        bundling(mx.resolve("mods").resolve("newer.jar"), "newer", "mixinextras-forge-0.5.3.jar", mixinextrasLib);
+        List<String> none = new ArrayList<>();
+        eq(0, ModuleCheck.predict(mx, TOML, none::add), "no clash between versions of one bundle");
+        eq(List.of(), none, "nothing logged");
+        // a mod bundled by another and also installed on its own: the loader keeps one
+        Path arch = tmp();
+        mod(arch.resolve("mods").resolve("architectury-9.2.14.jar"), "architectury", "dev/arch/A.class");
+        bundling(arch.resolve("mods").resolve("sounds.jar"), "sounds", "architectury-forge-9.2.14.jar",
+                jarBytes(Map.of(TOML, "modId = \"architectury\"\n", "dev/arch/A.class", "x")));
+        eq(0, ModuleCheck.predict(arch, TOML, none::add), "a mod bundled and installed: one module");
         // a mod whose own classes are a library another mod bundles
         Path shading = mod(mods.resolve("shading.jar"), "shading", "com/google/gson/Gson.class");
         Files.setLastModifiedTime(shading, FileTime.fromMillis(clock += 1000));
         List<String> log = new ArrayList<>();
+        eq(0, ModuleCheck.predict(game, TOML, log::add), "written down first");
         eq(1, ModuleCheck.predict(game, TOML, log::add), "a mod against a bundled library");
         check(Files.exists(mods.resolve("shading.jar.disabled")), "the newest jar is off: " + log);
+    }
+
+    static void onlyOneLayerClashes() throws IOException {
+        Path game = tmp();
+        Path mods = game.resolve("mods");
+        // CreativeCore's own net.fabricmc.api, and the Fabric loader Forgified Fabric API bundles
+        // as a language provider: plugin layer and game layer, the game starts with both
+        mod(mods.resolve("creativecore.jar"), "creativecore", "net/fabricmc/api/EnvType.class");
+        bundling(mods.resolve("fabric-api.jar"), "fabric_api", "fabric-loader-2.6.0.jar",
+                jarBytes(Map.of("META-INF/MANIFEST.MF", manifest("LANGPROVIDER", "net.fabricmc.loader"),
+                        "net/fabricmc/api/EnvType.class", "x")));
+        eq(0, ModuleCheck.predict(game, TOML, s -> { }), "a package in both layers is no clash");
+        // two jars of the plugin layer with one package still clash
+        jar(mods.resolve("other-loader.jar"), Map.of("META-INF/MANIFEST.MF",
+                manifest("LIBRARY", "other.loader"), "net/fabricmc/api/EnvType.class", "y"));
+        Files.setLastModifiedTime(mods.resolve("other-loader.jar"), FileTime.fromMillis(clock += 1000));
+        eq(0, ModuleCheck.predict(game, TOML, s -> { }), "written down first");
+        eq(1, ModuleCheck.predict(game, TOML, s -> { }), "one layer, one package: a clash");
+        check(Files.exists(mods.resolve("other-loader.jar.disabled")), "the newest jar is off");
+        check(Files.exists(mods.resolve("creativecore.jar")), "the game-layer mod stays");
     }
 
     static void severalClashesInOneStart() throws IOException {
@@ -115,6 +183,7 @@ public final class EarlyTest {
         mod(mods.resolve("b.jar"), "b", "p/B.class");
         mod(mods.resolve("c.jar"), "c", "p/C.class");
         lastGood(game, "a.jar");
+        eq(0, ModuleCheck.predict(game, TOML, s -> { }), "both written down first");
         eq(2, ModuleCheck.predict(game, TOML, s -> { }), "two turned off");
         check(Files.exists(mods.resolve("a.jar")), "the one from the last good set stays");
         eq(2, Files.readAllLines(game.resolve("modkeel").resolve(Note.FILE)).size(), "one note line each");
@@ -185,7 +254,10 @@ public final class EarlyTest {
         mod(g2.resolve("mods").resolve("y.jar"), "y", "q/A.class");
         jar(g2.resolve("mods").resolve("z.jar"), Map.of("r/A.class", "x"));
         rolledLog(g2, "2026-10-11-1.log.gz", "ResolutionException: Modules z and w export package r to module x");
+        Files.createDirectories(g2.resolve("modkeel"));
+        Files.writeString(g2.resolve("modkeel").resolve(ModuleCheck.PREDICTED), "q\tx.jar\ty.jar\n");
         ModuleCheck.run(g2, TOML, s -> { });
+        check(Files.exists(g2.resolve("mods").resolve("y.jar.disabled")), "the confirmed prediction acted");
         check(Files.exists(g2.resolve("mods").resolve("z.jar")), "not acted on after a prediction");
         check(Files.exists(g2.resolve("modkeel").resolve(ModuleCheck.SEEN)), "but marked read");
     }
