@@ -37,7 +37,7 @@ from portablemc.standard import Context, StandardRunner  # noqa: E402
 WORLD = "My World"
 TIMEOUT = 420
 OPTIONS = ("onboardAccessibility:false\nskipMultiplayerWarning:true\npauseOnLostFocus:false\n"
-           "renderDistance:6\nsoundVolume:0.0\nmaster:0.0\ntutorialStep:none\n")
+           "renderDistance:6\nsoundCategory_master:0.0\ntutorialStep:none\n")
 CRASHED = re.compile(r"Crash report saved to|---- Minecraft Crash Report")
 SHOT = re.compile(r"\[modkeel\] tour: shot (\d+) (\S+) \| (.*)")
 TOUR_END = re.compile(r"\[modkeel\] tour: (done|missing .*|no capture ack.*)")
