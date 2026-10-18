@@ -4,8 +4,11 @@ A safety net for modded Minecraft. Drop it in your mods folder; there is nothing
 
 ![The same crash without Modkeel (a crash report to dig through) and with it (the likely mod and a one-click fix)](images/0-before-after.png)
 
-When the game crashes, the next start says which mod most likely did it, how sure Modkeel is and
-why. One button disables that mod.
+Which mod crashed Minecraft? When the game crashes, the next start says which mod most likely did
+it, how sure Modkeel is and why: the evidence it found in the stack trace and the log (its code
+or its mixin in the error, a version another mod expects, the same jar crashing in the Modkeel
+lab). When the crash does not point at one mod, it says so instead of guessing. One button
+disables that mod. The crash is read on your PC; nothing is uploaded to find the mod.
 
 <table>
 <tr>
